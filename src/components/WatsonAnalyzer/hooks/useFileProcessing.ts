@@ -307,7 +307,7 @@ export const useFileProcessing = (): UseFileProcessingReturn => {
         const row = { ...rows[rowIndex] };
 
         // Extract product ID for logging
-        const productId = row['ColorSAPMaterialNo'] || row['ProductID'] || row['ID'] || `Row ${rowIndex + 1}`;
+        const productId = row['MaterialSAPMaterialNo'] || row['ColorSAPMaterialNo'] || row['ProductID'] || row['ID'] || `Row ${rowIndex + 1}`;
 
         for (const column of selectedColumns) {
           const original = row[column];
