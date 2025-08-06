@@ -148,7 +148,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
       const processedRow = { ...row };
       
       // Extract product ID for logging
-      const productId = row['ColorSAPMaterialNo'] || row['ProductID'] || row['ID'] || `Row ${processedRows.length + 1}`;
+      const productId = row['MaterialSAPMaterialNo'] || row['ColorSAPMaterialNo'] || row['ProductID'] || row['ID'] || `Row ${processedRows.length + 1}`;
 
       for (const column of selectedColumns) {
         const original = row[column];
