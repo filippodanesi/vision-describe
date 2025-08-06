@@ -194,7 +194,7 @@ const WatsonAnalyzer: React.FC = () => {
     const text = processedData
       .slice(0, showMoreResults ? processedData.length : 3)
       .map((row, index) => {
-        const productCode = row.ColorSAPMaterialNo || `Row ${index + 1}`;
+        cconst productCode = row.MaterialSAPMaterialNo || row.ColorSAPMaterialNo || `Row ${index + 1}`;
         const rowText = selectedColumns
           .map(column => `${column}: ${row[column]}`)
           .join('\n');
