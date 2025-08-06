@@ -1,0 +1,25 @@
+AI Product Description Optimizer
+Copyright (c) 2025 Triumph Intertrade AG
+
+This software is dual-licensed. See the LICENSE file for details.
+
+NOTICE: This software contains proprietary and confidential information. 
+Commercial use requires a separate commercial license.
+
+Third-party dependencies and their licenses:
+- React (MIT License)
+- Tailwind CSS (MIT License)
+- Shadcn/ui (MIT License)
+- Lucide React (ISC License)
+- OpenAI SDK (MIT License)
+- Anthropic SDK (MIT License)
+- Papaparse (MIT License)
+- ExcelJS (MIT License)
+
+For commercial licensing inquiries, please contact:
+[Your Email Address]
+[Your Website]
+
+All rights reserved. Unauthorized copying, distribution, or use of this 
+software is strictly prohibited except as expressly permitted under the 
+applicable license terms. 
