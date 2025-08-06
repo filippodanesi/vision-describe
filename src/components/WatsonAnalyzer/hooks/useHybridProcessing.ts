@@ -318,7 +318,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         
         // Add server processing logs for visibility
         for (const row of result.processedRows) {
-          const productId = row['ColorSAPMaterialNo'] || row['ProductID'] || row['ID'] || `Row ${allProcessedRows.length + 1}`;
+          const productId = row['MaterialSAPMaterialNo'] || row['ColorSAPMaterialNo'] || row['ProductID'] || row['ID'] || `Row ${processedRows.length + 1}`;
           addLog(`✓ ${productId} | server batch | optimized | $${(result.cost.totalCost / result.processedRows.length).toFixed(4)}`);
         }
         
