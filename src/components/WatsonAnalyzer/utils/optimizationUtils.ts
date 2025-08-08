@@ -226,23 +226,35 @@ LANGUAGE CONTEXT:
 
       // Build normalized acronym part in desired order
       const acronymPart = hasGRS && hasGOTS ? 'GRS/GOTS' : hasGRS ? 'GRS' : 'GOTS';
+      const desiredLabel = `${label} ${acronymPart}`;
 
       // Replace any existing certificate label lines with the localized, normalized one
-      const patterns = [
-        /(Sustainability\s+certificate)\s+(GOTS\s*\/\s*GRS|GRS\s*\/\s*GOTS|GRS|GOTS)/gi,
-        /(Nachhaltigkeitszertifikat)\s+(GOTS\s*\/\s*GRS|GRS\s*\/\s*GOTS|GRS|GOTS)/gi
+      const patternSources = [
+        '(Sustainability\\s+certificate)\\s+(GOTS\\s*\\/\\s*GRS|GRS\\s*\\/\\s*GOTS|GRS|GOTS)',
+        '(Nachhaltigkeitszertifikat)\\s+(GOTS\\s*\\/\\s*GRS|GRS\\s*\\/\\s*GOTS|GRS|GOTS)'
       ];
 
       let updated = raw;
-      for (const p of patterns) {
-        updated = updated.replace(p, `${label} ${acronymPart}`);
+      let foundExistingLabel = false;
+      for (const src of patternSources) {
+        const testRegex = new RegExp(src, 'i');
+        if (testRegex.test(updated)) {
+          foundExistingLabel = true;
+        }
+        const replaceRegex = new RegExp(src, 'gi');
+        updated = updated.replace(replaceRegex, desiredLabel);
       }
 
       // If no explicit label phrase was found but acronyms exist, try appending a line at the end
-      if (updated === raw) {
+      if (!foundExistingLabel) {
         // Append as a separate line before existing certifications if we can detect such section
-        updated = `${raw}\n${label} ${acronymPart}`;
+        updated = `${updated}\n${desiredLabel}`;
       }
+
+      // Collapse contiguous duplicate lines of the same desired label
+      const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&');
+      const duplicateRegex = new RegExp(`(?:\\n)?\\s*${escapeRegExp(desiredLabel)}\\s*(?:\\n\\s*${escapeRegExp(desiredLabel)}\\s*)+`, 'gi');
+      updated = updated.replace(duplicateRegex, `\n${desiredLabel}`);
 
       return updated;
     };
