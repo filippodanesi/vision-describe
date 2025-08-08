@@ -248,8 +248,14 @@ LANGUAGE & CERTIFICATION CONTEXT:
 
       // If no explicit label phrase was found but acronyms exist, try appending a line at the end
       if (!foundExistingLabel) {
-        // Append as a separate line before existing certifications if we can detect such section
-        updated = `${updated}\n${desiredLabel}`;
+        // Prefer inserting before other certifications like OEKO-TEX when present
+        const anchorRegex = /(OEKO[-\s]?TEX[^\n]*)/i;
+        if (anchorRegex.test(updated)) {
+          updated = updated.replace(anchorRegex, `${desiredLabel}\n$1`);
+        } else {
+          // Append as a separate line if no anchor found
+          updated = `${updated}\n${desiredLabel}`;
+        }
       }
 
       // Collapse contiguous duplicate lines of the same desired label
@@ -257,7 +263,19 @@ LANGUAGE & CERTIFICATION CONTEXT:
       const duplicateRegex = new RegExp(`(?:\\n)?\\s*${escapeRegExp(desiredLabel)}\\s*(?:\\n\\s*${escapeRegExp(desiredLabel)}\\s*)+`, 'gi');
       updated = updated.replace(duplicateRegex, `\n${desiredLabel}`);
 
-      return updated;
+      // Also ensure only a single desiredLabel line exists globally (remove non-contiguous duplicates)
+      const lines = updated.split(/\r?\n/);
+      let seenDesired = false;
+      const normalized = lines.filter((line) => {
+        if (line.trim().toLowerCase() === desiredLabel.toLowerCase()) {
+          if (seenDesired) return false;
+          seenDesired = true;
+          return true;
+        }
+        return true;
+      }).join('\n');
+
+      return normalized;
     };
 
     const normalizedContent = normalizeCertificateLabel(response.content);
