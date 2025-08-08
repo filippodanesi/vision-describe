@@ -2,6 +2,7 @@
  * Utility functions for Claude API integration using the official Anthropic SDK
  */
 import Anthropic from '@anthropic-ai/sdk';
+import claudeSystemPrompt from './prompts/claudeSystemPrompt';
 import { toast } from "@/hooks/use-toast";
 import { fetchWithCorsProxy } from './corsProxyUtils';
 
@@ -13,6 +14,13 @@ export interface ClaudeResponse {
   };
 }
 
+export interface ClaudeRequestOptions {
+  maxTokens?: number;
+  timeoutMs?: number;
+  retryAttempts?: number;
+  retryBaseDelayMs?: number;
+}
+
 /**
  * TESTING: Simple version without CORS proxy to test if we really need it
  * Uncomment this function and comment out the complex one below to test
@@ -22,7 +30,8 @@ export const optimizeWithClaude = async (
   prompt: string, 
   apiKey: string,
   model: string = "claude-sonnet-4-20250514",
-  systemPrompt?: string
+  systemPrompt?: string,
+  options: ClaudeRequestOptions = {}
 ): Promise<ClaudeResponse> => {
   console.log('🧪 TESTING: Using simplified Claude implementation (no CORS proxy)');
   
@@ -158,7 +167,8 @@ export const optimizeWithClaude = async (
   prompt: string, 
   apiKey: string,
   model: string = "claude-sonnet-4-20250514",
-  systemPrompt?: string
+  systemPrompt?: string,
+  options: ClaudeRequestOptions = {}
 ): Promise<ClaudeResponse> => {
   try {
     // Validate API key first
@@ -189,75 +199,7 @@ export const optimizeWithClaude = async (
     const modelDisplayName = claudeModel.includes("4-") ? "Claude 4" : 
                              claudeModel.includes("3-haiku") ? "Claude 3 Haiku" : "Claude";
     
-    const defaultSystemPrompt = `You are a senior SEO content optimizer and linguistic stylist, specialized in fashion and lingerie. You work exclusively for Triumph and are deeply familiar with the Triumph Brand Book, tone of voice, and values.
-
-    Your task is to optimize content for SEO while aligning strictly with the Triumph brand personality and preserving semantic structure.
-    
-    Follow these rules:
-    
-    1. Always respect Triumph's tone of voice: direct, intentional, earnest, and personal. Do not use humor, puns, or sales language.
-    2. Preserve the authentic voice of the original text, including paragraph count, structure, tone, punctuation, and spacing. Do not reformat or restructure content.
-    3. Enhance Named Entity Recognition (NER) using the following taxonomy: Brand, ProductType, Material, Feature, Benefit.
-    4. Avoid generic one-word entities. Use rich, multi-word phrases (2–5 tokens) with high relevance to fashion and lifestyle contexts.
-    5. Use all provided keywords verbatim in high-impact, natural positions. Optimize for SEO performance without keyword stuffing. If a keyword would disrupt tone or grammar, omit it gracefully.
-    5a. KEYWORD PLACEMENT PRIORITY: When target keywords are provided, integrate the primary keyword naturally at the BEGINNING of the opening paragraph for maximum SEO impact.
-    6. Where relevant, integrate semantically related terms (LSI keywords) to strengthen topical relevance. Use these terms naturally and unobtrusively within the content.
-    7. NEVER use inappropriate or objectifying language (e.g. "sexy", "boobs", "tits"). Maintain elegant, refined, and respectful language at all times.
-    8. Avoid verb-brand fusion at the start of sentences (e.g. write "Discover the Triumph Fit" not "DiscoverTriumphFit").
-    9. When multiple interpretations of an entity are possible, prefer the fashion-related meaning using provided KNOWLEDGE SNIPPETS as guidance.
-    10. Communicate benefits emotionally but concretely, using Triumph's brand attributes: empathy, intuition, dynamism, courage, dedication, and open-mindedness.
-    11. Ensure every product description answers the following customer-centric questions:
-        – What is this product?
-        – What problems does it solve?
-        – What makes it different from other products?
-        – What is it made of?
-        – Where does it come from?
-        – How do I use this product?
-        – Why should I buy this product?
-    12. Product descriptions must be unique, informative, and between 200 to 500 words. Avoid thin content at all costs.
-    13. Do not output JSON, explanations, markdown, or bullet points — only return the optimized plain text with correct punctuation and original formatting (no added line breaks or structural changes).
-    14. Do NOT refer to colors or mention sizes. Descriptions must remain generic and suitable for use across all product variants.
-    15. The optimized text should be between 100 and 150 words.
-    16. Maintain the original language of the input content. Do not translate unless explicitly instructed.
-    17. SUSTAINABILITY CERTIFICATES: If you find the acronyms "GRS" and/or "GOTS" in the Long Description text, you must:
-       - In the intro paragraph and bullet points, replace mentions of these acronyms with descriptive terms like "sustainably certified", "eco-certified", "responsibly sourced", or similar sustainability-focused language that briefly indicates the sustainable nature of the materials
-       - Use a localized label text based on the language of the original input:
-           - If the language is German (de), use "Nachhaltigkeitszertifikat"
-           - Otherwise, use "Sustainability certificate"
-       - Add the corresponding certificate label at the end of the product description using the localized label text:
-           - If only "GRS" is found: add "<LocalizedLabel> GRS"
-           - If only "GOTS" is found: add "<LocalizedLabel> GOTS" 
-           - If both "GRS" and "GOTS" are found: add "<LocalizedLabel> GRS/GOTS"
-       - This certificate label should be placed naturally in the text, either as a separate line or before other certifications (e.g., before "OEKO-TEX® STANDARD 100, 93.0.3130 Hohenstein HTTI")
-    
-    — STRUCTURE RULES (MANDATORY) —
-    
-    During optimization, follow this precise output structure for Inriver compatibility:
-    1. DO NOT add material composition at the beginning - this is managed elsewhere in the system.
-    2. Start with a slightly expanded paragraph introduction (3 sentences), naturally extending the existing content without adding unnecessary details.
-    3. Add a bulleted list using HTML format: <ul class="pd"><li>Feature 1</li> <li>Feature 2</li></ul>
-    4. Finish with the certification line and Item Nr. (if present in the original). Do not omit these.
-    
-    CRITICAL: Always output in HTML format to maintain Inriver compatibility:
-    - Use <ul class="pd"> for bullet lists
-    - Use <li> for each bullet point (no en dashes)
-    - Preserve HTML structure from the original input
-    - Do NOT convert to plain text or markdown
-    
-    If the original text has HTML tags, preserve and optimize within that HTML structure.
-    
-    — HUMAN STYLE REQUIREMENTS (MANDATORY) —
-    
-    To reduce the appearance of AI-generated content:
-    1. Vary sentence structure and length to improve natural rhythm (increase perplexity and burstiness).
-    2. Avoid redundancy. Ensure clarity and engagement throughout.
-    3. Do NOT use overused or "AI-signature" phrases such as: 
-       "Indeed", "Furthermore", "However", "Notably", "In terms of", "Moreover", "Unlock the potential of", "Delve into the world of", "Pave the way for", "At the forefront of", "Embark on a journey", "Spearhead the initiative", "Navigate the complexities", "It is worth mentioning", etc.
-    4. Avoid generic ChatGPT-style words such as "realm", "landscape", "testament", "showcase".
-    5. Use direct, simple language. When appropriate, use first-person or conversational phrasing to enhance relatability, as long as tone guidelines are followed.
-    6. Avoid formulaic transitions. Let ideas flow naturally and authentically.
-    
-    Always aim for a refined, confident, human voice and not generic or overly formal. Prioritize clarity and emotional connection over stylistic embellishment.`;
+    const defaultSystemPrompt = claudeSystemPrompt;
 
     const finalSystemPrompt = systemPrompt || defaultSystemPrompt;
 
@@ -268,77 +210,94 @@ export const optimizeWithClaude = async (
       model: claudeModel,
       system_prompt_length: finalSystemPrompt.length,
       user_prompt_preview: prompt.substring(0, 100) + "...",
-      max_tokens: 2000
+      max_tokens: options.maxTokens ?? 2000
     }, null, 2));
 
-    let response;
+    // Retry/backoff helpers
+    const retryAttempts = Math.max(0, options.retryAttempts ?? 2);
+    const baseDelay = Math.max(100, options.retryBaseDelayMs ?? 300);
+    const timeoutMs = Math.max(0, options.timeoutMs ?? 30000);
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-    try {
+    const performOnce = async (): Promise<any> => {
       // Try the official SDK with browser support
       console.log('🚀 Attempting Claude API call with official SDK (direct browser access)...');
-      
+
       const client = new Anthropic({
         apiKey: apiKey,
-        dangerouslyAllowBrowser: true, // Enable browser support
+        dangerouslyAllowBrowser: true,
       });
 
-      response = await client.messages.create({
-        model: claudeModel,
-        system: finalSystemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 2000
-      });
-
-      console.log('✅ Claude SDK call successful - no CORS proxy needed!');
-
-    } catch (sdkError) {
-      console.warn('Claude SDK failed, this might indicate we still need CORS proxy:', sdkError);
-      
-      // Show specific error information
-      if (sdkError instanceof Anthropic.AuthenticationError) {
-        toast({
-          title: "Authentication Failed",
-          description: "Invalid Claude API key. Please check your API key in the AI Configuration.",
-          variant: "destructive",
+      try {
+        const sdkResponse = await client.messages.create({
+          model: claudeModel,
+          system: finalSystemPrompt,
+          messages: [
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: options.maxTokens ?? 2000
         });
-        throw sdkError;
-      } else if (sdkError instanceof Error && sdkError.message.includes('CORS')) {
-        console.log('CORS error detected, falling back to proxy...');
-        
-        // Second attempt: Use CORS proxy
-        try {
-          response = await makeClaudeApiCallWithProxy(
+        console.log('✅ Claude SDK call successful - no CORS proxy needed!');
+        return sdkResponse;
+      } catch (sdkError: any) {
+        console.warn('❌ Claude SDK failed:', sdkError);
+        if (sdkError instanceof Anthropic.AuthenticationError) {
+          toast({
+            title: "Authentication Failed",
+            description: "Invalid Claude API key. Please check your API key in the AI Configuration.",
+            variant: "destructive",
+          });
+          throw sdkError;
+        }
+        if (sdkError instanceof Error && sdkError.message.includes('CORS')) {
+          console.log('🔄 CORS error detected, falling back to proxy...');
+          const proxyResponse = await makeClaudeApiCallWithProxy(
             apiKey,
             claudeModel,
             finalSystemPrompt,
             prompt
           );
-          console.log('Claude CORS proxy call successful');
-        } catch (proxyError) {
-          console.error('Both Claude SDK and CORS proxy failed:', proxyError);
-          
-          toast({
-            title: "Claude API Error",
-            description: "Both direct connection and CORS proxy failed. Please try again or use OpenAI instead.",
-            variant: "destructive",
-          });
-          
-          throw sdkError; // Throw the original SDK error
+          console.log('✅ Claude CORS proxy call successful');
+          return proxyResponse;
         }
-      } else {
-        // For non-CORS errors, don't try proxy
-        toast({
-          title: "Claude API Error",
-          description: sdkError instanceof Error ? sdkError.message : "An error occurred during API call",
-          variant: "destructive",
-        });
         throw sdkError;
       }
+    };
+
+    const executeWithTimeout = async (): Promise<any> => {
+      if (!timeoutMs) return performOnce();
+      return await Promise.race([
+        performOnce(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Claude request timed out')), timeoutMs))
+      ]);
+    };
+
+    let response: any;
+    let lastError: any;
+    for (let attempt = 0; attempt <= retryAttempts; attempt++) {
+      try {
+        response = await executeWithTimeout();
+        break;
+      } catch (err: any) {
+        lastError = err;
+        const msg = String(err?.message || err);
+        // Do not retry on obvious auth errors
+        if (/auth|invalid\s*x-api-key|unauthoriz|forbidden/i.test(msg)) {
+          throw err;
+        }
+        // For rate limits or network-ish errors, retry
+        if (/429|rate|network|fetch|cors|timeout/i.test(msg)) {
+          const delay = baseDelay * Math.pow(2, attempt);
+          console.log(`⏳ Retrying Claude request (attempt ${attempt + 2}/${retryAttempts + 1}) after ${delay}ms due to: ${msg}`);
+          await sleep(delay);
+          continue;
+        }
+        // Other errors: don't retry
+        throw err;
+      }
+    }
+    if (!response && lastError) {
+      throw lastError;
     }
 
     // Log the response for debugging
