@@ -1,5 +1,4 @@
 import React from 'react';
-import { Home, DollarSign } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -76,7 +75,7 @@ const Header: React.FC<HeaderProps> = ({ credentialsFileExists, budgetUpdateTrig
                   onClick={hardRefresh}
                   className="text-stone-950 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                 >
-                  <Home className="h-5 w-5" />
+                  <span className="inline-block h-5 w-5 rounded-full bg-black dark:bg-black/90" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
