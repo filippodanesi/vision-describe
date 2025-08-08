@@ -297,7 +297,7 @@ export const optimizeWithClaude = async (
       console.log('✅ Claude SDK call successful - no CORS proxy needed!');
 
     } catch (sdkError) {
-      console.warn('❌ Claude SDK failed, this might indicate we still need CORS proxy:', sdkError);
+      console.warn('Claude SDK failed, this might indicate we still need CORS proxy:', sdkError);
       
       // Show specific error information
       if (sdkError instanceof Anthropic.AuthenticationError) {
@@ -308,7 +308,7 @@ export const optimizeWithClaude = async (
         });
         throw sdkError;
       } else if (sdkError instanceof Error && sdkError.message.includes('CORS')) {
-        console.log('🔄 CORS error detected, falling back to proxy...');
+        console.log('CORS error detected, falling back to proxy...');
         
         // Second attempt: Use CORS proxy
         try {
@@ -318,9 +318,9 @@ export const optimizeWithClaude = async (
             finalSystemPrompt,
             prompt
           );
-          console.log('✅ Claude CORS proxy call successful');
+          console.log('Claude CORS proxy call successful');
         } catch (proxyError) {
-          console.error('❌ Both Claude SDK and CORS proxy failed:', proxyError);
+          console.error('Both Claude SDK and CORS proxy failed:', proxyError);
           
           toast({
             title: "Claude API Error",
@@ -434,7 +434,7 @@ export const processBatchClaudeRequests = async (
 
           // Try direct SDK first
           try {
-            console.log(`📡 Processing request ${i + index + 1}/${requests.length} with direct SDK`);
+            console.log(`Processing request ${i + index + 1}/${requests.length} with direct SDK`);
             const result = await optimizeWithClaude(
               request.prompt,
               request.apiKey,
@@ -453,7 +453,7 @@ export const processBatchClaudeRequests = async (
               sdkError.message.includes('fetch') ||
               sdkError.message.includes('network')
             )) {
-              console.log(`🔄 Request ${i + index + 1} failed with SDK, trying CORS proxy...`);
+              console.log(`Request ${i + index + 1} failed with SDK, trying CORS proxy...`);
               
               const proxyResult = await makeClaudeApiCallWithProxy(
                 request.apiKey,
@@ -490,12 +490,12 @@ export const processBatchClaudeRequests = async (
 
         } catch (error) {
           lastError = error as Error;
-          console.warn(`❌ Request ${i + index + 1} failed (attempt ${attempt + 1}):`, error);
+          console.warn(`Request ${i + index + 1} failed (attempt ${attempt + 1}):`, error);
           
           // If it's a rate limit error, wait longer
           if (error instanceof Error && error.message.includes('rate')) {
             const rateLimitDelay = Math.min(retryDelay * Math.pow(2, attempt), 30000); // Max 30 seconds
-            console.log(`⏳ Rate limit detected, waiting ${rateLimitDelay}ms...`);
+            console.log(`Rate limit detected, waiting ${rateLimitDelay}ms...`);
             await new Promise(resolve => setTimeout(resolve, rateLimitDelay));
           }
         }
@@ -525,7 +525,7 @@ export const processBatchClaudeRequests = async (
   // Log summary
   const successful = results.filter(r => r.success).length;
   const proxied = results.filter(r => r.usedProxy).length;
-  console.log(`📊 Batch processing complete: ${successful}/${requests.length} successful, ${proxied} used CORS proxy, ${failures} failed`);
+  console.log(`Batch processing complete: ${successful}/${requests.length} successful, ${proxied} used CORS proxy, ${failures} failed`);
 
   return results;
 };
