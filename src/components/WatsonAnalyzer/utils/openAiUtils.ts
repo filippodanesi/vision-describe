@@ -64,7 +64,7 @@ export const optimizeWithOpenAI = async (
   
   During optimization, follow this precise output structure for Inriver compatibility:
   1. DO NOT add material composition at the beginning - this is managed elsewhere in the system.
-  2. Start with a **slightly expanded paragraph introduction** (3 sentences), naturally extending the existing content without adding unnecessary details.
+  2. Start with a slightly expanded paragraph introduction (3 sentences), naturally extending the existing content without adding unnecessary details.
   3. Add a bulleted list using HTML format: <ul class="pd"><li>Feature 1</li> <li>Feature 2</li></ul>
   4. Finish with the certification line and Item Nr. (if present in the original). Do not omit these.
   
