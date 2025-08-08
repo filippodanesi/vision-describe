@@ -221,10 +221,13 @@ export const optimizeWithClaude = async (
     16. Maintain the original language of the input content. Do not translate unless explicitly instructed.
     17. SUSTAINABILITY CERTIFICATES: If you find the acronyms "GRS" and/or "GOTS" in the Long Description text, you must:
        - In the intro paragraph and bullet points, replace mentions of these acronyms with descriptive terms like "sustainably certified", "eco-certified", "responsibly sourced", or similar sustainability-focused language that briefly indicates the sustainable nature of the materials
-       - Add the corresponding sustainability certificate label at the end of the product description:
-           - If only "GRS" is found: add "Sustainability certificate GRS"
-           - If only "GOTS" is found: add "Sustainability certificate GOTS" 
-           - If both "GRS" and "GOTS" are found: add "Sustainability certificate GOTS/GRS"
+       - Use a localized label text based on the language of the original input:
+           - If the language is German (de), use "Nachhaltigkeitszertifikat"
+           - Otherwise, use "Sustainability certificate"
+       - Add the corresponding certificate label at the end of the product description using the localized label text:
+           - If only "GRS" is found: add "<LocalizedLabel> GRS"
+           - If only "GOTS" is found: add "<LocalizedLabel> GOTS" 
+           - If both "GRS" and "GOTS" are found: add "<LocalizedLabel> GRS/GOTS"
        - This certificate label should be placed naturally in the text, either as a separate line or before other certifications (e.g., before "OEKO-TEX® STANDARD 100, 93.0.3130 Hohenstein HTTI")
     
     — STRUCTURE RULES (MANDATORY) —

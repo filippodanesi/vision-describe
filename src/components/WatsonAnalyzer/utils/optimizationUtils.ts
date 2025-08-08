@@ -2,6 +2,7 @@
  * Main optimization utilities that coordinate text optimization with AI
  */
 import { Model } from '@/lib/models';
+import { franc } from 'franc-min';
 import { OPENAI_API_KEY, ANTHROPIC_API_KEY } from '@/config/env';
 import { optimizeWithOpenAI, OpenAIResponse } from './openAiUtils';
 import { optimizeWithClaude, ClaudeResponse } from './claudeUtils';
@@ -107,6 +108,17 @@ export const optimizeTextWithAI = async (
     console.log('%cTarget keywords:', 'font-weight: bold; color: #2196F3;');
     console.log(keywords);
 
+    // Detect language to inform sustainability label localization
+    let detectedLang = 'und';
+    try {
+      // Using franc-min (ISO 639-3 codes). For short texts franc may return 'und'.
+      detectedLang = franc((text || '').slice(0, 2000));
+    } catch (e) {
+      detectedLang = 'und';
+    }
+    const isGerman = detectedLang === 'deu';
+    const localizedCertificateLabel = isGerman ? 'Nachhaltigkeitszertifikat' : 'Sustainability certificate';
+
     // Create a more specific user prompt that works with the detailed system prompt
     const userPrompt = keywords.length > 0 
       ? `Optimize this product description text:
@@ -127,7 +139,12 @@ PARAGRAPH EXPANSION INSTRUCTIONS:
 - Do NOT add new information or unnecessary details
 - Simply elaborate on what's already mentioned in a more flowing way
 
-${analysisResults ? `ANALYSIS CONTEXT: ${JSON.stringify(analysisResults)}` : ''}`
+${analysisResults ? `ANALYSIS CONTEXT: ${JSON.stringify(analysisResults)}` : ''}
+
+LANGUAGE CONTEXT:
+- Detected language (ISO 639-3): ${detectedLang}
+- When adding the sustainability certificate label, use this localized label text: "${localizedCertificateLabel}"
+- Always order the acronyms as: GRS/GOTS when both are present.`
       : `Optimize this product description text for clarity, professionalism, and brand alignment:
 
 "${text}"
@@ -137,7 +154,12 @@ PARAGRAPH EXPANSION INSTRUCTIONS:
 - Do NOT add new information or unnecessary details
 - Simply elaborate on what's already mentioned in a more flowing way
 
-${analysisResults ? `ANALYSIS CONTEXT: ${JSON.stringify(analysisResults)}` : ''}`;
+${analysisResults ? `ANALYSIS CONTEXT: ${JSON.stringify(analysisResults)}` : ''}
+
+LANGUAGE CONTEXT:
+- Detected language (ISO 639-3): ${detectedLang}
+- When adding the sustainability certificate label, use this localized label text: "${localizedCertificateLabel}"
+- Always order the acronyms as: GRS/GOTS when both are present.`;
 
     console.log('%cUser prompt sent:', 'font-weight: bold; color: #2196F3;');
     console.log(userPrompt);
@@ -193,13 +215,47 @@ ${analysisResults ? `ANALYSIS CONTEXT: ${JSON.stringify(analysisResults)}` : ''}
     }
 
     console.log('%c=== OPTIMIZATION COMPLETE ===', 'background: #4CAF50; color: white; padding: 2px 5px; border-radius: 3px;');
+    // Post-process to normalize sustainability certificate label and ordering
+    const normalizeCertificateLabel = (raw: string): string => {
+      if (!raw) return raw;
+      const label = localizedCertificateLabel;
+      // Detect presence of acronyms
+      const hasGRS = /\bGRS\b/i.test(raw);
+      const hasGOTS = /\bGOTS\b/i.test(raw);
+      if (!hasGRS && !hasGOTS) return raw;
+
+      // Build normalized acronym part in desired order
+      const acronymPart = hasGRS && hasGOTS ? 'GRS/GOTS' : hasGRS ? 'GRS' : 'GOTS';
+
+      // Replace any existing certificate label lines with the localized, normalized one
+      const patterns = [
+        /(Sustainability\s+certificate)\s+(GOTS\s*\/\s*GRS|GRS\s*\/\s*GOTS|GRS|GOTS)/gi,
+        /(Nachhaltigkeitszertifikat)\s+(GOTS\s*\/\s*GRS|GRS\s*\/\s*GOTS|GRS|GOTS)/gi
+      ];
+
+      let updated = raw;
+      for (const p of patterns) {
+        updated = updated.replace(p, `${label} ${acronymPart}`);
+      }
+
+      // If no explicit label phrase was found but acronyms exist, try appending a line at the end
+      if (updated === raw) {
+        // Append as a separate line before existing certifications if we can detect such section
+        updated = `${raw}\n${label} ${acronymPart}`;
+      }
+
+      return updated;
+    };
+
+    const normalizedContent = normalizeCertificateLabel(response.content);
+
     console.log('%cResult:', 'font-weight: bold; color: #2196F3;');
-    console.log(response.content);
+    console.log(normalizedContent);
     console.log('%cToken usage:', 'font-weight: bold; color: #2196F3;');
     console.log(`Input tokens: ${response.tokens.inputTokens}, Output tokens: ${response.tokens.outputTokens}`);
     
     return {
-      content: response.content,
+      content: normalizedContent,
       tokens: response.tokens
     };
   } catch (error: any) {
