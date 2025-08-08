@@ -118,6 +118,12 @@ export const optimizeTextWithAI = async (
     }
     const isGerman = detectedLang === 'deu';
     const localizedCertificateLabel = isGerman ? 'Nachhaltigkeitszertifikat' : 'Sustainability certificate';
+    // Detect acronyms in INPUT text to drive deterministic certificate logic
+    const inputHasGRS = /\bGRS\b/i.test(text || '');
+    const inputHasGOTS = /\bGOTS\b/i.test(text || '');
+    const hasAnyCertAcronymInInput = inputHasGRS || inputHasGOTS;
+    const acronymPartWanted = inputHasGRS && inputHasGOTS ? 'GRS/GOTS' : inputHasGRS ? 'GRS' : inputHasGOTS ? 'GOTS' : '';
+    const desiredCertificateLabel = hasAnyCertAcronymInInput ? `${localizedCertificateLabel} ${acronymPartWanted}` : '';
 
     // Create a more specific user prompt that works with the detailed system prompt
     const userPrompt = keywords.length > 0 
@@ -141,10 +147,11 @@ PARAGRAPH EXPANSION INSTRUCTIONS:
 
 ${analysisResults ? `ANALYSIS CONTEXT: ${JSON.stringify(analysisResults)}` : ''}
 
-LANGUAGE CONTEXT:
+LANGUAGE & CERTIFICATION CONTEXT:
 - Detected language (ISO 639-3): ${detectedLang}
-- When adding the sustainability certificate label, use this localized label text: "${localizedCertificateLabel}"
-- Always order the acronyms as: GRS/GOTS when both are present.`
+- Localized sustainability label to use: "${localizedCertificateLabel}"
+- Certification acronyms present in original input: GRS=${inputHasGRS}, GOTS=${inputHasGOTS}
+- If any certification acronyms are present, append exactly one line at the end with: "${desiredCertificateLabel}" (do not duplicate if already present)`
       : `Optimize this product description text for clarity, professionalism, and brand alignment:
 
 "${text}"
@@ -156,10 +163,11 @@ PARAGRAPH EXPANSION INSTRUCTIONS:
 
 ${analysisResults ? `ANALYSIS CONTEXT: ${JSON.stringify(analysisResults)}` : ''}
 
-LANGUAGE CONTEXT:
+LANGUAGE & CERTIFICATION CONTEXT:
 - Detected language (ISO 639-3): ${detectedLang}
-- When adding the sustainability certificate label, use this localized label text: "${localizedCertificateLabel}"
-- Always order the acronyms as: GRS/GOTS when both are present.`;
+- Localized sustainability label to use: "${localizedCertificateLabel}"
+- Certification acronyms present in original input: GRS=${inputHasGRS}, GOTS=${inputHasGOTS}
+- If any certification acronyms are present, append exactly one line at the end with: "${desiredCertificateLabel}" (do not duplicate if already present)`;
 
     console.log('%cUser prompt sent:', 'font-weight: bold; color: #2196F3;');
     console.log(userPrompt);
@@ -218,15 +226,8 @@ LANGUAGE CONTEXT:
     // Post-process to normalize sustainability certificate label and ordering
     const normalizeCertificateLabel = (raw: string): string => {
       if (!raw) return raw;
-      const label = localizedCertificateLabel;
-      // Detect presence of acronyms
-      const hasGRS = /\bGRS\b/i.test(raw);
-      const hasGOTS = /\bGOTS\b/i.test(raw);
-      if (!hasGRS && !hasGOTS) return raw;
-
-      // Build normalized acronym part in desired order
-      const acronymPart = hasGRS && hasGOTS ? 'GRS/GOTS' : hasGRS ? 'GRS' : 'GOTS';
-      const desiredLabel = `${label} ${acronymPart}`;
+      if (!hasAnyCertAcronymInInput || !desiredCertificateLabel) return raw;
+      const desiredLabel = desiredCertificateLabel;
 
       // Replace any existing certificate label lines with the localized, normalized one
       const patternSources = [
