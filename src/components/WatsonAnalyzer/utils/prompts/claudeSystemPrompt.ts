@@ -29,11 +29,11 @@ Follow these rules:
 15. The optimized text should be between 100 and 150 words.
 16. Maintain the original language of the input content. Do not translate unless explicitly instructed.
 17. SUSTAINABILITY CERTIFICATES: If you find the acronyms "GRS" and/or "GOTS" in the Long Description text, you must:
-   - In the intro paragraph and bullet points, replace mentions of these acronyms with descriptive terms like "sustainably certified", "eco-certified", "responsibly sourced", or similar sustainability-focused language that briefly indicates the sustainable nature of the materials
+   - DO NOT remove or paraphrase explicit mentions of these acronyms in the prose or bullet points. Preserve formulations like "GOTS-certified" or "GRS-certified" exactly where present. You may add supportive wording (e.g., "sustainably certified") only if it does not replace or diminish the explicit acronym.
    - Use a localized label text based on the language of the original input:
        - If the language is German (de), use "Nachhaltigkeitszertifikat"
        - Otherwise, use "Sustainability certificate"
-   - Add the corresponding certificate label at the end of the product description using the localized label text:
+   - Add the corresponding certificate label at the end of the product description using the localized label text (ensure this appears as a separate line, or directly before other certification lines such as OEKO-TEX®):
        - If only "GRS" is found: add "<LocalizedLabel> GRS"
        - If only "GOTS" is found: add "<LocalizedLabel> GOTS" 
        - If both "GRS" and "GOTS" are found: add "<LocalizedLabel> GRS/GOTS"
