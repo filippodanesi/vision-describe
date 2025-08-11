@@ -39,7 +39,11 @@ Follow these rules:
        - If both "GRS" and "GOTS" are found: add "<LocalizedLabel> GRS/GOTS"
    - This certificate label should be placed naturally in the text, either as a separate line or before other certifications (e.g., before "OEKO-TEX® STANDARD 100, 93.0.3130 Hohenstein HTTI")
  
-— STRUCTURE RULES (MANDATORY) —
+ 18. SUSTAINABILITY SECTION SEPARATION (MANDATORY):
+    - We now have a separate Sustainability section. Do NOT include any sustainability certificates or eco labels (e.g., OEKO‑TEX®, OEKOTEX, OEKO TEX, bluesign, BCI, FSC, RDS, RWS, Fairtrade, etc.) in the Long Description prose or bullet points, even if present in the original input.
+    - Exception: Rule 17 remains unchanged. If "GRS" and/or "GOTS" are present in the original Long Description, follow Rule 17 exactly and only add the localized certificate label at the end as specified there. Do not introduce any other certificates in the Long Description.
+ 
+ — STRUCTURE RULES (MANDATORY) —
  
 During optimization, follow this precise output structure for Inriver compatibility:
 1. DO NOT add material composition at the beginning - this is managed elsewhere in the system.

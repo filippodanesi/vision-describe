@@ -169,6 +169,15 @@ LANGUAGE & CERTIFICATION CONTEXT:
 - Certification acronyms present in original input: GRS=${inputHasGRS}, GOTS=${inputHasGOTS}
 - If any certification acronyms are present, append exactly one line at the end with: "${desiredCertificateLabel}" (do not duplicate if already present)`;
 
+    // Append explicit sustainability separation instruction to the user prompt
+    const sustainabilitySeparationNote = `
+
+IMPORTANT SUSTAINABILITY NOTE:
+- There is a separate Sustainability section. Do NOT include any other sustainability certificates or eco labels (e.g., OEKO‑TEX®, OEKOTEX, OEKO TEX, bluesign, BCI, FSC, RDS, RWS, Fairtrade) in the Long Description prose or bullet points, even if present in the original input.
+- Exception: If GRS and/or GOTS appear in the original text, follow Rule 17 exactly and only add the localized certificate label at the end as specified.`;
+
+    const finalUserPrompt = `${userPrompt}${sustainabilitySeparationNote}`;
+
     console.log('%cUser prompt sent:', 'font-weight: bold; color: #2196F3;');
     console.log(userPrompt);
     if (systemPrompt) {
@@ -188,7 +197,7 @@ LANGUAGE & CERTIFICATION CONTEXT:
       }
       console.log('%cCalling OpenAI API...', 'background: #2196F3; color: white; padding: 2px 5px; border-radius: 3px;');
       try {
-        response = await optimizeWithOpenAI(userPrompt, apiKey, model.id, systemPrompt);
+        response = await optimizeWithOpenAI(finalUserPrompt, apiKey, model.id, systemPrompt);
         console.log('%cOpenAI API call successful', 'background: #4CAF50; color: white; padding: 2px 5px; border-radius: 3px;');
       } catch (apiError: any) {
         console.error('%cOpenAI API ERROR:', 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;', {
@@ -206,7 +215,7 @@ LANGUAGE & CERTIFICATION CONTEXT:
       }
       console.log('%cCalling Claude API...', 'background: #2196F3; color: white; padding: 2px 5px; border-radius: 3px;');
       try {
-        response = await optimizeWithClaude(userPrompt, apiKey, model.id, systemPrompt);
+        response = await optimizeWithClaude(finalUserPrompt, apiKey, model.id, systemPrompt);
         console.log('%cClaude API call successful', 'background: #4CAF50; color: white; padding: 2px 5px; border-radius: 3px;');
       } catch (apiError: any) {
         console.error('%cClaude API ERROR:', 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;', {
@@ -280,13 +289,55 @@ LANGUAGE & CERTIFICATION CONTEXT:
 
     const normalizedContent = normalizeCertificateLabel(response.content);
 
+    // Remove non-allowed sustainability certificates from the Long Description while preserving GRS/GOTS logic
+    const sanitizeNonAllowedCertificates = (raw: string): string => {
+      if (!raw) return raw;
+      let updated = raw;
+
+      // Define banned certificate keywords (excluding GRS/GOTS)
+      const bannedKeywords = [
+        'OEKO\s*[\-‐‑–—]?\s*TEX', // various hyphen variants
+        'OEKOTEX',
+        'bluesign',
+        '\\bBCI\\b',
+        '\\bFSC\\b',
+        '\\bRDS\\b',
+        '\\bRWS\\b',
+        'Fairtrade'
+      ];
+
+      const bannedRegex = new RegExp(`(${bannedKeywords.join('|')})`, 'i');
+
+      // 1) Remove entire <li> elements containing banned terms
+      const liRegex = new RegExp(`<li[^>]*>[^<]*(?:${bannedKeywords.join('|')})[^<]*<\\/li>`, 'gi');
+      updated = updated.replace(liRegex, '');
+
+      // 2) Remove standalone lines containing banned terms (e.g., certificate lines at the end)
+      const lineRegex = new RegExp(`^.*${bannedKeywords.join('|')}.*$`, 'gim');
+      updated = updated.replace(lineRegex, '');
+
+      // 3) Remove parenthetical mentions like (OEKO-TEX ...)
+      const parenRegex = new RegExp(`\\s*\\((?:(?!\\)).)*(?:${bannedKeywords.join('|')}).*?\\)`, 'gim');
+      updated = updated.replace(parenRegex, '');
+
+      // 4) Clean up multiple blank lines created by removals
+      updated = updated.replace(/\n{3,}/g, '\n\n');
+
+      // 5) Remove empty <ul class="pd"></ul> that may result from removing all items
+      updated = updated.replace(/<ul class="pd">\s*<\\/ul>/gi, '');
+
+      return updated;
+    };
+
+    const sanitizedContent = sanitizeNonAllowedCertificates(normalizedContent);
+
     console.log('%cResult:', 'font-weight: bold; color: #2196F3;');
-    console.log(normalizedContent);
+    console.log(sanitizedContent);
     console.log('%cToken usage:', 'font-weight: bold; color: #2196F3;');
     console.log(`Input tokens: ${response.tokens.inputTokens}, Output tokens: ${response.tokens.outputTokens}`);
     
     return {
-      content: normalizedContent,
+      content: sanitizedContent,
       tokens: response.tokens
     };
   } catch (error: any) {
