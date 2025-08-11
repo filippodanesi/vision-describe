@@ -324,7 +324,7 @@ IMPORTANT SUSTAINABILITY NOTE:
       updated = updated.replace(/\n{3,}/g, '\n\n');
 
       // 5) Remove empty <ul class="pd"></ul> that may result from removing all items
-      updated = updated.replace(/<ul class="pd">\s*<\\/ul>/gi, '');
+      updated = updated.replace(/<ul class="pd">\s*<\/ul>/gi, '');
 
       return updated;
     };
