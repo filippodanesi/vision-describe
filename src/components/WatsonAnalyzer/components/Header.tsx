@@ -8,6 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useCostTracker } from '../hooks/useCostTracker';
+import { Home } from "lucide-react";
 
 // Import for CorsProxy
 import CorsProxy from './CorsProxy';
@@ -75,7 +76,7 @@ const Header: React.FC<HeaderProps> = ({ credentialsFileExists, budgetUpdateTrig
                   onClick={hardRefresh}
                   className="text-stone-950 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                 >
-                  <span className="inline-block h-5 w-5 rounded-full bg-black dark:bg-black/90" />
+                  <Home className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
