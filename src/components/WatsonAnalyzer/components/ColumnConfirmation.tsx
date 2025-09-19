@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CheckCircle, AlertTriangle, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { USECASE_PROFILES } from '../usecases';
 
 interface ColumnMapping {
   longDescColumn: string;
@@ -15,6 +16,7 @@ interface ColumnMapping {
 interface ColumnConfirmationProps {
   fileData: { rows: any[]; columns: string[] };
   selectedColumns: string[];
+  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next';
   onConfirm: (mappings: ColumnMapping[]) => void;
   onBack: () => void;
 }
@@ -78,28 +80,62 @@ const findMatchingShortDescriptionColumn = (columnNames: string[], targetLanguag
 const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
   fileData,
   selectedColumns,
+  useCase = 'ecommerce',
   onConfirm,
   onBack,
 }) => {
   const [mappings, setMappings] = useState<ColumnMapping[]>([]);
+  const [workLang, setWorkLang] = useState<string>('');
+  const [availableLangs, setAvailableLangs] = useState<string[]>([]);
+  const [amazonMapping, setAmazonMapping] = useState<{
+    productId?: string;
+    title?: string;
+    descriptionIn?: string;
+    bullets: (string | undefined)[];
+  }>({ bullets: [] });
 
   useEffect(() => {
-    // Generate initial mappings
-    const initialMappings: ColumnMapping[] = selectedColumns.map(column => {
-      // Extract language from column name
+    if (useCase === 'amazon') {
+      // Suggest mapping using detectors
+      const cols = fileData.columns;
+      const prof = USECASE_PROFILES.amazon;
+      const pick = (rxs: RegExp[]) => cols.find(c => rxs.some(rx => rx.test(c)));
+      setAmazonMapping({
+        productId: pick(prof.detectors.productId),
+        title: pick(prof.detectors.title),
+        descriptionIn: pick(prof.detectors.descriptionIn),
+        bullets: [
+          pick(prof.detectors.bulletIn1),
+          pick(prof.detectors.bulletIn2),
+          pick(prof.detectors.bulletIn3),
+          pick(prof.detectors.bulletIn4),
+          pick(prof.detectors.bulletIn5),
+        ],
+      });
+      setMappings([]); // not used for amazon
+      return;
+    }
+
+    // E-commerce: derive languages from columns
+    const langs = Array.from(new Set(
+      fileData.columns
+        .map(c => c.match(/MaterialLongDescriptionEcom_([a-z]{2})$/i)?.[1]?.toLowerCase())
+        .filter(Boolean) as string[]
+    ));
+    setAvailableLangs(langs);
+    const defaultLang = langs[0] || '';
+    setWorkLang(defaultLang);
+
+    const selectedForLang = selectedColumns.filter(c => new RegExp(`MaterialLongDescriptionEcom_${defaultLang}$`, 'i').test(c));
+    const initialMappings: ColumnMapping[] = (selectedForLang.length ? selectedForLang : selectedColumns).map(column => {
       const langMatch = column.match(/_([a-z]{2})$/i);
       const language = langMatch ? langMatch[1].toUpperCase() : 'UNK';
-      
-      // Find all short description columns
       const availableShortDescColumns = fileData.columns.filter(col => 
         col.toLowerCase().includes('short description')
       );
-      
-      // Find the best match
       const matchedShortDescColumn = langMatch 
         ? findMatchingShortDescriptionColumn(fileData.columns, langMatch[1])
         : '';
-
       return {
         longDescColumn: column,
         language,
@@ -109,7 +145,7 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
     });
 
     setMappings(initialMappings);
-  }, [selectedColumns, fileData.columns]);
+  }, [selectedColumns, fileData.columns, useCase]);
 
   const handleShortDescChange = (index: number, newShortDescColumn: string) => {
     // Convert special value back to empty string
@@ -120,10 +156,15 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
   };
 
   const handleConfirm = () => {
-    onConfirm(mappings);
+    if (useCase === 'amazon') {
+      onConfirm({ useCase: 'amazon', mapping: amazonMapping } as any);
+      return;
+    }
+    onConfirm({ useCase: 'ecommerce', workLang, mappings } as any);
   };
 
-  const allMappingsValid = mappings.length > 0; // Always valid now since user can choose no short description
+
+  const allMappingsValid = useCase === 'amazon' ? Boolean(amazonMapping.productId && (amazonMapping.descriptionIn || amazonMapping.bullets.some(Boolean))) : mappings.length > 0;
   const hasAutoMatches = mappings.some(mapping => mapping.matchedShortDescColumn);
   const hasFailedMatches = mappings.some(mapping => !mapping.matchedShortDescColumn);
 
@@ -131,12 +172,14 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">Confirm Column Mappings</h2>
-        <p className="text-gray-600">
-          Verify that each Long Description column is paired with the correct Short Description for keyword extraction
-        </p>
+        {useCase === 'amazon' ? (
+          <p className="text-gray-600">Map Amazon columns such as vendor_sku#1.value, item_name#1.value, rtip_product_description#1.value, bullet_point#*.value</p>
+        ) : (
+          <p className="text-gray-600">Verify that each Long Description column is paired with the correct Short Description for keyword extraction</p>
+        )}
       </div>
 
-      {hasAutoMatches && (
+      {useCase !== 'amazon' && hasAutoMatches && (
         <Alert>
           <CheckCircle className="h-4 w-4" />
           <AlertDescription>
@@ -145,7 +188,7 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
         </Alert>
       )}
 
-      {hasFailedMatches && (
+      {useCase !== 'amazon' && hasFailedMatches && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
@@ -154,14 +197,76 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
         </Alert>
       )}
 
+      {useCase === 'ecommerce' && availableLangs.length > 0 && (
+        <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
+          <label className="text-sm font-medium text-gray-700 mb-2 block">Working language</label>
+          <Select value={workLang} onValueChange={(v) => setWorkLang(v)}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select language" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableLangs.map(l => (
+                <SelectItem key={l} value={l}>{l}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <div className="space-y-4">
-        {mappings.map((mapping, index) => (
-          <Card key={mapping.longDescColumn}>
+
+        {useCase === 'amazon' ? (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Amazon Field Mapping</CardTitle>
+              <CardDescription>Confirm or adjust detected columns</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                {([
+                  ['Product ID', 'productId'],
+                  ['Title', 'title'],
+                  ['Description In', 'descriptionIn'],
+                ] as const).map(([label, key]) => (
+                  <div key={key} className="space-y-1">
+                    <div className="text-gray-700 font-medium">{label}</div>
+                    <Select value={(amazonMapping as any)[key] || ''} onValueChange={(v) => setAmazonMapping(prev => ({ ...prev, [key]: v }))}>
+                      <SelectTrigger className={`w-full ${!((amazonMapping as any)[key]) && (key === 'productId' || key === 'descriptionIn') ? 'border-red-300' : ''}`}>
+                        <SelectValue placeholder={`Select ${label} column...`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fileData.columns.map(col => (
+                          <SelectItem key={col} value={col}>{col}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+                <div className="md:col-span-2 space-y-2">
+                  <div className="text-gray-700 font-medium">Bullets In (up to 5)</div>
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                    {amazonMapping.bullets.map((b, i) => (
+                      <Select key={i} value={b || ''} onValueChange={(v) => setAmazonMapping(prev => { const next = [...prev.bullets]; next[i] = v; return { ...prev, bullets: next }; })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder={`bullet ${i + 1}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fileData.columns.map(col => (
+                            <SelectItem key={col} value={col}>{col}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          mappings.map((mapping, index) => (
+            <Card key={mapping.longDescColumn}>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">
-                  {mapping.language}
-                </span>
                 {mapping.longDescColumn}
               </CardTitle>
               <CardDescription>
@@ -209,7 +314,8 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
               </div>
             </CardContent>
           </Card>
-        ))}
+          ))
+        )}
       </div>
 
       <div className="flex justify-between pt-4">

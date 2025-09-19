@@ -7,7 +7,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { useCostTracker } from '../hooks/useCostTracker';
 import { Home } from "lucide-react";
 
 // Import for CorsProxy
@@ -15,50 +14,11 @@ import CorsProxy from './CorsProxy';
 
 interface HeaderProps {
   credentialsFileExists?: boolean;
-  budgetUpdateTrigger?: number;
 }
 
-const BudgetIndicator: React.FC = () => {
-  const costTracker = useCostTracker();
-  
-  if (!costTracker) return null;
-  
-  const openAIBudget = costTracker.remainingBudget.openai;
-  const anthropicBudget = costTracker.remainingBudget.anthropic;
-  const totalSpent = costTracker.totalCost.openai + costTracker.totalCost.anthropic;
-  
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs bg-gray-50 border-gray-300">
-              OpenAI: ${openAIBudget.toFixed(2)}
-            </Badge>
-            <Badge variant="outline" className="text-xs bg-gray-50 border-gray-300">
-              Claude: ${anthropicBudget.toFixed(2)}
-            </Badge>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div className="text-xs">
-            <p>Budget remaining:</p>
-            <p>OpenAI: ${openAIBudget.toFixed(2)}</p>
-            <p>Anthropic: ${anthropicBudget.toFixed(2)}</p>
-            <p className="mt-1 pt-1 border-t">
-              Total spent: ${totalSpent.toFixed(5)}
-            </p>
-            <p className="text-gray-400 mt-1">
-              Click "Configure AI" to update budgets
-            </p>
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-};
+const BudgetIndicator: React.FC = () => null;
 
-const Header: React.FC<HeaderProps> = ({ credentialsFileExists, budgetUpdateTrigger }) => {
+const Header: React.FC<HeaderProps> = ({ credentialsFileExists }) => {
   const hardRefresh = () => {
     window.location.reload();
   };

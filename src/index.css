@@ -1,4 +1,15 @@
 
+/*
+ * AI Product Description Optimizer - Global Styles
+ * 
+ * @author Filippo Danesi
+ * @email filippo.danesi93@gmail.com
+ * @website https://www.filippodanesi.com
+ * @created 2025
+ * @copyright Copyright (c) 2025 Filippo Danesi. All rights reserved.
+ * @license Dual-licensed: CC BY-NC-SA 4.0 (non-commercial) | Commercial license required
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -55,6 +66,6 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Geist', sans-serif;
   }
 }

@@ -72,7 +72,7 @@ export default {
 				}
 			},
 			fontFamily: {
-				inter: ['Inter', 'sans-serif'],
+				geist: ['Geist', 'sans-serif'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

@@ -1,19 +1,17 @@
 
 import React from 'react';
-import JsonExportButton from './JsonExportButton';
-import CsvExportButton from './CsvExportButton';
+import XlsxExportButton from './XlsxExportButton';
 
 interface ExportResultsProps {
   results: any;
   isDisabled: boolean;
+  originalMeta?: any;
+  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next';
 }
 
-const ExportResults: React.FC<ExportResultsProps> = ({ results, isDisabled }) => {
+const ExportResults: React.FC<ExportResultsProps> = ({ results, isDisabled, originalMeta, useCase = 'ecommerce' }) => {
   return (
-    <div className="flex space-x-2">
-      <JsonExportButton results={results} isDisabled={isDisabled} />
-      <CsvExportButton results={results} isDisabled={isDisabled} />
-    </div>
+    <XlsxExportButton results={results} isDisabled={isDisabled} originalMeta={originalMeta} useCase={useCase} />
   );
 };
 

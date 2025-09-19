@@ -10,6 +10,7 @@ import {
   ProcessingResult 
 } from '@/lib/api/serverProcessing';
 import { optimizeTextWithAI } from '../utils/optimizationUtils';
+import { processAmazonRows } from '../processing/processAmazon';
 
 // Utility function to find matching short description column
 const findMatchingShortDescriptionColumn = (columnNames: string[], targetLanguage: string): string => {
@@ -28,8 +29,8 @@ const findMatchingShortDescriptionColumn = (columnNames: string[], targetLanguag
       const patterns = [
         ` ${lang}$`,           // "Short description de" (end of string)
         ` ${langUpper}$`,      // "Short description DE" (end of string)
-        `\\[${lang}\\]`,       // "Short description [de]" (escaped brackets)
-        `\\[${langUpper}\\]`,  // "Short description [DE]" (escaped brackets)
+        `\[${lang}\]`,       // "Short description [de]" (escaped brackets)
+        `\[${langUpper}\]`,  // "Short description [DE]" (escaped brackets)
         `_${lang}$`,          // "Short description_de" (end of string)
         `_${langUpper}$`,     // "Short description_DE" (end of string)
         ` ${lang} `,          // "Short description de " (with space after)
@@ -57,8 +58,8 @@ const findMatchingShortDescriptionColumn = (columnNames: string[], targetLanguag
       const patterns = [
         ` ${lang}$`,           // "Short descriptions de" (end of string)
         ` ${langUpper}$`,      // "Short descriptions DE" (end of string)
-        `\\[${lang}\\]`,       // "Short descriptions [de]" (escaped brackets)
-        `\\[${langUpper}\\]`,  // "Short descriptions [DE]" (escaped brackets)
+        `\[${lang}\]`,       // "Short descriptions [de]" (escaped brackets)
+        `\[${langUpper}\]`,  // "Short descriptions [DE]" (escaped brackets)
         `_${lang}$`,          // "Short descriptions_de" (end of string)
         `_${langUpper}$`,     // "Short descriptions_DE" (end of string)
         ` ${lang} `,          // "Short descriptions de " (with space after)
@@ -102,7 +103,9 @@ export interface HybridProcessingHook {
     rows: any[],
     columns: string[],
     model: Model,
-    apiKey: string
+    apiKey: string,
+    context?: { useCase?: 'ecommerce' | 'amazon'; mappings?: any; lang?: string; dryRun?: boolean },
+    costTracker?: any
   ) => Promise<any[]>;
   cancelProcessing: () => void;
 }
@@ -134,13 +137,15 @@ export const useHybridProcessing = (): HybridProcessingHook => {
   const processChunkClientSide = async (
     chunk: ProcessingChunk,
     globalRowOffset: number = 0,
-    totalGlobalRows: number = 0
+    totalGlobalRows: number = 0,
+    costTracker?: any
   ): Promise<ProcessingResult> => {
     const { rows, selectedColumns, model, apiKey } = chunk;
     const processedRows: any[] = [];
     let totalCost = 0;
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
+    
 
     for (const row of rows) {
       if (cancelRequested.current) break;
@@ -201,12 +206,15 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           processedRow[column] = result.content;
           
           // Track cost
-          const costRecord = costTracker.trackOperation(
-            model.id,
-            original,
-            result.content,
-            result.tokens
-          );
+          let costRecord = null;
+          if (costTracker) {
+            costRecord = costTracker.trackOperation(
+              model.id,
+              original,
+              result.content,
+              result.tokens
+            );
+          }
           
           totalCost += costRecord?.actualCost || costRecord?.estimatedCost || 0;
           totalInputTokens += result.tokens.inputTokens;
@@ -216,7 +224,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           const cost = costRecord?.actualCost || costRecord?.estimatedCost || 0;
           addLog(`✓ ${productId} | ${language.toLowerCase()} | optimized | $${cost.toFixed(4)}`);
 
-        } catch (error) {
+        } catch (error: any) {
           console.error('Client-side optimization error:', error);
           addLog(`⨯ ${productId} | ${language.toLowerCase()} | failed: ${error?.message || 'unknown error'}`);
           // Keep original text on error
@@ -251,11 +259,14 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     rows: any[],
     selectedColumns: string[],
     model: Model,
-    apiKey: string
+    apiKey: string,
+    context?: { useCase?: 'ecommerce' | 'amazon'; mappings?: any; lang?: string; dryRun?: boolean },
+    costTracker?: any
   ): Promise<any[]> => {
     setIsProcessing(true);
     setProgress(0);
-    setTotalRows(rows.length);
+    const effectiveRows = context?.dryRun ? rows.slice(0, 10) : rows;
+    setTotalRows(effectiveRows.length);
     setProcessedRows(0);
     setLogs([]);
     setEstimatedTimeRemaining('');
@@ -268,12 +279,18 @@ export const useHybridProcessing = (): HybridProcessingHook => {
       
       const serverAvailable = await isServerProcessingAvailable();
       
+      // For Amazon, run client-side specialized processing for now
+      if (context?.useCase === 'amazon') {
+        setProcessingMode('client');
+        return await processWithClient(effectiveRows, selectedColumns, model, apiKey, context);
+      }
+
       if (serverAvailable) {
         setProcessingMode('server');
-        return await processWithServer(rows, selectedColumns, model, apiKey);
+        return await processWithServer(effectiveRows, selectedColumns, model, apiKey);
       } else {
         setProcessingMode('client');
-        return await processWithClient(rows, selectedColumns, model, apiKey);
+        return await processWithClient(effectiveRows, selectedColumns, model, apiKey, context);
       }
 
     } catch (error) {
@@ -290,7 +307,8 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     model: Model,
     apiKey: string
   ): Promise<any[]> => {
-    const chunks = createProcessingChunks(rows, selectedColumns, model, apiKey, 10);
+    // Use 1-row chunks to reflect per-row progress even on full runs
+    const chunks = createProcessingChunks(rows, selectedColumns, model, apiKey, 1);
     let allProcessedRows: any[] = [];
     let totalCost = 0;
 
@@ -318,7 +336,8 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         
         // Add server processing logs for visibility
         for (const row of result.processedRows) {
-          const productId = row['MaterialSAPMaterialNo'] || row['ColorSAPMaterialNo'] || row['ProductID'] || row['ID'] || `Row ${processedRows.length + 1}`;
+          const idxFallback = typeof processedRows === 'number' ? processedRows : 0;
+          const productId = row['MaterialSAPMaterialNo'] || row['ColorSAPMaterialNo'] || row['ProductID'] || row['ID'] || `Row ${idxFallback + 1}`;
           addLog(`✓ ${productId} | server batch | optimized | $${(result.cost.totalCost / result.processedRows.length).toFixed(4)}`);
         }
         
@@ -358,10 +377,12 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     rows: any[],
     selectedColumns: string[],
     model: Model,
-    apiKey: string
+    apiKey: string,
+    context?: { useCase?: 'ecommerce' | 'amazon'; mappings?: any; lang?: string; dryRun?: boolean }
   ): Promise<any[]> => {
     // Use client-side keep-alive mechanism
-    const chunks = createProcessingChunks(rows, selectedColumns, model, apiKey, 5);
+    // Smaller chunks to surface per-row progress smoothly in UI
+    const chunks = createProcessingChunks(rows, selectedColumns, model, apiKey, 1);
     let allProcessedRows: any[] = [];
     
     // Simple keep-alive interval
@@ -378,8 +399,23 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         const chunk = chunks[i];
         const globalRowOffset = allProcessedRows.length;
 
-        const result = await processChunkClientSide(chunk, globalRowOffset, rows.length);
+        if (context?.useCase === 'amazon') {
+          const mapped = context.mappings?.mapping || {};
+          const targetLanguage = context.lang || 'en';
+          const processed = await processAmazonRows(chunk.rows, model, apiKey, mapped, targetLanguage, (m) => addLog(m));
+          allProcessedRows.push(...processed);
+          const processedCount = Math.min(allProcessedRows.length, rows.length);
+          setProcessedRows(processedCount);
+          setProgress(Math.round((processedCount / rows.length) * 100));
+          continue;
+        }
+
+        const result = await processChunkClientSide(chunk, globalRowOffset, rows.length, costTracker);
         allProcessedRows.push(...result.processedRows);
+        // Ensure progress jumps one row at a time even when chunk size is 1
+        const processedCount = Math.min(allProcessedRows.length, rows.length);
+        setProcessedRows(processedCount);
+        setProgress(Math.round((processedCount / rows.length) * 100));
 
         // Progress is already updated in processChunkClientSide for each individual row
         // No need to update here as it would overwrite the more granular progress

@@ -1,8 +1,6 @@
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Server, Monitor, Search } from 'lucide-react';
 
 interface ProcessingViewProps {
   progress: number;
@@ -23,38 +21,9 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
   processingMode = 'checking',
   onCancel 
 }) => {
-  const getModeIcon = () => {
-    switch (processingMode) {
-      case 'server': return <Server className="h-3 w-3" />;
-      case 'client': return <Monitor className="h-3 w-3" />;
-      case 'checking': return <Search className="h-3 w-3" />;
-    }
-  };
-
-  const getModeColor = () => {
-    switch (processingMode) {
-      case 'server': return 'bg-green-100 text-green-800 border-green-200';
-      case 'client': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'checking': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    }
-  };
-
-  const getModeText = () => {
-    switch (processingMode) {
-      case 'server': return 'Server';
-      case 'client': return 'Client';
-      case 'checking': return 'Checking...';
-    }
-  };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <Badge className={`text-xs hover:bg-transparent ${getModeColor()}`}>
-          {getModeIcon()}
-          <span className="ml-1">{getModeText()}</span>
-        </Badge>
-      </div>
 
       <div>
         <Progress value={progress} />

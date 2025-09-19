@@ -1,3 +1,26 @@
+/**
+ * Cost Tracker Hook
+ * 
+ * @author Filippo Danesi
+ * @created 2025
+ * @description Comprehensive cost tracking system for AI operations.
+ *              Manages token usage, cost calculations, budget tracking,
+ *              and provides detailed analytics for AI processing.
+ * 
+ * Key Features:
+ * - Real-time cost calculation based on actual token usage
+ * - Support for multiple AI providers (OpenAI, Anthropic)
+ * - Budget management and remaining balance tracking
+ * - Cost history and session statistics
+ * - Automatic cost estimation when actual tokens unavailable
+ * - Persistent storage of cost data
+ * 
+ * Pricing Data:
+ * - Updated January 2025 with latest provider pricing
+ * - Supports all major models (o4-mini, Claude Sonnet 4, etc.)
+ * - Handles different pricing tiers and batch discounts
+ */
+
 import { useState, useEffect } from 'react';
 
 export interface ModelCostData {
@@ -23,7 +46,7 @@ export interface CostRecord {
 
 // Updated costs per model (prices as of January 2025)
 const MODEL_COSTS: Record<string, ModelCostData> = {
-  // OpenAI o4-mini
+  // OpenAI o4-mini (Standard pricing)
   'o4-mini': {
     name: 'o4-mini',
     inputCostPer1M: 1.10,
@@ -31,7 +54,7 @@ const MODEL_COSTS: Record<string, ModelCostData> = {
     tokensPerCharInput: 0.25,
     tokensPerCharOutput: 0.25
   },
-  // OpenAI o3
+  // OpenAI o3 (Standard pricing)
   'o3': {
     name: 'o3',
     inputCostPer1M: 2.00,
@@ -39,22 +62,38 @@ const MODEL_COSTS: Record<string, ModelCostData> = {
     tokensPerCharInput: 0.25,
     tokensPerCharOutput: 0.25
   },
+  // OpenAI o3-pro (Standard pricing)
+  'o3-pro': {
+    name: 'o3-pro',
+    inputCostPer1M: 20.00,
+    outputCostPer1M: 80.00,
+    tokensPerCharInput: 0.25,
+    tokensPerCharOutput: 0.25
+  },
+  // OpenAI o3-mini (Standard pricing)
+  'o3-mini': {
+    name: 'o3-mini',
+    inputCostPer1M: 1.10,
+    outputCostPer1M: 4.40,
+    tokensPerCharInput: 0.25,
+    tokensPerCharOutput: 0.25
+  },
   // Legacy OpenAI models
   'gpt-4o-mini': {
     name: 'GPT-4o-mini',
-    inputCostPer1M: 1.00,
-    outputCostPer1M: 3.00,
+    inputCostPer1M: 0.15,
+    outputCostPer1M: 0.60,
     tokensPerCharInput: 0.25,
     tokensPerCharOutput: 0.25
   },
   'gpt-4o': {
     name: 'GPT-4o',
-    inputCostPer1M: 5.00,
-    outputCostPer1M: 15.00,
+    inputCostPer1M: 2.50,
+    outputCostPer1M: 10.00,
     tokensPerCharInput: 0.25,
     tokensPerCharOutput: 0.25
   },
-  // Claude Sonnet 4
+  // Claude Sonnet 4 (Base pricing)
   'claude-sonnet-4-20250514': {
     name: 'Claude 4 Sonnet',
     inputCostPer1M: 3.00,
@@ -69,7 +108,7 @@ const MODEL_COSTS: Record<string, ModelCostData> = {
     tokensPerCharInput: 0.25,
     tokensPerCharOutput: 0.25
   },
-  // Claude Opus 4
+  // Claude Opus 4 (Base pricing)
   'claude-opus-4-0': {
     name: 'Claude 4 Opus',
     inputCostPer1M: 15.00,
@@ -79,6 +118,14 @@ const MODEL_COSTS: Record<string, ModelCostData> = {
   },
   'claude-opus-4': {
     name: 'Claude 4 Opus',
+    inputCostPer1M: 15.00,
+    outputCostPer1M: 75.00,
+    tokensPerCharInput: 0.25,
+    tokensPerCharOutput: 0.25
+  },
+  // Claude Opus 4.1 (Base pricing)
+  'claude-opus-4-1': {
+    name: 'Claude 4.1 Opus',
     inputCostPer1M: 15.00,
     outputCostPer1M: 75.00,
     tokensPerCharInput: 0.25,
@@ -108,10 +155,10 @@ const MODEL_COSTS: Record<string, ModelCostData> = {
   }
 };
 
-// Initial budget per provider - increased to handle large volumes
+// Initial budget per provider - realistic for production use
 const DEFAULT_BUDGETS = {
-  openai: 500.00,    // $500 for OpenAI
-  anthropic: 500.00  // $500 for Claude
+  openai: 100.00,    // $100 for OpenAI (sufficient for ~1000 products with o4-mini)
+  anthropic: 100.00  // $100 for Claude (sufficient for ~500 products with Sonnet 4)
 };
 
 export const useCostTracker = () => {

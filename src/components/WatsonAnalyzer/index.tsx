@@ -1,3 +1,25 @@
+/**
+ * AI Product Description Optimizer - Main Component
+ * 
+ * @author Filippo Danesi
+ * @email filippo.danesi93@gmail.com
+ * @website https://www.filippodanesi.com
+ * @created 2025
+ * @copyright Copyright (c) 2025 Filippo Danesi. All rights reserved.
+ * @license Dual-licensed: CC BY-NC-SA 4.0 (non-commercial) | Commercial license required
+ * 
+ * @description Main orchestrator component for the AI-powered product description optimization tool.
+ *              Handles file upload, column mapping, model selection, processing, and results export.
+ * 
+ * Key Features:
+ * - Multi-format file support (Excel, CSV)
+ * - Automatic column detection and mapping
+ * - AI model selection (OpenAI, Anthropic)
+ * - Real-time cost tracking and token counting
+ * - Multi-language content generation
+ * - Export to optimized Excel format
+ */
+
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from './ThemeProvider';
 import { Link } from 'react-router-dom';
@@ -8,6 +30,8 @@ import { useHybridProcessing } from './hooks/useHybridProcessing';
 import { useCostTracker } from './hooks/useCostTracker';
 import { models } from '@/lib/models';
 import { ProcessingStep } from './types';
+import { UseCase, AVAILABLE_USE_CASES } from './usecases';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, ArrowRight, RefreshCw, Download, Copy } from 'lucide-react';
 import * as ExcelJS from 'exceljs';
 import { validateEnv, OPENAI_API_KEY, ANTHROPIC_API_KEY } from '@/config/env';
@@ -16,10 +40,12 @@ import { validateEnv, OPENAI_API_KEY, ANTHROPIC_API_KEY } from '@/config/env';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import FileUpload from './components/FileUpload';
+import TokenCounter from './components/TokenCounter';
 import ColumnSelector from './components/ColumnSelector';
 import ColumnConfirmation from './components/ColumnConfirmation';
 import ModelSelector from './components/ModelSelector';
 import ProcessingView from './components/ProcessingView';
+import ExportResults from './components/ExportResults';
 import { getModelById } from '@/lib/models';
 import { Button } from '@/components/ui/button';
 
@@ -31,6 +57,7 @@ const WatsonAnalyzer: React.FC = () => {
   const [fileData, setFileData] = useState<{
     rows: any[];
     columns: string[];
+    meta?: any;
   } | null>(null);
   
   // Selected columns
@@ -42,8 +69,7 @@ const WatsonAnalyzer: React.FC = () => {
   // Selected model
   const [selectedModel, setSelectedModel] = useState<string>('');
   
-  // Budget update trigger for header refresh
-  const [budgetUpdateTrigger, setBudgetUpdateTrigger] = useState(0);
+  // Budget UI removed
   
   // Processing state
   const {
@@ -64,6 +90,9 @@ const WatsonAnalyzer: React.FC = () => {
   const [processingEndTime, setProcessingEndTime] = useState<Date | null>(null);
   const [showMoreResults, setShowMoreResults] = useState(false);
 
+  // Use case selection (E-commerce default)
+  const [useCase, setUseCase] = useState<UseCase>('ecommerce');
+
   // Validate environment variables on component mount
   useEffect(() => {
     if (!validateEnv()) {
@@ -75,7 +104,7 @@ const WatsonAnalyzer: React.FC = () => {
   }, []);
 
   // Handle file upload
-  const handleFileUploaded = (data: { rows: any[]; columns: string[] }) => {
+  const handleFileUploaded = (data: { rows: any[]; columns: string[]; meta?: any }) => {
     setFileData(data);
     setCurrentStep(ProcessingStep.SELECT_COLUMNS);
   };
@@ -87,7 +116,7 @@ const WatsonAnalyzer: React.FC = () => {
   };
 
   // Handle column confirmation
-  const handleColumnConfirmation = (mappings: any[]) => {
+  const handleColumnConfirmation = (mappings: any) => {
     setColumnMappings(mappings);
     setCurrentStep(ProcessingStep.SELECT_MODEL);
   };
@@ -97,8 +126,12 @@ const WatsonAnalyzer: React.FC = () => {
     setCurrentStep(ProcessingStep.SELECT_COLUMNS);
   };
 
-  // Handle model selection
-  const handleModelSelected = async (model: string) => {
+  /**
+   * Handles model selection and initiates the processing workflow
+   * @param model - Selected AI model ID (e.g., 'o4-mini', 'claude-sonnet-4')
+   * @param options - Processing options including dry run and target language
+   */
+  const handleModelSelected = async (model: string, options?: { dryRun?: boolean; targetLanguage?: string }) => {
     // Determine API key based on model/provider
     const isAnthropic = model.startsWith('claude');
     const apiKey = isAnthropic ? ANTHROPIC_API_KEY : OPENAI_API_KEY;
@@ -127,7 +160,9 @@ const WatsonAnalyzer: React.FC = () => {
         fileData.rows,
         selectedColumns,
         modelConfig,
-        apiKey as string
+        apiKey as string,
+        { useCase: useCase === 'amazon' ? 'amazon' : 'ecommerce', mappings: columnMappings, dryRun: options?.dryRun, lang: options?.targetLanguage },
+        costTracker
       );
       
       setProcessedData(processedRowsData);
@@ -296,64 +331,7 @@ const WatsonAnalyzer: React.FC = () => {
               </p>
             </div>
 
-            {/* Compact Budget Management */}
-            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Budget</span>
-                <div className="flex items-center gap-3 text-xs">
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-600">OpenAI:</span>
-                    <input 
-                      type="number" 
-                      placeholder="500"
-                      className="w-16 px-1 py-0.5 text-xs border border-gray-300 rounded"
-                      onChange={(e) => {
-                        const value = parseFloat(e.target.value) || 500;
-                        if (costTracker) {
-                          costTracker.setBudget('openai', value);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const value = parseFloat((e.target as HTMLInputElement).value) || 500;
-                          if (costTracker) {
-                            costTracker.setBudget('openai', value);
-                            // Force header re-render by triggering budget update
-                            setBudgetUpdateTrigger(prev => prev + 1);
-                          }
-                        }
-                      }}
-                    />
-                    <span className="text-gray-600">$</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-600">Claude:</span>
-                    <input 
-                      type="number" 
-                      placeholder="500"
-                      className="w-16 px-1 py-0.5 text-xs border border-gray-300 rounded"
-                      onChange={(e) => {
-                        const value = parseFloat(e.target.value) || 500;
-                        if (costTracker) {
-                          costTracker.setBudget('anthropic', value);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const value = parseFloat((e.target as HTMLInputElement).value) || 500;
-                          if (costTracker) {
-                            costTracker.setBudget('anthropic', value);
-                            // Force header re-render by triggering budget update
-                            setBudgetUpdateTrigger(prev => prev + 1);
-                          }
-                        }
-                      }}
-                    />
-                    <span className="text-gray-600">$</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Budget UI removed */}
 
             {/* Upload Section */}
             <div className="bg-gray-50 rounded-lg p-4">
@@ -361,7 +339,39 @@ const WatsonAnalyzer: React.FC = () => {
               <p className="text-sm text-gray-600 mb-3">
                 Upload your Inriver file with product data (.xlsx, .xls, .csv)
               </p>
-              <FileUpload onFileUploaded={handleFileUploaded} />
+
+              {/* Use Case Selector */}
+              <div className="mb-3">
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Use Case</label>
+                <Select value={useCase} onValueChange={(v) => setUseCase(v as UseCase)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select use case" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {([...AVAILABLE_USE_CASES].sort((a, b) => {
+                      const order: Record<string, number> = { ecommerce: 0, amazon: 1, zalando: 2, aboutyou: 3, next: 4 };
+                      const ao = order[a.value] ?? 99;
+                      const bo = order[b.value] ?? 99;
+                      if (ao !== bo) return ao - bo;
+                      return a.label.localeCompare(b.label);
+                    })).map((uc) => {
+                      const isDisabled = uc.value !== 'amazon' && uc.value !== 'ecommerce';
+                      return (
+                        <SelectItem 
+                          key={uc.value} 
+                          value={uc.value} 
+                          disabled={isDisabled}
+                          className={isDisabled ? 'text-gray-400 cursor-not-allowed' : ''}
+                        >
+                          {uc.label}{isDisabled ? ' (Coming soon)' : ''}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <FileUpload onFileUploaded={handleFileUploaded} useCase={useCase} />
             </div>
           </div>
         );
@@ -370,18 +380,30 @@ const WatsonAnalyzer: React.FC = () => {
         return (
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-4">
-              <h2 className="text-lg font-medium mb-2">Select Language Variants</h2>
-              <p className="text-sm text-gray-600">
-                Choose MaterialLongDescriptionEcom columns to optimize (with or without Color prefix)
-              </p>
+              {useCase === 'amazon' ? (
+                <>
+                  <h2 className="text-lg font-medium mb-2">Select Columns (Amazon)</h2>
+                  <p className="text-sm text-gray-600">Choose input columns such as rtip_product_description#1.value and bullet_point#*.value</p>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-lg font-medium mb-2">Select Language Variants</h2>
+                  <p className="text-sm text-gray-600">Choose MaterialLongDescriptionEcom columns to optimize (with or without Color prefix)</p>
+                </>
+              )}
             </div>
 
             <ColumnSelector 
-              columns={(fileData?.columns || []).filter((col) => {
-                const colLower = col.toLowerCase();
-                return colLower.startsWith('colormateriallongdescriptionecom') || 
-                       colLower.startsWith('materiallongdescriptionecom');
-              })}
+              useCase={useCase}
+              columns={(() => {
+                const cols = fileData?.columns || [];
+                if (useCase === 'amazon') return cols;
+                return cols.filter((col) => {
+                  const colLower = col.toLowerCase();
+                  return colLower.startsWith('colormateriallongdescriptionecom') || 
+                         colLower.startsWith('materiallongdescriptionecom');
+                });
+              })()}
               onColumnsSelected={handleColumnsSelected}
             />
           </div>
@@ -392,6 +414,7 @@ const WatsonAnalyzer: React.FC = () => {
           <ColumnConfirmation
             fileData={fileData!}
             selectedColumns={selectedColumns}
+            useCase={useCase}
             onConfirm={handleColumnConfirmation}
             onBack={handleBackToColumnSelection}
           />
@@ -416,11 +439,12 @@ const WatsonAnalyzer: React.FC = () => {
         const modelDisplayName = modelConfig ? modelConfig.name : selectedModel;
         
         return (
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-3xl mx-auto">
             <div className="mb-4">
               <h2 className="text-2xl font-bold">Processing File...</h2>
               <p className="text-sm text-gray-600 mt-1">Using {modelDisplayName} for optimization</p>
             </div>
+            
             <ProcessingView
               progress={progress}
               totalRows={totalRows}
@@ -430,6 +454,7 @@ const WatsonAnalyzer: React.FC = () => {
               processingMode={processingMode}
               onCancel={cancelProcessing}
             />
+            
           </div>
         );
 
@@ -446,7 +471,6 @@ const WatsonAnalyzer: React.FC = () => {
               <h4 className="font-medium text-gray-900 mb-2">Results Summary</h4>
               <div className="space-y-2 text-sm">
                 <p>Total rows processed: {processedData?.length || 0}</p>
-                <p>Columns optimized: {selectedColumns.join(', ')}</p>
                 <p>Model used: {selectedModel}</p>
                 {getProcessingTime() && (
                   <p>Processing time: {getProcessingTime()}</p>
@@ -455,73 +479,28 @@ const WatsonAnalyzer: React.FC = () => {
             </div>
 
             {/* Cost Summary */}
-            {costTracker && costTracker.getSessionStats().totalOperations > 0 && (
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-                  Cost Summary
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="bg-white rounded p-3 border border-gray-100">
-                    <div className="text-gray-600">Total Operations</div>
-                    <div className="font-mono text-lg font-bold text-gray-900">
-                      {costTracker.getSessionStats().totalOperations}
-                    </div>
-                  </div>
-                  <div className="bg-white rounded p-3 border border-gray-100">
-                    <div className="text-gray-600">Total Cost</div>
-                    <div className="font-mono text-lg font-bold text-gray-800">
-                      ${costTracker.getSessionStats().totalActualCost.toFixed(5)}
-                    </div>
-                  </div>
-                  <div className="bg-white rounded p-3 border border-gray-100">
-                    <div className="text-gray-600">Total Tokens</div>
-                    <div className="font-mono text-lg font-bold text-gray-700">
-                      {costTracker.getSessionStats().totalTokens.toLocaleString()}
-                    </div>
-                  </div>
-                  <div className="bg-white rounded p-3 border border-gray-100">
-                    <div className="text-gray-600">Avg Cost/Op</div>
-                    <div className="font-mono text-lg font-bold text-gray-600">
-                      ${(costTracker.getSessionStats().totalActualCost / costTracker.getSessionStats().totalOperations).toFixed(5)}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Token Breakdown */}
-                <div className="mt-4 p-3 bg-white rounded border border-gray-200">
-                  <div className="text-sm text-gray-800 mb-2 font-medium">Token Usage Breakdown:</div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600">Input:</span> 
-                      <span className="font-mono ml-2 text-gray-800">{costTracker.getSessionStats().totalTokensInput.toLocaleString()}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Output:</span> 
-                      <span className="font-mono ml-2 text-gray-800">{costTracker.getSessionStats().totalTokensOutput.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Budget Status */}
-                <div className="mt-4 p-3 bg-white rounded border border-gray-200">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Budget Remaining:</span>
-                    <span className="font-mono font-bold text-gray-800">
-                      ${(selectedModel.startsWith('claude') ? costTracker.remainingBudget.anthropic : costTracker.remainingBudget.openai).toFixed(2)}
-                    </span>
-                  </div>
+            {costTracker && (
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-2">Cost Summary</h4>
+                <div className="space-y-2 text-sm">
+                  <p>Total cost: ${costTracker.getSessionStats().totalActualCost.toFixed(4)}</p>
+                  <p>Total tokens: {costTracker.getSessionStats().totalTokens.toLocaleString()}</p>
+                  <p>Remaining budget: ${typeof costTracker.remainingBudget === 'number' ? costTracker.remainingBudget.toFixed(2) : 'N/A'}</p>
                 </div>
               </div>
             )}
 
+
             {/* Sample Results removed as requested */}
+
+            {/* Export */}
+            <div className="flex items-center justify-center">
+              <ExportResults results={processedData} isDisabled={!processedData || processedData.length === 0} originalMeta={fileData?.meta} useCase={useCase === 'amazon' ? 'amazon' : 'ecommerce'} />
+            </div>
 
             {/* Action Buttons */}
             <div className="flex items-center justify-center gap-4 pt-4">
-              <Button onClick={downloadProcessedFile}>
-                <Download className="mr-2 h-4 w-4" />
-                Download Results
-              </Button>
+              {/* XLSX export (augment original workbook) */}
               <Button variant="outline" onClick={copyResultsToClipboard}>
                 <Copy className="mr-2 h-4 w-4" />
                 Copy to Clipboard
@@ -545,7 +524,7 @@ const WatsonAnalyzer: React.FC = () => {
   return (
     <ThemeProvider defaultTheme="light">
       <div className="min-h-screen flex flex-col">
-        <Header budgetUpdateTrigger={budgetUpdateTrigger} />
+        <Header />
 
         <main className="flex-1 container max-w-7xl mx-auto px-4 py-6">
           <div className="max-w-4xl mx-auto">
