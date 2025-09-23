@@ -210,10 +210,10 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
 
       {useCase === 'ecommerce' && availableLangs.length > 0 && (
         <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
-          <label className="text-sm font-medium text-gray-700 mb-2 block">Working language</label>
+          <label className="text-sm font-medium text-gray-700 mb-2 block">Content language (input = output)</label>
           <Select value={workLang} onValueChange={(v) => setWorkLang(v)}>
             <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select language" />
+              <SelectValue placeholder="Select content language" />
             </SelectTrigger>
             <SelectContent>
               {availableLangs.map(l => (
