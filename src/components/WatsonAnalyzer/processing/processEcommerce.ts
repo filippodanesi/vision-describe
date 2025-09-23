@@ -21,10 +21,17 @@ export async function processEcommerceRows(
     const description = String(row[descKey] ?? '');
 
     // Optional short hint mapping names vary; attempt broad match
-    const shortHintKey = Object.keys(row).find(k => /short description/i.test(k) && new RegExp(`\b${lang}\b`, 'i').test(k));
+    const shortHintKey = Object.keys(row).find(k => {
+      const lower = k.toLowerCase();
+      const hasLang = new RegExp(`(^|[ _-])${lang}($|[ _-])`, 'i').test(k);
+      const isShortDesc = /short description/i.test(k) && hasLang;
+      const isSC = /^sc(\b|[_\s-][a-z]{2}$|$)/i.test(k) && new RegExp(`${lang}$`, 'i').test(k);
+      const isAltStyle = new RegExp(`^materialalternativestyle_${lang}$`, 'i').test(k);
+      return isShortDesc || isSC || isAltStyle;
+    });
     const shortHint = shortHintKey ? String(row[shortHintKey] ?? '') : '';
 
-    // Title: AlternativeStyle_${lang} or MaterialSeriesName
+    // Title: AlternativeStyle_<lang> or MaterialSeriesName
     const altTitleKey = `MaterialAlternativeStyle_${lang}`;
     const title = String(row[altTitleKey] ?? row['MaterialSeriesName'] ?? '');
 

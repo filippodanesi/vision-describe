@@ -29,7 +29,7 @@ const findMatchingShortDescriptionColumn = (columnNames: string[], targetLanguag
   // First priority: exact language match with strict patterns
   for (const key of columnNames) {
     const lower = key.toLowerCase();
-    if (lower.includes('short description')) {
+    if (lower.includes('short description') || lower.startsWith('sc') || lower.startsWith('materialalternativestyle_')) {
       const patterns = [
         ` ${lang}$`,           // "Short description de" (end of string)
         ` ${langUpper}$`,      // "Short description DE" (end of string)
@@ -46,6 +46,13 @@ const findMatchingShortDescriptionColumn = (columnNames: string[], targetLanguag
         if (regex.test(lower) || regex.test(key)) {
           return key;
         }
+      }
+      // Direct exacts: SC or MaterialAlternativeStyle_<lang>
+      if (/^sc$/i.test(key) || new RegExp(`^sc[_\s-]?${lang}$`, 'i').test(key)) {
+        return key;
+      }
+      if (new RegExp(`^materialalternativestyle_${lang}$`, 'i').test(key)) {
+        return key;
       }
     }
   }
@@ -130,9 +137,13 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
     const initialMappings: ColumnMapping[] = (selectedForLang.length ? selectedForLang : selectedColumns).map(column => {
       const langMatch = column.match(/_([a-z]{2})$/i);
       const language = langMatch ? langMatch[1].toUpperCase() : 'UNK';
-      const availableShortDescColumns = fileData.columns.filter(col => 
-        col.toLowerCase().includes('short description')
-      );
+      const availableShortDescColumns = fileData.columns.filter(col => {
+        const lower = col.toLowerCase();
+        const isShortDesc = lower.includes('short description');
+        const isSC = /^sc(\b|[_\s-][a-z]{2}$|$)/i.test(col);
+        const isAltStyle = /^materialalternativestyle_/i.test(col);
+        return isShortDesc || isSC || isAltStyle;
+      });
       const matchedShortDescColumn = langMatch 
         ? findMatchingShortDescriptionColumn(fileData.columns, langMatch[1])
         : '';
