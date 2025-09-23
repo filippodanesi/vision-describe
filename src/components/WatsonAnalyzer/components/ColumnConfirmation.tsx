@@ -57,7 +57,7 @@ const findMatchingShortDescriptionColumn = (columnNames: string[], targetLanguag
     }
   }
   
-  // Second priority: Look for "Short descriptions" plural form
+  // Second priority: Look for the "Short descriptions" plural form
   for (const key of columnNames) {
     const lower = key.toLowerCase();
     if (lower.includes('short descriptions')) {
