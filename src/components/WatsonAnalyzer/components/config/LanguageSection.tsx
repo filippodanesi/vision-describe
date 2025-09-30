@@ -29,11 +29,12 @@ export const LanguageSection: React.FC<LanguageSectionProps> = ({ language, setL
           <SelectContent>
             <SelectItem value="auto">Auto-detect</SelectItem>
             <SelectItem value="en">English</SelectItem>
-            <SelectItem value="fr">French</SelectItem>
-            <SelectItem value="de">German</SelectItem>
-            <SelectItem value="it">Italian</SelectItem>
-            <SelectItem value="pt">Portuguese</SelectItem>
-            <SelectItem value="es">Spanish</SelectItem>
+            <SelectItem value="de">German (Deutsch)</SelectItem>
+            <SelectItem value="es">Spanish (Español)</SelectItem>
+            <SelectItem value="fr">French (Français)</SelectItem>
+            <SelectItem value="it">Italian (Italiano)</SelectItem>
+            <SelectItem value="pt-PT">Portuguese - Portugal 🇵🇹</SelectItem>
+            <SelectItem value="pt-BR">Portuguese - Brazil 🇧🇷</SelectItem>
           </SelectContent>
         </Select>
       </div>

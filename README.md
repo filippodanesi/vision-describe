@@ -34,10 +34,11 @@ The **AI Product Description Optimizer** is a cutting-edge enterprise solution d
 ## Features
 
 ### Advanced AI Integration
-- **Multi-Model Architecture**: Support for OpenAI (GPT-4, o1-mini) and Anthropic (Claude Sonnet 4, Claude Opus 4)
+- **Multi-Model Architecture**: Support for OpenAI GPT-5 and Anthropic Claude Sonnet 4.5 - latest models with enhanced accuracy
 - **Intelligent Prompting**: Custom system prompts optimized for e-commerce requirements
 - **Quality Assurance**: Built-in content validation and policy compliance checking
 - **Adaptive Learning**: Context-aware content generation based on product categories
+- **Reduced Hallucinations**: Latest models with improved fact accuracy and grounding
 
 ### Enterprise Analytics
 - **Real-Time Cost Tracking**: Precise token usage monitoring with provider-specific pricing
@@ -147,22 +148,24 @@ npm run dev
 
 ## Cost Analysis & ROI
 
-### Current Pricing (January 2025)
+### Current Pricing (September 2025)
 
-| Model | Input Cost | Output Cost | Typical Use Case |
-|-------|------------|-------------|------------------|
-| **OpenAI o1-mini** | $1.10/1M tokens | $4.40/1M tokens | Standard content generation |
-| **Claude Sonnet 4** | $3.00/1M tokens | $15.00/1M tokens | High-quality content |
-| **Claude Opus 4** | $15.00/1M tokens | $75.00/1M tokens | Premium content |
+| Model | Input Cost | Output Cost | Context | Typical Use Case |
+|-------|------------|-------------|---------|------------------|
+| **OpenAI GPT-5** | $1.25/1M tokens | $10.00/1M tokens | 400K | ⭐ **Recommended** - Best value |
+| **Claude Sonnet 4.5** | $3.00/1M tokens | $15.00/1M tokens | 200K | Premium accuracy |
+
+**Cost per Product**: ~$0.005 (GPT-5) or ~$0.0084 (Claude Sonnet 4.5)
 
 ### ROI Calculator
 
 | Metric | Manual Process | AI Optimizer | Savings |
 |--------|----------------|--------------|---------|
 | **Time per Product** | 2-4 hours | 30 seconds | 95% reduction |
-| **Cost per Product** | $50-200 | $0.0012 | 99.99% reduction |
+| **Cost per Product** | $50-200 | $0.005-0.008 | **99.96%** reduction |
 | **Quality Consistency** | Variable | 99.9% | Standardized output |
 | **Scalability** | Limited | Unlimited | Enterprise-ready |
+| **Fact Accuracy** | Variable | Enhanced | Latest AI models (GPT-5/Claude 4.5) |
 
 ---
 

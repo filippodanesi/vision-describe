@@ -1,3 +1,5 @@
+import { getLanguageInstructions, getShortLanguageInstruction } from './languageInstructions';
+
 export interface AmazonPromptCtx {
   title?: string;
   brand?: string;
@@ -8,7 +10,7 @@ export interface AmazonPromptCtx {
   care?: string;
   color?: string;
   size?: string;
-  language?: string;            // e.g., "de", "en", "it"
+  language?: string;            // e.g., "de", "en", "it", "pt-PT", "pt-BR"
   primaryKeyword?: string;
   secondaryKeywords?: string[];
 }
@@ -22,8 +24,10 @@ export const buildBulletsPrompt = (ctx: AmazonPromptCtx) => {
   const existingBullets = (ctx.bullets || []).filter(Boolean).join(' | ');
 
   return `
-TASK: Write EXACTLY 5 bullets for an Amazon PDP in ${lang.toUpperCase()}.
-TRANSLATION: If the input content is in a different language, translate it to ${lang.toUpperCase()}.
+TASK: Write EXACTLY 5 bullets for an Amazon PDP.
+
+LOCALIZATION: If the input content is in a different language, LOCALIZE (not just translate) to ${getShortLanguageInstruction(lang)}.
+${getLanguageInstructions(lang)}
 
 CONTEXT:
 - Title: ${safe(ctx.title)}
@@ -42,7 +46,7 @@ SEO:
 
 FORMAT:
 - Output ONLY 5 lines. No numbering, no symbols, no labels.
-- Write in ${lang.toUpperCase()} language for the target market.
+- Sound natural and native in the target language.
 `;
 };
 
@@ -53,8 +57,10 @@ export const buildDescriptionPrompt = (ctx: AmazonPromptCtx) => {
   const existingBullets = (ctx.bullets || []).filter(Boolean).join(' | ');
 
   return `
-TASK: Write ONE paragraph (3–6 sentences) Amazon PDP long description in ${lang.toUpperCase()}.
-TRANSLATION: If the input content is in a different language, translate it to ${lang.toUpperCase()}.
+TASK: Write ONE paragraph (3–6 sentences) Amazon PDP long description.
+
+LOCALIZATION: If the input content is in a different language, LOCALIZE (not just translate) to ${getShortLanguageInstruction(lang)}.
+${getLanguageInstructions(lang)}
 
 CONTEXT:
 - Title: ${safe(ctx.title)}
@@ -72,7 +78,7 @@ SEO:
 
 FORMAT:
 - Output ONLY the paragraph. No labels, no headings, no bullets, no HTML/markdown.
-- Write in ${lang.toUpperCase()} language for the target market.
+- Sound natural and native in the target language.
 `;
 };
 
@@ -81,8 +87,10 @@ export const buildAplusPrompt = (ctx: AmazonPromptCtx & { sourceDescription?: st
   const pkw  = safe(ctx.primaryKeyword);
 
   return `
-TASK: Write ONE sentence (<= 300 chars) for Amazon A+ (between two images) in ${lang.toUpperCase()}.
-TRANSLATION: If the source content is in a different language, translate it to ${lang.toUpperCase()}.
+TASK: Write ONE sentence (<= 300 chars) for Amazon A+ content (between two images).
+
+LOCALIZATION: If the source content is in a different language, LOCALIZE (not just translate) to ${getShortLanguageInstruction(lang)}.
+${getLanguageInstructions(lang)}
 
 SOURCE:
 - Use this description as source: ${safe(ctx.sourceDescription) || safe(ctx.description)}
@@ -93,7 +101,7 @@ SEO:
 FORMAT:
 - Output ONLY the sentence. No labels, no headings, no line breaks.
 - Strictly <= 300 characters.
-- Write in ${lang.toUpperCase()} language for the target market.
+- Sound natural and native in the target language.
 `;
 };
 

@@ -7,6 +7,34 @@ import { VersionData } from '@/components/Changelog/types';
 const Changelog: React.FC = () => {
   const versions: VersionData[] = [
     {
+      version: "2.1.0",
+      date: "September 30, 2025",
+      type: "MAJOR",
+      features: [
+        "🌍 CRITICAL FIX: Separated PT-PT (Portugal) from PT-BR (Brazil) - no more Brazilian terms in European Portuguese",
+        "✨ MAJOR: Implemented intelligent localization system (not just translation)",
+        "🎯 ENHANCEMENT: Added language-specific instructions for natural, fluent output",
+        "📝 FIX: Spanish translations now natural and idiomatic (not literal word-for-word)",
+        "🔧 IMPROVEMENT: Added brand TOV (Tone of Voice) guidelines for Triumph and sloggi",
+        "🌐 UPDATE: Enhanced all language outputs (DE, FR, IT, ES, PT-PT, PT-BR) with cultural adaptation",
+        "📚 DOCUMENTATION: Added comprehensive translation testing guide and quality metrics"
+      ]
+    },
+    {
+      version: "2.0.0",
+      date: "September 30, 2025",
+      type: "MAJOR",
+      features: [
+        "🚀 BREAKING: Upgraded to latest AI models - GPT-5 and Claude Sonnet 4.5",
+        "✨ MAJOR: Removed deprecated models (o4-mini, o3, Claude Opus 4) - using only latest generation",
+        "🎯 ENHANCEMENT: Significantly reduced hallucinations with next-gen AI models",
+        "📊 UPDATE: Updated cost analysis with official pricing - GPT-5 ($1.25/$10) and Claude 4.5 ($3/$15)",
+        "🔒 IMPROVEMENT: Enhanced fact accuracy and grounding capabilities",
+        "⚡ OPTIMIZATION: Better cost than estimated - 31% cheaper for GPT-5!",
+        "📝 DOCUMENTATION: Updated all documentation to reflect new model architecture"
+      ]
+    },
+    {
       version: "1.1.8",
       date: "May 24, 2025",
       type: "MAJOR",
