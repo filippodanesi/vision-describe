@@ -110,7 +110,31 @@ const WatsonAnalyzer: React.FC = () => {
   // Handle file upload
   const handleFileUploaded = (data: { rows: any[]; columns: string[]; meta?: any }) => {
     setFileData(data);
-    setCurrentStep(ProcessingStep.SELECT_COLUMNS);
+    
+    // For Partoo, auto-detect and select all relevant columns
+    if (useCase === 'partoo') {
+      // Auto-select all columns for Partoo (processor will filter what's needed)
+      const partooColumns = data.columns.filter(col => {
+        const colLower = col.toLowerCase();
+        // Include all columns that are NOT in the skip list
+        return !(
+          /business.?id/i.test(col) ||
+          /business.?identification/i.test(col) ||
+          /^code$/i.test(col) ||
+          /siret/i.test(col) ||
+          /^unnamed/i.test(col) ||
+          /local.?or.?global/i.test(col) ||
+          /creation.?date/i.test(col) ||
+          /closed.?date/i.test(col) ||
+          /address.?complement/i.test(col)
+        );
+      });
+      
+      setSelectedColumns(partooColumns);
+      setCurrentStep(ProcessingStep.SELECT_MODEL); // Skip column selection and confirmation
+    } else {
+      setCurrentStep(ProcessingStep.SELECT_COLUMNS);
+    }
   };
 
   // Handle column selection
