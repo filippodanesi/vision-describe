@@ -132,6 +132,30 @@ const WatsonAnalyzer: React.FC = () => {
       });
       
       setSelectedColumns(partooColumns);
+      
+      // Auto-create column mappings for Partoo based on detected columns
+      const findColumn = (patterns: RegExp[]): string | undefined => {
+        return data.columns.find(col => 
+          col && patterns.some(pattern => pattern.test(col))
+        );
+      };
+      
+      const partooMapping = {
+        mapping: {
+          businessId: findColumn([/^Business identification$/i]),
+          name: findColumn([/^Name$/i]),
+          address: findColumn([/^Address$/i]),
+          city: findColumn([/^City$/i]),
+          zipcode: findColumn([/^Zipcode$/i]),
+          country: findColumn([/^Country$/i]),
+          status: findColumn([/^Status$/i]),
+          shortDescription: findColumn([/^Short description/i]),
+          longDescription: findColumn([/^Long description/i]),
+          businessOpeningDate: findColumn([/^business.?opening.?date$/i]),
+        }
+      };
+      
+      setColumnMappings(partooMapping);
       setCurrentStep(ProcessingStep.SELECT_MODEL); // Skip column selection and confirmation
     } else {
       setCurrentStep(ProcessingStep.SELECT_COLUMNS);

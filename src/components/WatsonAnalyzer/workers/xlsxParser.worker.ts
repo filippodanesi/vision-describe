@@ -112,14 +112,15 @@ self.onmessage = async (ev: MessageEvent<ParseRequest>) => {
       }
     } else if (useCase === 'partoo') {
       // Partoo files have a specific structure:
-      // Row 1: Sample data ("business default en", etc.)
-      // Row 2: Technical IDs ("siret", "country", "description_long")
-      // Row 3: Display names ("SIRET", "Country", "Long description") ← USE THIS
-      // Row 4: Field descriptions ("Requires 14 digits...", "Read only", etc.)
-      // Row 5+: Actual data
-      columns = getRowValues(firstWorksheet, 3, trimValues);
-      dataStartRow = 5; // Skip first 4 rows
-      headerRowIndex = 3;
+      // Row 1: Header groupings ("Business identification", "Address", "Descriptions")
+      // Row 2: Sample data ("business default en" repeated)
+      // Row 3: Technical IDs ("business_id", "name", "code", "status", etc.)
+      // Row 4: Display names ("Business Id", "Name", "Code", "Status", etc.) ← USE THIS
+      // Row 5: Field descriptions ("Do not delete", "Read only", "80 character maximum", etc.) ← SKIP
+      // Row 6+: Actual data
+      columns = getRowValues(firstWorksheet, 4, trimValues);
+      dataStartRow = 6; // Skip first 5 rows (header structure + notes row)
+      headerRowIndex = 4;
     }
     
     if (columns.length === 0) {
