@@ -589,37 +589,48 @@ const WatsonAnalyzer: React.FC = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {processedData.slice(0, 10).map((row: any, index: number) => (
-                          <TableRow key={index} className="hover:bg-gray-50/50">
-                            {useCase === 'partoo' ? (
-                              <>
-                                <TableCell className="font-mono text-xs text-gray-600">{row.businessId || '-'}</TableCell>
-                                <TableCell className="text-xs text-gray-900">{row.name || '-'}</TableCell>
-                                <TableCell className="text-xs text-gray-700">{row.city || '-'}</TableCell>
+                        {processedData.slice(0, 10).map((row: any, index: number) => {
+                          // For Partoo, use column mappings to access data
+                          if (useCase === 'partoo' && columnMappings?.mapping) {
+                            const mapping = columnMappings.mapping;
+                            const businessId = row[mapping.businessId] || '-';
+                            const name = row[mapping.name] || '-';
+                            const city = row[mapping.city] || '-';
+                            const shortDesc = row[mapping.shortDescription] || '';
+                            const longDesc = row[mapping.longDescription] || '';
+                            
+                            return (
+                              <TableRow key={index} className="hover:bg-gray-50/50">
+                                <TableCell className="font-mono text-xs text-gray-600">{businessId}</TableCell>
+                                <TableCell className="text-xs text-gray-900">{name}</TableCell>
+                                <TableCell className="text-xs text-gray-700">{city}</TableCell>
                                 <TableCell className="text-xs text-gray-600 max-w-[200px]">
-                                  <div className="truncate" title={row.shortDescription}>
-                                    {row.shortDescription ? row.shortDescription.substring(0, 60) + (row.shortDescription.length > 60 ? '...' : '') : '-'}
+                                  <div className="truncate" title={shortDesc}>
+                                    {shortDesc ? shortDesc.substring(0, 60) + (shortDesc.length > 60 ? '...' : '') : '-'}
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-xs text-gray-600 max-w-[300px]">
-                                  <div className="truncate" title={row.longDescription}>
-                                    {row.longDescription ? row.longDescription.substring(0, 100) + (row.longDescription.length > 100 ? '...' : '') : '-'}
+                                  <div className="truncate" title={longDesc}>
+                                    {longDesc ? longDesc.substring(0, 100) + (longDesc.length > 100 ? '...' : '') : '-'}
                                   </div>
                                 </TableCell>
-                              </>
-                            ) : (
-                              <>
-                                <TableCell className="font-mono text-xs text-gray-600">{row.sku || row.asin || '-'}</TableCell>
-                                <TableCell className="text-xs text-gray-900">{row.productName || row.title || '-'}</TableCell>
-                                <TableCell className="text-xs text-gray-600 max-w-[300px]">
-                                  <div className="line-clamp-2" title={row.optimizedLongDescription || row.optimizedText}>
-                                    {row.optimizedLongDescription || row.optimizedText || '-'}
-                                  </div>
-                                </TableCell>
-                              </>
-                            )}
-                          </TableRow>
-                        ))}
+                              </TableRow>
+                            );
+                          }
+                          
+                          // For other use cases
+                          return (
+                            <TableRow key={index} className="hover:bg-gray-50/50">
+                              <TableCell className="font-mono text-xs text-gray-600">{row.sku || row.asin || '-'}</TableCell>
+                              <TableCell className="text-xs text-gray-900">{row.productName || row.title || '-'}</TableCell>
+                              <TableCell className="text-xs text-gray-600 max-w-[300px]">
+                                <div className="line-clamp-2" title={row.optimizedLongDescription || row.optimizedText}>
+                                  {row.optimizedLongDescription || row.optimizedText || '-'}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
