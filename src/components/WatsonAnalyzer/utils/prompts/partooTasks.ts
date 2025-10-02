@@ -33,11 +33,26 @@ export const COUNTRY_TO_LANGUAGE: PartooLanguageMapping = {
   'AT': 'de-AT',
   'ES': 'es-ES',
   'NL': 'nl-NL',
+  'BE': 'nl-BE', // Belgium (Dutch default, French also common)
+  'LU': 'fr-LU', // Luxembourg (French default)
   'UK': 'en-GB',
   'GB': 'en-GB',
   'IE': 'en-IE',
   'US': 'en-US',
   'CH': 'de-CH', // Default for Switzerland, can be overridden by city detection
+  'HU': 'hu-HU', // Hungary
+  'PL': 'pl-PL', // Poland
+  'CZ': 'cs-CZ', // Czech Republic
+  'SK': 'sk-SK', // Slovakia
+  'RO': 'ro-RO', // Romania
+  'BG': 'bg-BG', // Bulgaria
+  'HR': 'hr-HR', // Croatia
+  'SI': 'sl-SI', // Slovenia
+  'GR': 'el-GR', // Greece
+  'SE': 'sv-SE', // Sweden
+  'NO': 'no-NO', // Norway
+  'DK': 'da-DK', // Denmark
+  'FI': 'fi-FI', // Finland
 };
 
 /**
