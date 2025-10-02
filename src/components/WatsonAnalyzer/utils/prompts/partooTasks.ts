@@ -211,71 +211,66 @@ export function buildPartooStorePrompt(storeData: PartooStoreData, overwritePoli
   const language = detectLanguage(storeData.country, storeData.city);
   const isClosed = isStoreClosed(storeData.status);
   
-  let prompt = `LANGUAGE: ${language}
+  // Build inputs section
+  let prompt = `Language: ${language}
+
+Use ONLY these details. Do not invent or infer missing information.
 
 INPUTS:
 - Name: ${storeData.name}
-- Address: ${storeData.address}, ${storeData.zipcode} ${storeData.city}, ${storeData.country}
+- City: ${storeData.city}
+- Country: ${storeData.country}
 - Status: ${storeData.status}`;
 
+  // Add optional fields only if provided
+  if (storeData.address) {
+    prompt += `\n- Address: ${storeData.address}`;
+  }
+  
+  if (storeData.zipcode) {
+    prompt += `\n- Zipcode: ${storeData.zipcode}`;
+  }
+  
+  if (storeData.businessOpeningDate) {
+    prompt += `\n- Opening date: ${storeData.businessOpeningDate}`;
+  }
+
   if (storeData.existingShort) {
-    prompt += `\n- Existing short description: ${storeData.existingShort}`;
+    prompt += `\n- Existing short: ${storeData.existingShort}`;
   }
   
   if (storeData.existingLong) {
-    prompt += `\n- Existing long description: ${storeData.existingLong}`;
+    prompt += `\n- Existing long: ${storeData.existingLong}`;
   }
 
-  prompt += `\n\nOUTPUT JSON ONLY:
+  // Overwrite policy guidance
+  if (overwritePolicy === 'fill-improve') {
+    const shortIsGeneric = isGenericDescription(storeData.existingShort, storeData.city);
+    const longIsGeneric = isGenericDescription(storeData.existingLong, storeData.city);
+    
+    if (shortIsGeneric || longIsGeneric) {
+      prompt += `\n\nNOTE: Existing text is GENERIC (corporate/boilerplate). REWRITE FULLY using only the specific store details above. Do NOT copy corporate history, global statistics, or brand background.`;
+    }
+  }
+
+  // Output format
+  prompt += `\n\nReturn JSON ONLY (no other text):
 
 {
   "short_description": "<35-50 words, plain text>",
   "long_description": "<90-140 words, plain text>"
 }
 
-RULES:
-
-1. If Status indicates PERMANENTLY CLOSED:
-   Return a neutral closure notice in the appropriate language stating that the Triumph store in ${storeData.city} is permanently closed and directing customers to the brand website for other locations.
-
-2. Language must be ${language} (${language.startsWith('fr') || language.startsWith('pt') ? 'FORMAL' : 'professional but warm'}).
-
-3. Overwrite policy: ${overwritePolicy === 'fill-only' ? 'FILL ONLY empty fields' : 'FILL empty fields + IMPROVE generic descriptions'}`;
-
-  if (overwritePolicy === 'fill-improve') {
-    const shortIsGeneric = isGenericDescription(storeData.existingShort, storeData.city);
-    const longIsGeneric = isGenericDescription(storeData.existingLong, storeData.city);
-    
-    if (shortIsGeneric || longIsGeneric) {
-      prompt += `\n   - Existing description is GENERIC (corporate/boilerplate text) → COMPLETELY REWRITE
-   - DO NOT copy or reuse any corporate history, global statistics, or brand background
-   - IGNORE existing text entirely - create fresh, location-specific content`;
-    } else {
-      prompt += `\n   - Existing description is adequate → IMPROVE clarity and local specificity`;
-    }
-  }
-
-  prompt += `\n\n4. Content requirements:
-   - Write ONLY about THIS SPECIFIC STORE in ${storeData.city}
-   - Mention ${storeData.city} and the store location naturally
-   - Highlight EXPERT BRA FITTING service offered at this location
-   - Focus on LINGERIE FOR EVERYDAY COMFORT available in-store
-   - Mention COORDINATED SETS and product selection
-   - Keep tone direct, intentional, earnest, personal
-   
-5. What to AVOID (do NOT include):
-   - NO company history (founding years, "since 1886", etc.)
-   - NO global statistics (number of stores worldwide, countries, employees)
-   - NO brand background (Triumph International, company size)
-   - NO certifications or compliance initiatives (BSCI, etc.)
-   - NO corporate slogans or mission statements
-   - Write as if describing a local boutique, not a global corporation
-   
-6. Strict formatting constraints:
-   - NO links, HTML, emojis, promotional language
-   - NO awards, prizes, or unverifiable claims
-   - NO superlatives (best, perfect, ultimate, etc.)
-   - Output must be PLAIN TEXT only`;
+CRITICAL REQUIREMENTS:
+- Write in ${language}. Do not use any other language.
+- ALWAYS mention ${storeData.city} naturally in both descriptions.
+- ${storeData.address ? `Mention ${storeData.address} if it fits naturally.` : 'Address not provided - do not invent one.'}
+- Count words BEFORE responding. Short: 35-50 words. Long: 90-140 words.
+- Use ONLY information from Inputs above. Do not invent details.
+- Focus on: expert bra fitting, lingerie for everyday comfort, coordinated sets.
+- NO company history, global stats, corporate background, certifications, or mission statements.
+- NO prices, hours, phone, email, directions, promotions, or loyalty programs.
+- Plain text only - no HTML, markdown, links, emojis.`;
 
   return prompt;
 }
