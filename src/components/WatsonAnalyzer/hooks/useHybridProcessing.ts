@@ -411,8 +411,8 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         } else if (context?.useCase === 'partoo') {
           const { processPartooRows } = await import('../processing/processPartoo');
           const mapped = context.mappings?.mapping || {};
-          await processPartooRows(chunk.rows, model, apiKey, mapped, 'fill-improve', (m) => addLog(m));
-          allProcessedRows.push(...chunk.rows);
+          const processed = await processPartooRows(chunk.rows, model, apiKey, mapped, 'fill-improve', (m) => addLog(m));
+          allProcessedRows.push(...processed);
           const processedCount = Math.min(allProcessedRows.length, rows.length);
           setProcessedRows(processedCount);
           setProgress(Math.round((processedCount / rows.length) * 100));
