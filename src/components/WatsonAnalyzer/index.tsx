@@ -389,9 +389,9 @@ const WatsonAnalyzer: React.FC = () => {
           <div className="max-w-3xl mx-auto space-y-4">
             {/* Welcome Section */}
             <div className="text-center mb-4">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Product Description Optimizer</h1>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Copy Assistant</h1>
               <p className="text-sm text-gray-600">
-                Optimize product descriptions using AI-powered automation
+                Generate optimized content for products, stores, and marketplace platforms using AI
               </p>
             </div>
 
