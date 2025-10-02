@@ -68,10 +68,17 @@ export const optimizeWithOpenAI = async (
 
   console.log("OpenAI API request body:", JSON.stringify(requestBody, null, 2));
 
+  // Log a note about slower models
+  if (model.includes('gpt-5') || model.includes('o3')) {
+    console.log(`⏳ Note: ${model} may take longer to respond (up to 60s). Please wait...`);
+  }
+
   // Retry with exponential backoff and timeout
   const retryAttempts = Math.max(0, options.retryAttempts ?? 2);
   const baseDelay = Math.max(100, options.retryBaseDelayMs ?? 300);
-  const timeoutMs = Math.max(0, options.timeoutMs ?? 30000);
+  // GPT-5 and o3 models can be slower - use 60s timeout, otherwise 30s
+  const defaultTimeout = (model.includes('gpt-5') || model.includes('o3')) ? 60000 : 30000;
+  const timeoutMs = Math.max(0, options.timeoutMs ?? defaultTimeout);
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   const fetchWithTimeout = async (resource: string, init: RequestInit, timeout: number) => {
