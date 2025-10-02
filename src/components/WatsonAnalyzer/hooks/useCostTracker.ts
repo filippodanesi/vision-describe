@@ -17,7 +17,7 @@
  * 
  * Pricing Data:
  * - Updated January 2025 with latest provider pricing
- * - Supports all major models (o4-mini, Claude Sonnet 4, etc.)
+ * - Supports all major models (GPT-5, o4-mini, Claude Sonnet 4.5, etc.)
  * - Handles different pricing tiers and batch discounts
  */
 
@@ -75,6 +75,21 @@ const MODEL_COSTS: Record<string, ModelCostData> = {
     name: 'o3-mini',
     inputCostPer1M: 1.10,
     outputCostPer1M: 4.40,
+    tokensPerCharInput: 0.25,
+    tokensPerCharOutput: 0.25
+  },
+  // OpenAI GPT-5 (Standard pricing)
+  'gpt-5': {
+    name: 'GPT-5',
+    inputCostPer1M: 2.00,
+    outputCostPer1M: 8.00,
+    tokensPerCharInput: 0.25,
+    tokensPerCharOutput: 0.25
+  },
+  'gpt-5-2025-08-07': {
+    name: 'GPT-5',
+    inputCostPer1M: 2.00,
+    outputCostPer1M: 8.00,
     tokensPerCharInput: 0.25,
     tokensPerCharOutput: 0.25
   },
@@ -207,7 +222,7 @@ export const useCostTracker = () => {
     if (provider) {
       // Reset only for a specific provider
       setCostHistory(prev => prev.filter(record => {
-        const isOpenAI = ['gpt-4o-mini', 'gpt-4o', 'o4-mini', 'o3'].includes(record.model);
+        const isOpenAI = ['gpt-4o-mini', 'gpt-4o', 'o4-mini', 'o3', 'gpt-5', 'gpt-5-2025-08-07'].includes(record.model);
         return provider === 'openai' ? !isOpenAI : isOpenAI;
       }));
       setRemainingBudget(prev => ({

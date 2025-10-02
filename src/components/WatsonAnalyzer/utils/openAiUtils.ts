@@ -1,5 +1,11 @@
 /**
  * Utility functions for OpenAI API integration
+ * 
+ * GPT-5 Optimization:
+ * - Uses minimal reasoning effort for faster responses (10-20s vs 40-60s)
+ * - Uses low verbosity for concise, structured outputs
+ * - Ideal for simple text generation tasks like product descriptions
+ * - For complex coding/reasoning tasks, consider using medium/high reasoning effort
  */
 import openAISystemPrompt from './prompts/openaiSystemPrompt';
 
@@ -62,7 +68,12 @@ export const optimizeWithOpenAI = async (
     ],
     // Model-specific parameters
     ...(isNewModel ? { 
-      max_completion_tokens: options.maxTokens ?? defaultMaxTokens
+      max_completion_tokens: options.maxTokens ?? defaultMaxTokens,
+      // GPT-5 optimization: use minimal reasoning and low verbosity for fast, concise responses
+      ...(model.includes('gpt-5') && {
+        reasoning_effort: "minimal",
+        verbosity: "low"
+      })
     } : { 
       temperature: options.temperature ?? 0.7,
       max_tokens: options.maxTokens ?? 4000 
@@ -71,16 +82,18 @@ export const optimizeWithOpenAI = async (
 
   console.log("OpenAI API request body:", JSON.stringify(requestBody, null, 2));
 
-  // Log a note about slower models
-  if (model.includes('gpt-5') || model.includes('o3')) {
+  // Log a note about model timing
+  if (model.includes('gpt-5')) {
+    console.log(`⚡ ${model} optimized with minimal reasoning + low verbosity for fast responses (~10-20s)`);
+  } else if (model.includes('o3')) {
     console.log(`⏳ Note: ${model} may take longer to respond (up to 60s). Please wait...`);
   }
 
   // Retry with exponential backoff and timeout
   const retryAttempts = Math.max(0, options.retryAttempts ?? 2);
   const baseDelay = Math.max(100, options.retryBaseDelayMs ?? 300);
-  // GPT-5 and o3 models can be slower - use 60s timeout, otherwise 30s
-  const defaultTimeout = (model.includes('gpt-5') || model.includes('o3')) ? 60000 : 30000;
+  // GPT-5 with minimal reasoning is fast (~20s), o3 can be slower (60s)
+  const defaultTimeout = model.includes('o3') ? 60000 : (model.includes('gpt-5') ? 30000 : 30000);
   const timeoutMs = Math.max(0, options.timeoutMs ?? defaultTimeout);
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
