@@ -3,7 +3,7 @@
 // @ts-ignore - Workers run in a different context
 import * as ExcelJS from 'exceljs';
 
-type UseCase = 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next';
+type UseCase = 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
 
 interface ParseConfig {
   maxRows?: number;
@@ -110,7 +110,18 @@ self.onmessage = async (ev: MessageEvent<ParseRequest>) => {
         dataStartRow = keyRow + (skipSampleRow ? 3 : 2);
         headerRowIndex = keyRow;
       }
+    } else if (useCase === 'partoo') {
+      // Partoo files have a specific structure:
+      // Row 1: Sample data ("business default en", etc.)
+      // Row 2: Technical IDs ("siret", "country", "description_long")
+      // Row 3: Display names ("SIRET", "Country", "Long description") ← USE THIS
+      // Row 4: Field descriptions ("Requires 14 digits...", "Read only", etc.)
+      // Row 5+: Actual data
+      columns = getRowValues(firstWorksheet, 3, trimValues);
+      dataStartRow = 5; // Skip first 4 rows
+      headerRowIndex = 3;
     }
+    
     if (columns.length === 0) {
       columns = getRowValues(firstWorksheet, 1, trimValues);
       dataStartRow = 2;

@@ -109,45 +109,11 @@ const WatsonAnalyzer: React.FC = () => {
 
   // Handle file upload
   const handleFileUploaded = (data: { rows: any[]; columns: string[]; meta?: any }) => {
-    // For Partoo, check if we need to fix column headers
-    // Partoo exports have sample data in row 1 and real headers in row 2
+    setFileData(data);
+    
+    // For Partoo, auto-select all relevant columns (processor will filter what's needed)
     if (useCase === 'partoo') {
-      // Check if first row looks like sample data instead of headers
-      const firstRow = data.rows[0];
-      const hasRealHeaders = data.columns.some(col => 
-        /^Business identification$/i.test(col) || 
-        /^Name$/i.test(col) ||
-        /^Short description$/i.test(col) ||
-        /^Long description$/i.test(col)
-      );
-
-      // If headers look wrong, use first data row as headers
-      if (!hasRealHeaders && firstRow) {
-        const newColumns = Object.values(firstRow) as string[];
-        const newRows = data.rows.slice(1); // Skip the row we used as headers
-        
-        // Reconstruct rows with new column names
-        const reconstructedRows = newRows.map(row => {
-          const newRow: any = {};
-          Object.keys(row).forEach((oldKey, index) => {
-            const newKey = newColumns[index] || oldKey;
-            newRow[newKey] = row[oldKey];
-          });
-          return newRow;
-        });
-
-        setFileData({
-          rows: reconstructedRows,
-          columns: newColumns.filter(col => col && col.trim() !== ''),
-          meta: data.meta
-        });
-      } else {
-        setFileData(data);
-      }
-      
-      // Auto-select all relevant columns for Partoo (processor will filter what's needed)
-      const columns = hasRealHeaders ? data.columns : Object.values(firstRow || {}) as string[];
-      const partooColumns = columns.filter(col => {
+      const partooColumns = data.columns.filter(col => {
         if (!col || typeof col !== 'string') return false;
         const colLower = col.toLowerCase().trim();
         // Include all columns that are NOT in the skip list
@@ -168,7 +134,6 @@ const WatsonAnalyzer: React.FC = () => {
       setSelectedColumns(partooColumns);
       setCurrentStep(ProcessingStep.SELECT_MODEL); // Skip column selection and confirmation
     } else {
-      setFileData(data);
       setCurrentStep(ProcessingStep.SELECT_COLUMNS);
     }
   };
