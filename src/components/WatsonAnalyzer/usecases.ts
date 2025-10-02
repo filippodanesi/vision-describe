@@ -123,7 +123,7 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
       bulletIn5: [],
     },
     required: ['productId', 'title'],
-    outputColumns: ['gen_short_description', 'gen_long_description'],
+    outputColumns: [], // Partoo updates existing columns, doesn't add new ones
   },
 };
 

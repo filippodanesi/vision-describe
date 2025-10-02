@@ -126,8 +126,7 @@ export async function processPartooRows(
     // Validate required fields
     if (!name || !city || !country) {
       addLog?.(`${businessId} | partoo | SKIP: Missing required fields (name/city/country)`);
-      processed.gen_short_description = existingShort || '';
-      processed.gen_long_description = existingLong || '';
+      // Keep original values unchanged
       out.push(processed);
       continue;
     }
@@ -141,8 +140,9 @@ export async function processPartooRows(
     // If store is closed, return standardized closure message
     if (closed) {
       const closureMsg = getClosedStoreMessage(language, city);
-      processed.gen_short_description = closureMsg.short;
-      processed.gen_long_description = closureMsg.long;
+      // Update the ORIGINAL columns directly
+      processed[shortDescKey] = closureMsg.short;
+      processed[longDescKey] = closureMsg.long;
       addLog?.(`${businessId} | partoo | CLOSED: Using standard closure message`);
       out.push(processed);
       continue;
@@ -165,8 +165,7 @@ export async function processPartooRows(
 
     // If we don't need to generate anything, skip AI call
     if (!needsShort && !needsLong) {
-      processed.gen_short_description = existingShort;
-      processed.gen_long_description = existingLong;
+      // Keep original values unchanged
       addLog?.(`${businessId} | partoo | SKIP: Existing descriptions are adequate`);
       out.push(processed);
       continue;
@@ -207,8 +206,7 @@ export async function processPartooRows(
 
       if (!parsed) {
         addLog?.(`${businessId} | partoo | ERROR: Could not parse AI response`);
-        processed.gen_short_description = existingShort || '';
-        processed.gen_long_description = existingLong || '';
+        // Keep original values unchanged
         processed.gen_error = 'Failed to parse AI response';
       } else {
         // Validate word counts
@@ -226,15 +224,19 @@ export async function processPartooRows(
         const cleanShort = stripMarkdown(parsed.short);
         const cleanLong = stripMarkdown(parsed.long);
 
-        processed.gen_short_description = needsShort ? cleanShort : existingShort;
-        processed.gen_long_description = needsLong ? cleanLong : existingLong;
+        // Update the ORIGINAL columns directly (only if we need to)
+        if (needsShort) {
+          processed[shortDescKey] = cleanShort;
+        }
+        if (needsLong) {
+          processed[longDescKey] = cleanLong;
+        }
 
         addLog?.(`${businessId} | partoo | SUCCESS: Generated short=${shortWords}w, long=${longWords}w`);
       }
     } catch (error) {
       addLog?.(`${businessId} | partoo | ERROR: ${error}`);
-      processed.gen_short_description = existingShort || '';
-      processed.gen_long_description = existingLong || '';
+      // Keep original values unchanged
       processed.gen_error = String(error);
     }
 
