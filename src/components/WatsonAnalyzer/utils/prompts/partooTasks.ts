@@ -224,8 +224,20 @@ RULES:
  */
 export function parsePartooResponse(response: string): { short: string; long: string } | null {
   try {
+    // Remove markdown code blocks if present (```json ... ``` or ``` ... ```)
+    let cleanedResponse = response.trim();
+    
+    // Remove opening markdown fence (```json or ```)
+    cleanedResponse = cleanedResponse.replace(/^```(?:json)?\s*\n?/i, '');
+    
+    // Remove closing markdown fence (```)
+    cleanedResponse = cleanedResponse.replace(/\n?```\s*$/i, '');
+    
+    // Trim any remaining whitespace
+    cleanedResponse = cleanedResponse.trim();
+    
     // Try to parse as JSON
-    const parsed = JSON.parse(response);
+    const parsed = JSON.parse(cleanedResponse);
     
     if (parsed.short_description && parsed.long_description) {
       return {
