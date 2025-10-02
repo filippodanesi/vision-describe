@@ -100,7 +100,7 @@ export async function processPartooRows(
     const row = rows[i];
     const processed = { ...row } as any;
 
-    // Extract fields using mapping
+    // Extract static mapping keys (these may be overridden dynamically per row for short/long description)
     const businessIdKey = mapping.businessId || 'Business identification';
     const nameKey = mapping.name || 'Name';
     const addressKey = mapping.address || 'Address';
@@ -108,8 +108,8 @@ export async function processPartooRows(
     const zipcodeKey = mapping.zipcode || 'Zipcode';
     const countryKey = mapping.country || 'Country';
     const statusKey = mapping.status || 'Status';
-    const shortDescKey = mapping.shortDescription || 'Short description';
-    const longDescKey = mapping.longDescription || 'Long description';
+    const mappingShortKey = mapping.shortDescription || 'Short description';
+    const mappingLongKey = mapping.longDescription || 'Long description';
     const openingDateKey = mapping.businessOpeningDate || 'business_opening_date';
 
     const businessId = String(row[businessIdKey] ?? `store-${i + 1}`);
@@ -119,6 +119,45 @@ export async function processPartooRows(
     const zipcode = String(row[zipcodeKey] ?? '').trim();
     const country = String(row[countryKey] ?? '').trim();
     const status = String(row[statusKey] ?? 'open').trim();
+    // Helper to derive language priority codes (e.g. 'de-CH' => ['de-ch','de','ch'])
+    const deriveLangCodes = (lang: string): string[] => {
+      if (!lang) return [];
+      const lower = lang.toLowerCase();
+      const parts = lower.split(/[-_]/g);
+      const codes: string[] = [lower];
+      if (parts.length > 0) codes.push(parts[0]);
+      if (parts.length > 1) codes.push(parts[1]);
+      return [...new Set(codes.filter(Boolean))];
+    };
+
+    // Detect language early (needed to pick correct column variant) – fallback to country-based detection first
+    const preLanguage = detectLanguage(country || '', city || '');
+    const langCodes = deriveLangCodes(preLanguage); // e.g. ['de-ch','de','ch']
+
+    // Dynamic picker for description columns when mapping key not present exactly
+    const pickDescriptionColumn = (type: 'short' | 'long'): string => {
+      const baseProvided = type === 'short' ? mappingShortKey : mappingLongKey;
+      // If provided key exists in row, keep it
+      if (baseProvided in row) return baseProvided;
+      // Collect candidates
+      const cols = Object.keys(row);
+      const regex = type === 'short' ? /short\s+description/i : /long\s+description/i;
+      const candidates = cols.filter(c => regex.test(c));
+      if (candidates.length === 0) return baseProvided; // fallback – will create a new column later
+      // Try exact language code matches in order
+      for (const code of langCodes) {
+        const codeRegex = new RegExp(`(^|\s|[_-])${code}(\s|$)`, 'i');
+        const hit = candidates.find(c => codeRegex.test(c.toLowerCase()));
+        if (hit) return hit;
+      }
+      // Prefer the one without extra suffix (shortest)
+      const sorted = [...candidates].sort((a, b) => a.length - b.length);
+      return sorted[0];
+    };
+
+    const shortDescKey = pickDescriptionColumn('short');
+    const longDescKey = pickDescriptionColumn('long');
+
     const existingShort = String(row[shortDescKey] ?? '').trim() || undefined;
     const existingLong = String(row[longDescKey] ?? '').trim() || undefined;
     const openingDate = String(row[openingDateKey] ?? '').trim() || undefined;
@@ -131,8 +170,8 @@ export async function processPartooRows(
       continue;
     }
 
-    // Detect language
-    const language = detectLanguage(country, city);
+  // Use previously detected language (preLanguage) to avoid recomputation (still recompute if needed)
+  const language = preLanguage || detectLanguage(country, city);
     const closed = isStoreClosed(status);
 
     addLog?.(`${businessId} | partoo | ${name} | ${city} | lang=${language} | closed=${closed}`);
@@ -230,6 +269,14 @@ export async function processPartooRows(
         }
         if (needsLong) {
           processed[longDescKey] = cleanLong;
+        }
+
+        // Add explicit log when dynamic mapping created/used columns not originally mapped
+        if (!(mapping.shortDescription && mapping.shortDescription === shortDescKey)) {
+          addLog?.(`${businessId} | partoo | MAP(short)->${shortDescKey}`);
+        }
+        if (!(mapping.longDescription && mapping.longDescription === longDescKey)) {
+          addLog?.(`${businessId} | partoo | MAP(long)->${longDescKey}`);
         }
 
         addLog?.(`${businessId} | partoo | SUCCESS: Generated short=${shortWords}w, long=${longWords}w`);
