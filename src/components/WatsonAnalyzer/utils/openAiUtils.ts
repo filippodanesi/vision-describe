@@ -41,7 +41,8 @@ export const optimizeWithOpenAI = async (
   
   // Handle specific models parameters differently
   const isO4MiniModel = model === OpenAIModelId.O4_MINI;
-  const isNewModel = model.includes('o3') || model.includes('o4');
+  // New OpenAI models (o-series and GPT-5) use max_completion_tokens instead of max_tokens
+  const isNewModel = model.includes('o3') || model.includes('o4') || model.includes('gpt-5') || model.startsWith('o-');
   
   // Configure API request body based on model type
   const requestBody = {
