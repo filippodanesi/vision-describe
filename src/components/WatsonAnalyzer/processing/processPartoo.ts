@@ -46,10 +46,10 @@ export interface PartooMapping {
 
 /**
  * Column patterns to SKIP (administrative/technical fields)
+ * Note: "Business identification" is NOT skipped - it's used as the store ID
  */
 const SKIP_COLUMNS = [
-  /^Business Id$/i,
-  /^Business identification$/i,
+  /^Business Id$/i,  // Alternative ID field (not used)
   /^Code$/i,
   /^Local or global$/i,
   /^Creation date$/i,
@@ -101,7 +101,7 @@ export async function processPartooRows(
     const processed = { ...row } as any;
 
     // Extract fields using mapping
-    const businessIdKey = mapping.businessId || 'Business Id';
+    const businessIdKey = mapping.businessId || 'Business identification';
     const nameKey = mapping.name || 'Name';
     const addressKey = mapping.address || 'Address';
     const cityKey = mapping.city || 'City';
