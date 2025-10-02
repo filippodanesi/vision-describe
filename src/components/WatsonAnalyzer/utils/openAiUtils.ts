@@ -45,6 +45,9 @@ export const optimizeWithOpenAI = async (
   const isNewModel = model.includes('o3') || model.includes('o4') || model.includes('gpt-5') || model.startsWith('o-');
   
   // Configure API request body based on model type
+  // GPT-5 needs more tokens because of reasoning overhead
+  const defaultMaxTokens = model.includes('gpt-5') ? 8000 : 4000;
+  
   const requestBody = {
     model: model,
     messages: [
@@ -59,7 +62,7 @@ export const optimizeWithOpenAI = async (
     ],
     // Model-specific parameters
     ...(isNewModel ? { 
-      max_completion_tokens: options.maxTokens ?? 4000
+      max_completion_tokens: options.maxTokens ?? defaultMaxTokens
     } : { 
       temperature: options.temperature ?? 0.7,
       max_tokens: options.maxTokens ?? 4000 
@@ -132,9 +135,20 @@ export const optimizeWithOpenAI = async (
         const data = await response.json();
         console.log("OpenAI API response:", JSON.stringify(data, null, 2));
         
-        if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
           console.error("Unexpected API response format:", data);
           throw new Error("Invalid response format from OpenAI API");
+        }
+        
+        // Check if content is empty (can happen with o-series models hitting token limit)
+        const content = data.choices[0].message.content;
+        if (!content || content.trim() === '') {
+          const finishReason = data.choices[0].finish_reason;
+          if (finishReason === 'length') {
+            throw new Error(`GPT-5 hit token limit (reasoning tokens used). The prompt may be too long or complex. Try using Claude Sonnet 4.5 instead.`);
+          }
+          console.error("Empty content in API response:", data);
+          throw new Error("Empty response from OpenAI API");
         }
         const usage = data.usage;
         const inputTokens = usage?.prompt_tokens || 0;

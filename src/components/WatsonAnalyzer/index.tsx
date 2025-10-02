@@ -36,7 +36,7 @@ import { models } from '@/lib/models';
 import { ProcessingStep } from './types';
 import { UseCase, AVAILABLE_USE_CASES } from './usecases';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, RefreshCw, Download, Copy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, Download } from 'lucide-react';
 import * as ExcelJS from 'exceljs';
 import { validateEnv, OPENAI_API_KEY, ANTHROPIC_API_KEY } from '@/config/env';
 
@@ -92,7 +92,6 @@ const WatsonAnalyzer: React.FC = () => {
   const [processedData, setProcessedData] = useState<any[] | null>(null);
   const [processingStartTime, setProcessingStartTime] = useState<Date | null>(null);
   const [processingEndTime, setProcessingEndTime] = useState<Date | null>(null);
-  const [showMoreResults, setShowMoreResults] = useState(false);
 
   // Use case selection (E-commerce default)
   const [useCase, setUseCase] = useState<UseCase>('ecommerce');
@@ -276,31 +275,6 @@ const WatsonAnalyzer: React.FC = () => {
     }
   };
 
-  const copyResultsToClipboard = () => {
-    if (!processedData) return;
-
-    const text = processedData
-      .slice(0, showMoreResults ? processedData.length : 3)
-      .map((row, index) => {
-        const productCode = row.MaterialSAPMaterialNo || row.ColorSAPMaterialNo || `Row ${index + 1}`;
-        const rowText = selectedColumns
-          .map(column => `${column}: ${row[column]}`)
-          .join('\n');
-        return `Product: ${productCode}\n${rowText}`;
-      })
-      .join('\n\n');
-
-    navigator.clipboard.writeText(text).then(() => {
-      toast('Copied to clipboard', {
-        description: 'Results have been copied to your clipboard.',
-      });
-    }).catch(() => {
-      toast('Failed to copy', {
-        description: 'Please try again.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
-      });
-    });
-  };
 
   const getProcessingTime = () => {
     if (!processingStartTime || !processingEndTime) return null;
@@ -583,19 +557,10 @@ const WatsonAnalyzer: React.FC = () => {
 
             {/* Sample Results removed as requested */}
 
-            {/* Export */}
-            <div className="flex items-center justify-center">
-              <ExportResults results={processedData} isDisabled={!processedData || processedData.length === 0} originalMeta={fileData?.meta} useCase={useCase === 'amazon' ? 'amazon' : useCase === 'partoo' ? 'partoo' : 'ecommerce'} />
-            </div>
-
             {/* Action Buttons */}
-            <div className="flex items-center justify-center gap-4 pt-4">
-              {/* XLSX export (augment original workbook) */}
-              <Button variant="outline" onClick={copyResultsToClipboard}>
-                <Copy className="mr-2 h-4 w-4" />
-                Copy to Clipboard
-              </Button>
-              <Button variant="secondary" onClick={reloadFile}>
+            <div className="flex items-center justify-center gap-4">
+              <ExportResults results={processedData} isDisabled={!processedData || processedData.length === 0} originalMeta={fileData?.meta} useCase={useCase === 'amazon' ? 'amazon' : useCase === 'partoo' ? 'partoo' : 'ecommerce'} />
+              <Button variant="outline" onClick={reloadFile}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Process Another File
               </Button>
