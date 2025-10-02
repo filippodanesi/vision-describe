@@ -1,5 +1,11 @@
 /**
  * Utility functions for Claude API integration using the official Anthropic SDK
+ * 
+ * Claude Sonnet 4.5 Configuration:
+ * - Extended thinking ENABLED for maximum performance on complex tasks
+ * - Significantly better coding capabilities and reasoning
+ * - Longer response times (60-120s) but highest quality output
+ * - Budget: 10,000 thinking tokens per request
  */
 import Anthropic from '@anthropic-ai/sdk';
 import claudeSystemPrompt from './prompts/claudeSystemPrompt';
@@ -216,8 +222,15 @@ export const optimizeWithClaude = async (
     // Retry/backoff helpers
     const retryAttempts = Math.max(0, options.retryAttempts ?? 2);
     const baseDelay = Math.max(100, options.retryBaseDelayMs ?? 300);
-    const timeoutMs = Math.max(0, options.timeoutMs ?? 30000);
+    // Claude Sonnet 4.5 with extended thinking can take up to 120s
+    const isSonnet45 = claudeModel.includes('sonnet-4-5');
+    const defaultTimeout = isSonnet45 ? 120000 : 30000; // 120s for Sonnet 4.5, 30s for others
+    const timeoutMs = Math.max(0, options.timeoutMs ?? defaultTimeout);
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    
+    if (isSonnet45) {
+      console.log('⏳ Claude Sonnet 4.5 with extended thinking may take up to 120s. Please wait...');
+    }
 
     const performOnce = async (): Promise<any> => {
       // Try the official SDK with browser support
@@ -229,14 +242,27 @@ export const optimizeWithClaude = async (
       });
 
       try {
-        const sdkResponse = await client.messages.create({
+        // Enable extended thinking for Sonnet 4.5 for maximum performance
+        const isSonnet45 = claudeModel.includes('sonnet-4-5');
+        const requestParams: any = {
           model: claudeModel,
           system: finalSystemPrompt,
           messages: [
             { role: 'user', content: prompt }
           ],
           max_tokens: options.maxTokens ?? 2000
-        });
+        };
+
+        // Add extended thinking for Sonnet 4.5
+        if (isSonnet45) {
+          requestParams.thinking = {
+            type: "enabled",
+            budget_tokens: 10000
+          };
+          console.log('🧠 Extended thinking enabled for Claude Sonnet 4.5 (budget: 10k tokens)');
+        }
+
+        const sdkResponse = await client.messages.create(requestParams);
         console.log('✅ Claude SDK call successful - no CORS proxy needed!');
         return sdkResponse;
       } catch (sdkError: any) {

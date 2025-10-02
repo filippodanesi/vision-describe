@@ -1,11 +1,11 @@
 /**
  * Utility functions for OpenAI API integration
  * 
- * GPT-5 Optimization:
- * - Uses minimal reasoning effort for faster responses (10-20s vs 40-60s)
- * - Uses low verbosity for concise, structured outputs
- * - Ideal for simple text generation tasks like product descriptions
- * - For complex coding/reasoning tasks, consider using medium/high reasoning effort
+ * GPT-5 Configuration:
+ * - Uses HIGH reasoning effort for maximum performance and quality
+ * - Uses MEDIUM verbosity for balanced, comprehensive outputs
+ * - Optimized for best results on all tasks
+ * - Trade-off: Slower response time (~40-60s) but highest quality
  */
 import openAISystemPrompt from './prompts/openaiSystemPrompt';
 
@@ -69,10 +69,10 @@ export const optimizeWithOpenAI = async (
     // Model-specific parameters
     ...(isNewModel ? { 
       max_completion_tokens: options.maxTokens ?? defaultMaxTokens,
-      // GPT-5 optimization: use minimal reasoning and low verbosity for fast, concise responses
+      // GPT-5 configuration: use HIGH reasoning and MEDIUM verbosity for maximum performance
       ...(model.includes('gpt-5') && {
-        reasoning_effort: "minimal",
-        verbosity: "low"
+        reasoning_effort: "high",
+        verbosity: "medium"
       })
     } : { 
       temperature: options.temperature ?? 0.7,
@@ -84,7 +84,7 @@ export const optimizeWithOpenAI = async (
 
   // Log a note about model timing
   if (model.includes('gpt-5')) {
-    console.log(`⚡ ${model} optimized with minimal reasoning + low verbosity for fast responses (~10-20s)`);
+    console.log(`🧠 ${model} using HIGH reasoning + MEDIUM verbosity for maximum performance (~40-60s)`);
   } else if (model.includes('o3')) {
     console.log(`⏳ Note: ${model} may take longer to respond (up to 60s). Please wait...`);
   }
@@ -92,8 +92,8 @@ export const optimizeWithOpenAI = async (
   // Retry with exponential backoff and timeout
   const retryAttempts = Math.max(0, options.retryAttempts ?? 2);
   const baseDelay = Math.max(100, options.retryBaseDelayMs ?? 300);
-  // GPT-5 with minimal reasoning is fast (~20s), o3 can be slower (60s)
-  const defaultTimeout = model.includes('o3') ? 60000 : (model.includes('gpt-5') ? 30000 : 30000);
+  // GPT-5 with high reasoning and o3 can take up to 60s
+  const defaultTimeout = (model.includes('gpt-5') || model.includes('o3')) ? 60000 : 30000;
   const timeoutMs = Math.max(0, options.timeoutMs ?? defaultTimeout);
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

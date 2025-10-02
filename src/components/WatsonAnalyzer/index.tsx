@@ -52,6 +52,7 @@ import ProcessingView from './components/ProcessingView';
 import ExportResults from './components/ExportResults';
 import { getModelById } from '@/lib/models';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const WatsonAnalyzer: React.FC = () => {
   // Current step
@@ -555,7 +556,76 @@ const WatsonAnalyzer: React.FC = () => {
             </div>
 
 
-            {/* Sample Results removed as requested */}
+            {/* Results Preview - First 10 rows */}
+            {processedData && processedData.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-gray-700">Preview (first 10 rows)</h4>
+                  <span className="text-xs text-gray-500">
+                    Showing {Math.min(10, processedData.length)} of {processedData.length} rows
+                  </span>
+                </div>
+                
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="max-h-[500px] overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          {useCase === 'partoo' ? (
+                            <>
+                              <TableHead className="font-semibold text-gray-700 text-xs">Business ID</TableHead>
+                              <TableHead className="font-semibold text-gray-700 text-xs">Name</TableHead>
+                              <TableHead className="font-semibold text-gray-700 text-xs">City</TableHead>
+                              <TableHead className="font-semibold text-gray-700 text-xs w-[200px]">Short Description</TableHead>
+                              <TableHead className="font-semibold text-gray-700 text-xs w-[300px]">Long Description</TableHead>
+                            </>
+                          ) : (
+                            <>
+                              <TableHead className="font-semibold text-gray-700 text-xs">SKU</TableHead>
+                              <TableHead className="font-semibold text-gray-700 text-xs">Product Name</TableHead>
+                              <TableHead className="font-semibold text-gray-700 text-xs w-[300px]">Optimized Text</TableHead>
+                            </>
+                          )}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {processedData.slice(0, 10).map((row: any, index: number) => (
+                          <TableRow key={index} className="hover:bg-gray-50/50">
+                            {useCase === 'partoo' ? (
+                              <>
+                                <TableCell className="font-mono text-xs text-gray-600">{row.businessId || '-'}</TableCell>
+                                <TableCell className="text-xs text-gray-900">{row.name || '-'}</TableCell>
+                                <TableCell className="text-xs text-gray-700">{row.city || '-'}</TableCell>
+                                <TableCell className="text-xs text-gray-600 max-w-[200px]">
+                                  <div className="truncate" title={row.shortDescription}>
+                                    {row.shortDescription ? row.shortDescription.substring(0, 60) + (row.shortDescription.length > 60 ? '...' : '') : '-'}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs text-gray-600 max-w-[300px]">
+                                  <div className="truncate" title={row.longDescription}>
+                                    {row.longDescription ? row.longDescription.substring(0, 100) + (row.longDescription.length > 100 ? '...' : '') : '-'}
+                                  </div>
+                                </TableCell>
+                              </>
+                            ) : (
+                              <>
+                                <TableCell className="font-mono text-xs text-gray-600">{row.sku || row.asin || '-'}</TableCell>
+                                <TableCell className="text-xs text-gray-900">{row.productName || row.title || '-'}</TableCell>
+                                <TableCell className="text-xs text-gray-600 max-w-[300px]">
+                                  <div className="line-clamp-2" title={row.optimizedLongDescription || row.optimizedText}>
+                                    {row.optimizedLongDescription || row.optimizedText || '-'}
+                                  </div>
+                                </TableCell>
+                              </>
+                            )}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex items-center justify-center gap-4">
