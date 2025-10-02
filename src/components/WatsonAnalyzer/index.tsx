@@ -161,7 +161,7 @@ const WatsonAnalyzer: React.FC = () => {
         selectedColumns,
         modelConfig,
         apiKey as string,
-        { useCase: useCase === 'amazon' ? 'amazon' : 'ecommerce', mappings: columnMappings, dryRun: options?.dryRun, lang: options?.targetLanguage },
+        { useCase: useCase === 'amazon' ? 'amazon' : useCase === 'partoo' ? 'partoo' : 'ecommerce', mappings: columnMappings, dryRun: options?.dryRun, lang: options?.targetLanguage },
         costTracker
       );
       
@@ -349,13 +349,13 @@ const WatsonAnalyzer: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {([...AVAILABLE_USE_CASES].sort((a, b) => {
-                      const order: Record<string, number> = { ecommerce: 0, amazon: 1, zalando: 2, aboutyou: 3, next: 4 };
+                      const order: Record<string, number> = { ecommerce: 0, amazon: 1, partoo: 2, zalando: 3, aboutyou: 4, next: 5 };
                       const ao = order[a.value] ?? 99;
                       const bo = order[b.value] ?? 99;
                       if (ao !== bo) return ao - bo;
                       return a.label.localeCompare(b.label);
                     })).map((uc) => {
-                      const isDisabled = uc.value !== 'amazon' && uc.value !== 'ecommerce';
+                      const isDisabled = uc.value !== 'amazon' && uc.value !== 'ecommerce' && uc.value !== 'partoo';
                       return (
                         <SelectItem 
                           key={uc.value} 
@@ -385,6 +385,11 @@ const WatsonAnalyzer: React.FC = () => {
                   <h2 className="text-lg font-medium mb-2">Select Columns (Amazon)</h2>
                   <p className="text-sm text-gray-600">Choose input columns such as rtip_product_description#1.value and bullet_point#*.value</p>
                 </>
+              ) : useCase === 'partoo' ? (
+                <>
+                  <h2 className="text-lg font-medium mb-2">Select Store Data Columns (Partoo)</h2>
+                  <p className="text-sm text-gray-600">Select columns like Name, City, Country, Short description, Long description</p>
+                </>
               ) : (
                 <>
                   <h2 className="text-lg font-medium mb-2">Select Language Variants</h2>
@@ -397,7 +402,7 @@ const WatsonAnalyzer: React.FC = () => {
               useCase={useCase}
               columns={(() => {
                 const cols = fileData?.columns || [];
-                if (useCase === 'amazon') return cols;
+                if (useCase === 'amazon' || useCase === 'partoo') return cols;
                 return cols.filter((col) => {
                   const colLower = col.toLowerCase();
                   return colLower.startsWith('colormateriallongdescriptionecom') || 
@@ -495,7 +500,7 @@ const WatsonAnalyzer: React.FC = () => {
 
             {/* Export */}
             <div className="flex items-center justify-center">
-              <ExportResults results={processedData} isDisabled={!processedData || processedData.length === 0} originalMeta={fileData?.meta} useCase={useCase === 'amazon' ? 'amazon' : 'ecommerce'} />
+              <ExportResults results={processedData} isDisabled={!processedData || processedData.length === 0} originalMeta={fileData?.meta} useCase={useCase === 'amazon' ? 'amazon' : useCase === 'partoo' ? 'partoo' : 'ecommerce'} />
             </div>
 
             {/* Action Buttons */}

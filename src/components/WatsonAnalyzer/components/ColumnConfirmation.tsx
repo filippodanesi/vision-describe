@@ -16,7 +16,7 @@ interface ColumnMapping {
 interface ColumnConfirmationProps {
   fileData: { rows: any[]; columns: string[] };
   selectedColumns: string[];
-  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next';
+  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
   onConfirm: (mappings: ColumnMapping[]) => void;
   onBack: () => void;
 }

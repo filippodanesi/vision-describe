@@ -1,4 +1,4 @@
-export type UseCase = 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next';
+export type UseCase = 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
 
 export type MappingField =
   | 'productId'
@@ -108,6 +108,22 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
     },
     required: [],
     outputColumns: [],
+  },
+  partoo: {
+    id: 'partoo-stores-v1',
+    label: 'Partoo (Store Descriptions)',
+    detectors: {
+      productId: [rx('^Business Id$'), rx('^Business identification$'), rx('^Code$')],
+      title: [rx('^Name$')],
+      descriptionIn: [rx('^Short description$'), rx('^Long description$')],
+      bulletIn1: [],
+      bulletIn2: [],
+      bulletIn3: [],
+      bulletIn4: [],
+      bulletIn5: [],
+    },
+    required: ['productId', 'title'],
+    outputColumns: ['gen_short_description', 'gen_long_description'],
   },
 };
 

@@ -21,6 +21,13 @@
 
 The **AI Product Description Optimizer** is a cutting-edge enterprise solution designed to revolutionize e-commerce content creation. Built with modern web technologies and powered by advanced AI models, it automates the generation of high-quality, SEO-optimized product descriptions, bullet points, and enhanced content for major e-commerce platforms.
 
+### Supported Use Cases
+
+- **E-commerce (Inriver)** - Product descriptions and material content optimization
+- **Amazon** - Listings optimization with bullet points and descriptions
+- **Partoo** - Store location descriptions with brand Tone of Voice compliance
+- *(More platforms coming soon: Zalando, About You, Next)*
+
 ### Key Benefits
 
 - **95% Time Reduction** - Automate content creation that typically takes hours
@@ -32,6 +39,30 @@ The **AI Product Description Optimizer** is a cutting-edge enterprise solution d
 ---
 
 ## Features
+
+### Use Case Support
+
+#### E-commerce (Inriver)
+- Product description optimization
+- Material content enhancement
+- Multi-language support
+- Color variant handling
+
+#### Amazon
+- Product listing optimization
+- Bullet points generation
+- Description refinement
+- Policy compliance checking
+
+#### Partoo (Store Descriptions)
+- **NEW** - Retail location descriptions
+- Automatic language detection from country code
+- Brand Tone of Voice compliance (Triumph)
+- Short (35-50 words) and Long (90-140 words) descriptions
+- Multi-language support with regional variants (IT, FR, PT, DE, ES, NL, EN)
+- Switzerland special handling (de-CH, fr-CH, it-CH)
+- Closed store management
+- See [Partoo Documentation](./PARTOO_README.md) for details
 
 ### Advanced AI Integration
 - **Multi-Model Architecture**: Support for OpenAI GPT-5 and Anthropic Claude Sonnet 4.5 - latest models with enhanced accuracy
@@ -56,6 +87,7 @@ The **AI Product Description Optimizer** is a cutting-edge enterprise solution d
 ### Advanced File Processing
 - **Multi-Format Support**: Excel (.xlsx, .xlsm), CSV, and JSON file processing
 - **Smart Column Detection**: AI-powered automatic field mapping and validation
+- **Use Case Detection**: Automatic identification of file format (E-commerce, Amazon, Partoo)
 - **Batch Processing**: Efficient handling of large product catalogs (1000+ items)
 - **Export Options**: Optimized Excel export with generated content and metadata
 
@@ -169,6 +201,33 @@ npm run dev
 
 ---
 
+## Use Case Examples
+
+### E-commerce (Inriver)
+Process product catalogs with multi-language material descriptions. Automatically detects and optimizes MaterialLongDescriptionEcom columns with color variants.
+
+### Amazon
+Optimize product listings with bullet points and descriptions. Handles Amazon-specific formats including `rtip_product_description` and `bullet_point#*.value` columns.
+
+### Partoo (Store Descriptions)
+Generate retail location descriptions following brand guidelines:
+
+**Input**: Store name, city, country, address  
+**Output**: Short (35-50 words) and Long (90-140 words) descriptions  
+**Features**:
+- Automatic language detection (IT→it-IT, FR→fr-FR, PT→pt-PT, etc.)
+- Switzerland multi-lingual support (de-CH, fr-CH, it-CH by city)
+- Triumph brand Tone of Voice compliance
+- Formal language for French and Portuguese markets
+- Closed store handling with standardized messages
+
+**Example Output** (Italian - Milano):
+> *Short*: "Triumph Centro a Milano offre consulenza di bra fitting e intimo per ogni giorno. In Via Dante 15 trovi una selezione di reggiseni, coordinati e loungewear pensati per comfort e sostegno..."
+
+See [Partoo Documentation](./PARTOO_README.md) for complete examples and guidelines.
+
+---
+
 ## Performance Metrics
 
 ### Processing Capabilities
@@ -238,10 +297,18 @@ graph LR
 
 ## Roadmap
 
+### Recently Completed
+
+#### Q4 2024 - Q1 2025
+- ✅ **Partoo Integration**: Store location descriptions with brand ToV compliance
+- ✅ **AI Models Upgrade**: GPT-5 and Claude Sonnet 4.5 integration
+- ✅ **Translation Quality**: Improved multi-language processing
+- ✅ **Documentation**: Comprehensive English documentation
+
 ### Upcoming Features
 
 #### Q2 2025
-- **Platform Expansion**: Support for additional e-commerce platforms
+- **Platform Expansion**: Zalando, About You, Next support
 - **Advanced Analytics**: Detailed performance dashboards
 - **Custom Templates**: User-defined content templates
 - **API Integration**: REST API for external integrations

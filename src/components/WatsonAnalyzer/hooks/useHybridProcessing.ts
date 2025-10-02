@@ -104,7 +104,7 @@ export interface HybridProcessingHook {
     columns: string[],
     model: Model,
     apiKey: string,
-    context?: { useCase?: 'ecommerce' | 'amazon'; mappings?: any; lang?: string; dryRun?: boolean },
+    context?: { useCase?: 'ecommerce' | 'amazon' | 'partoo'; mappings?: any; lang?: string; dryRun?: boolean },
     costTracker?: any
   ) => Promise<any[]>;
   cancelProcessing: () => void;
@@ -260,7 +260,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     selectedColumns: string[],
     model: Model,
     apiKey: string,
-    context?: { useCase?: 'ecommerce' | 'amazon'; mappings?: any; lang?: string; dryRun?: boolean },
+    context?: { useCase?: 'ecommerce' | 'amazon' | 'partoo'; mappings?: any; lang?: string; dryRun?: boolean },
     costTracker?: any
   ): Promise<any[]> => {
     setIsProcessing(true);
@@ -279,8 +279,8 @@ export const useHybridProcessing = (): HybridProcessingHook => {
       
       const serverAvailable = await isServerProcessingAvailable();
       
-      // For Amazon, run client-side specialized processing for now
-      if (context?.useCase === 'amazon') {
+      // For Amazon and Partoo, run client-side specialized processing for now
+      if (context?.useCase === 'amazon' || context?.useCase === 'partoo') {
         setProcessingMode('client');
         return await processWithClient(effectiveRows, selectedColumns, model, apiKey, context);
       }
@@ -378,7 +378,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     selectedColumns: string[],
     model: Model,
     apiKey: string,
-    context?: { useCase?: 'ecommerce' | 'amazon'; mappings?: any; lang?: string; dryRun?: boolean }
+    context?: { useCase?: 'ecommerce' | 'amazon' | 'partoo'; mappings?: any; lang?: string; dryRun?: boolean }
   ): Promise<any[]> => {
     // Use client-side keep-alive mechanism
     // Smaller chunks to surface per-row progress smoothly in UI
@@ -404,6 +404,15 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           const targetLanguage = context.lang || 'en';
           const processed = await processAmazonRows(chunk.rows, model, apiKey, mapped, targetLanguage, (m) => addLog(m));
           allProcessedRows.push(...processed);
+          const processedCount = Math.min(allProcessedRows.length, rows.length);
+          setProcessedRows(processedCount);
+          setProgress(Math.round((processedCount / rows.length) * 100));
+          continue;
+        } else if (context?.useCase === 'partoo') {
+          const { processPartooRows } = await import('../processing/processPartoo');
+          const mapped = context.mappings?.mapping || {};
+          await processPartooRows(chunk.rows, model, apiKey, mapped, 'fill-improve', (m) => addLog(m));
+          allProcessedRows.push(...chunk.rows);
           const processedCount = Math.min(allProcessedRows.length, rows.length);
           setProcessedRows(processedCount);
           setProgress(Math.round((processedCount / rows.length) * 100));

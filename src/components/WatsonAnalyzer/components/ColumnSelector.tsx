@@ -7,7 +7,7 @@ import { USECASE_PROFILES } from '../usecases';
 interface ColumnSelectorProps {
   columns: string[];
   onColumnsSelected: (columns: string[]) => void;
-  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next';
+  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
 }
 
 const ColumnSelector: React.FC<ColumnSelectorProps> = ({ columns, onColumnsSelected, useCase = 'ecommerce' }) => {

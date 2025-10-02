@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { File, HelpCircle, Upload, Loader2 } from 'lucide-react';
 import {
@@ -15,7 +15,7 @@ import Papa from 'papaparse';
 
 interface FileUploadProps {
   onFileUploaded: (data: { rows: any[]; columns: string[]; meta?: any }) => void;
-  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next';
+  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
 }
 
 /**
