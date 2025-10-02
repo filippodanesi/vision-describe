@@ -1,8 +1,8 @@
 <div align="center">
 
-# AI Product Description Optimizer
+# AI Copy Assistant
 
-**Enterprise-grade AI-powered content optimization for e-commerce platforms**
+**Enterprise-grade AI-powered content generation for e-commerce, retail locations, and marketplace platforms**
 
 [![License](https://img.shields.io/badge/License-Dual--licensed-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
@@ -19,7 +19,7 @@
 
 ## Overview
 
-The **AI Product Description Optimizer** is a cutting-edge enterprise solution designed to revolutionize e-commerce content creation. Built with modern web technologies and powered by advanced AI models, it automates the generation of high-quality, SEO-optimized product descriptions, bullet points, and enhanced content for major e-commerce platforms.
+The **AI Copy Assistant** is a cutting-edge enterprise solution designed to revolutionize content creation across e-commerce, retail, and marketplace platforms. Built with modern web technologies and powered by advanced AI models (GPT-5, Claude Sonnet 4.5), it automates the generation of high-quality, brand-compliant content including product descriptions, store location descriptions, bullet points, and optimized copy for multiple platforms and languages.
 
 ### Supported Use Cases
 
@@ -383,7 +383,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 **Built with passion by [Filippo Danesi](https://www.filippodanesi.com)**
 
-*Transforming e-commerce content creation with AI*
+*AI-powered content generation for e-commerce, retail, and marketplace platforms*
 
 [![GitHub](https://img.shields.io/badge/GitHub-filippodanesi-black?style=social&logo=github)](https://github.com/filippodanesi)
 [![Website](https://img.shields.io/badge/Website-filippodanesi.com-blue?style=social&logo=internet-explorer)](https://www.filippodanesi.com)

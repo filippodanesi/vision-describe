@@ -22,7 +22,7 @@ const ChangelogContent: React.FC<ChangelogContentProps> = ({ versions }) => {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-8">
-            This changelog tracks all updates and improvements made to the AI Product Description Optimizer.
+            This changelog tracks all updates and improvements made to the AI Copy Assistant.
           </p>
           
           <VersionTimeline versions={versions} />

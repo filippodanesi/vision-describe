@@ -1,9 +1,9 @@
 {
-  "name": "ai-product-description-optimizer",
+  "name": "ai-copy-assistant",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
-  "description": "AI-powered tool for optimizing ecommerce product descriptions with multi-language support, real-time cost tracking, and automated content generation for Amazon and other platforms",
+  "description": "AI-powered content generation assistant for e-commerce products, retail store descriptions, and marketplace platforms. Supports multi-language content, brand ToV compliance, real-time cost tracking, and automated copy generation for Amazon, Partoo, and e-commerce platforms",
   "author": "Filippo Danesi <filippo.danesi93@gmail.com>",
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
@@ -11,7 +11,7 @@
     "url": "git+https://github.com/filippodanesi/ai-product-description-optimizer"
   },
   "homepage": "https://www.filippodanesi.com",
-  "keywords": ["ai", "product-description", "optimization", "inriver", "ecommerce", "openai", "anthropic"],
+  "keywords": ["ai", "copywriting", "content-generation", "ecommerce", "retail", "product-description", "store-description", "partoo", "amazon", "inriver", "openai", "anthropic", "gpt-5", "claude"],
   "scripts": {
     "dev": "vite",
     "build": "vite build",

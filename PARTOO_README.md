@@ -2,7 +2,7 @@
 
 ## Overview
 
-This module generates and optimizes store descriptions for Triumph retail locations on the Partoo platform. It automatically detects the appropriate language from the country code and generates localized content following Triumph's brand Tone of Voice guidelines.
+This module is part of the **AI Copy Assistant** and generates optimized store descriptions for Triumph retail locations on the Partoo platform. It automatically detects the appropriate language from the country code and generates localized content following Triumph's brand Tone of Voice guidelines.
 
 ## Features
 
@@ -347,6 +347,7 @@ For a batch of 100 stores: ~$0.80-1.50
 
 ---
 
-**Last Updated**: September 30, 2025
-**Version**: 1.0.0
+**Last Updated**: October 2, 2025
+**Version**: 2.0.0
 **Owner**: Filippo Danesi
+**Part of**: AI Copy Assistant

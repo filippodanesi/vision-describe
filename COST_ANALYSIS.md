@@ -1,4 +1,4 @@
-# 💰 Cost Analysis - AI Product Description Optimizer
+# 💰 Cost Analysis - AI Copy Assistant
 
 ## 📊 Updated Pricing (September 2025)
 
