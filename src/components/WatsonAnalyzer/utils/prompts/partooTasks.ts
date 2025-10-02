@@ -147,6 +147,36 @@ export function isGenericDescription(text: string | undefined, city: string): bo
     }
   }
   
+  // Check for corporate/brand history descriptions (VERY GENERIC)
+  // These talk about the company history, global numbers, certifications
+  // but NOT about the specific store location and services
+  const corporatePatterns = [
+    /\d+\s*anni/i,                           // "130 anni", "oltre 130 anni"
+    /\d+\s*years/i,                          // "130 years"
+    /dal\s*\d{4}/i,                          // "Dal 1886"
+    /since\s*\d{4}/i,                        // "Since 1886"
+    /depuis\s*\d{4}/i,                       // "Depuis 1886"
+    /\d{2,}'?\d{3}\s*(negozi|stores|magasins|geschäfte)/i, // "4'050 negozi", "40'000 clienti"
+    /\d{2,}\s*paesi/i,                       // "120 paesi"
+    /\d{2,}\s*countries/i,                   // "120 countries"
+    /triumph international/i,                // Corporate name
+    /business social compliance initiative/i, // BSCI certification
+    /globally|globalmente|à l'échelle mondiale/i, // Global scale references
+    /worldwide|in tutto il mondo|dans le monde entier/i,
+  ];
+  
+  let corporateMatchCount = 0;
+  for (const pattern of corporatePatterns) {
+    if (pattern.test(text)) {
+      corporateMatchCount++;
+    }
+  }
+  
+  // If it has 2+ corporate indicators, it's definitely a generic brand description
+  if (corporateMatchCount >= 2) {
+    return true;
+  }
+  
   // Check if it lacks both city AND category references
   const cityLower = city.toLowerCase();
   const textLower = text.toLowerCase();
@@ -163,6 +193,11 @@ export function isGenericDescription(text: string | undefined, city: string): bo
   
   // If missing BOTH city and category, it's too generic
   if (!hasCityReference && !hasCategoryReference) {
+    return true;
+  }
+  
+  // If it has corporate language AND no city reference, it's generic
+  if (corporateMatchCount >= 1 && !hasCityReference) {
     return true;
   }
   
@@ -212,23 +247,34 @@ RULES:
     const longIsGeneric = isGenericDescription(storeData.existingLong, storeData.city);
     
     if (shortIsGeneric || longIsGeneric) {
-      prompt += `\n   - Existing description is GENERIC (too short, boilerplate, or missing city/category) → REWRITE FULLY`;
+      prompt += `\n   - Existing description is GENERIC (corporate/boilerplate text) → COMPLETELY REWRITE
+   - DO NOT copy or reuse any corporate history, global statistics, or brand background
+   - IGNORE existing text entirely - create fresh, location-specific content`;
     } else {
       prompt += `\n   - Existing description is adequate → IMPROVE clarity and local specificity`;
     }
   }
 
   prompt += `\n\n4. Content requirements:
-   - Mention ${storeData.city} naturally
-   - Highlight EXPERT BRA FITTING service
-   - Focus on LINGERIE FOR EVERYDAY COMFORT
-   - Mention COORDINATED SETS where appropriate
+   - Write ONLY about THIS SPECIFIC STORE in ${storeData.city}
+   - Mention ${storeData.city} and the store location naturally
+   - Highlight EXPERT BRA FITTING service offered at this location
+   - Focus on LINGERIE FOR EVERYDAY COMFORT available in-store
+   - Mention COORDINATED SETS and product selection
    - Keep tone direct, intentional, earnest, personal
    
-5. Strict constraints:
+5. What to AVOID (do NOT include):
+   - NO company history (founding years, "since 1886", etc.)
+   - NO global statistics (number of stores worldwide, countries, employees)
+   - NO brand background (Triumph International, company size)
+   - NO certifications or compliance initiatives (BSCI, etc.)
+   - NO corporate slogans or mission statements
+   - Write as if describing a local boutique, not a global corporation
+   
+6. Strict formatting constraints:
    - NO links, HTML, emojis, promotional language
    - NO awards, prizes, or unverifiable claims
-   - NO superlatives
+   - NO superlatives (best, perfect, ultimate, etc.)
    - Output must be PLAIN TEXT only`;
 
   return prompt;

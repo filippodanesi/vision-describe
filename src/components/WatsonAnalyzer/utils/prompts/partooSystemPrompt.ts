@@ -24,13 +24,22 @@ BRAND VALUES & PERSONALITY:
 - These emerge in HOW we speak, not as labels on the page
 
 CONTENT REQUIREMENTS:
-- Mention the CITY naturally
-- Highlight EXPERT BRA FITTING as a key service
-- Focus on LINGERIE FOR EVERYDAY COMFORT
-- Mention COORDINATED SETS where appropriate
+- Write ONLY about the SPECIFIC STORE and its location
+- Mention the CITY and store address naturally in context
+- Highlight EXPERT BRA FITTING as a key service offered at this location
+- Focus on LINGERIE FOR EVERYDAY COMFORT available in-store
+- Mention COORDINATED SETS and product selection where appropriate
 - Keep language specific to the location and services offered
 
-STRICT CONSTRAINTS:
+WHAT TO AVOID (Critical - Do NOT Include):
+- NO company history or founding dates ("since 1886", "130 years", etc.)
+- NO global statistics (number of stores worldwide, countries served, employees)
+- NO corporate background (Triumph International, company size, global presence)
+- NO certifications or compliance initiatives (BSCI, sustainability programs, etc.)
+- NO brand mission statements or corporate slogans
+- Write as if describing a LOCAL BOUTIQUE, not a global corporation
+
+STRICT FORMATTING CONSTRAINTS:
 - NO links, HTML tags, or markdown
 - NO emojis or special characters
 - NO promotional language or sales pitches
