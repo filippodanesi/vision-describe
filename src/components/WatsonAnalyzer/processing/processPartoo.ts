@@ -114,7 +114,7 @@ export async function processPartooRows(
     const openingDateKey = mapping.businessOpeningDate || 'business_opening_date';
 
     const name = String(row[nameKey] ?? '').trim();
-    const businessId = String(row[businessIdKey] ?? name || `row-${i + 1}`);
+    const businessId = String(row[businessIdKey] ?? (name || `row-${i + 1}`));
     const address = String(row[addressKey] ?? '').trim();
     const city = String(row[cityKey] ?? '').trim();
     const zipcode = String(row[zipcodeKey] ?? '').trim();
