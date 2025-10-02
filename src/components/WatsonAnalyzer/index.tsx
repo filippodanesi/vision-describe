@@ -524,29 +524,61 @@ const WatsonAnalyzer: React.FC = () => {
               <p className="text-gray-600 mb-4">Your file has been processed successfully.</p>
             </div>
 
-            {/* Results Summary */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-2">Results Summary</h4>
-              <div className="space-y-2 text-sm">
-                <p>Total rows processed: {processedData?.length || 0}</p>
-                <p>Model used: {selectedModel}</p>
-                {getProcessingTime() && (
-                  <p>Processing time: {getProcessingTime()}</p>
+            {/* Processing Summary - Unified */}
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-6 border border-gray-200 shadow-sm">
+              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Processing Summary
+              </h4>
+              
+              <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                {/* Left Column */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Rows Processed</span>
+                    <span className="font-mono font-semibold text-gray-900">{processedData?.length || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Model</span>
+                    <span className="font-mono text-gray-900">{getModelById(selectedModel)?.name || selectedModel}</span>
+                  </div>
+                  {getProcessingTime() && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Time</span>
+                      <span className="font-mono text-gray-900">{getProcessingTime()}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column - Cost */}
+                {costTracker && (
+                  <div className="space-y-3 border-l border-gray-300 pl-8">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Total Cost</span>
+                      <span className="font-mono font-semibold text-blue-600">
+                        ${costTracker.getSessionStats().totalActualCost.toFixed(4)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Total Tokens</span>
+                      <span className="font-mono text-gray-900">
+                        {costTracker.getSessionStats().totalTokens.toLocaleString()}
+                      </span>
+                    </div>
+                    {processedData && processedData.length > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Avg Cost/Row</span>
+                        <span className="font-mono text-gray-900">
+                          ${(costTracker.getSessionStats().totalActualCost / processedData.length).toFixed(4)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
-
-            {/* Cost Summary */}
-            {costTracker && (
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-2">Cost Summary</h4>
-                <div className="space-y-2 text-sm">
-                  <p>Total cost: ${costTracker.getSessionStats().totalActualCost.toFixed(4)}</p>
-                  <p>Total tokens: {costTracker.getSessionStats().totalTokens.toLocaleString()}</p>
-                  <p>Remaining budget: ${typeof costTracker.remainingBudget === 'number' ? costTracker.remainingBudget.toFixed(2) : 'N/A'}</p>
-                </div>
-              </div>
-            )}
 
 
             {/* Sample Results removed as requested */}

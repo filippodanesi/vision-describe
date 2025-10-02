@@ -464,8 +464,7 @@ export const useFileProcessing = (): UseFileProcessingReturn => {
         addLog(`✓ Successfully processed all ${updatedRows.length} rows`);
         addLog(`💰 Total cost: $${sessionStats.totalActualCost.toFixed(5)}`);
         addLog(`🔢 Total tokens: ${sessionStats.totalTokens.toLocaleString()} (${sessionStats.totalTokensInput.toLocaleString()} input + ${sessionStats.totalTokensOutput.toLocaleString()} output)`);
-        addLog(`📊 Average cost per operation: $${(sessionStats.totalActualCost / sessionStats.totalOperations).toFixed(5)}`);
-        addLog(`💳 Remaining budget: $${costTracker.remainingBudget[provider].toFixed(2)}`);
+        addLog(`📊 Average cost per row: $${(sessionStats.totalActualCost / updatedRows.length).toFixed(5)}`);
         
         // Clear intermediate save at completion
         localStorage.removeItem('file_processing_progress');
