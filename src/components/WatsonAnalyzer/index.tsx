@@ -499,7 +499,7 @@ const WatsonAnalyzer: React.FC = () => {
               </p>
             </div>
 
-            <ModelSelector onModelSelected={handleModelSelected} />
+            <ModelSelector onModelSelected={handleModelSelected} useCase={useCase} />
           </div>
         );
 

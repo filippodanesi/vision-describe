@@ -13,9 +13,10 @@ import {
 
 interface ModelSelectorProps {
   onModelSelected: (modelId: string, options?: { dryRun?: boolean; targetLanguage?: string }) => void;
+  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
 }
 
-const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelSelected }) => {
+const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelSelected, useCase = 'ecommerce' }) => {
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [targetLanguage, setTargetLanguage] = useState<string>('en');
   const [dryRun, setDryRun] = useState<boolean>(false);
@@ -84,33 +85,35 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelSelected }) => {
           })}
       </RadioGroup>
         
-        {/* Language Selection */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Globe className="h-4 w-4" />
-            Target Language
-            <Tooltip>
-              <TooltipTrigger>
-                <HelpCircle className="h-3 w-3 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">Select the language for the generated content. The AI will translate from the source language if needed.</p>
-              </TooltipContent>
-            </Tooltip>
-          </label>
-          <Select value={targetLanguage} onValueChange={setTargetLanguage}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select target language" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="de">Deutsch</SelectItem>
-              <SelectItem value="fr">Français</SelectItem>
-              <SelectItem value="it">Italiano</SelectItem>
-              <SelectItem value="es">Español</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Language Selection - Only for E-commerce (Partoo and Amazon auto-detect language) */}
+        {useCase === 'ecommerce' && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              Target Language
+              <Tooltip>
+                <TooltipTrigger>
+                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Select the language for the generated content. The AI will translate from the source language if needed.</p>
+                </TooltipContent>
+              </Tooltip>
+            </label>
+            <Select value={targetLanguage} onValueChange={setTargetLanguage}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select target language" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="de">Deutsch</SelectItem>
+                <SelectItem value="fr">Français</SelectItem>
+                <SelectItem value="it">Italiano</SelectItem>
+                <SelectItem value="es">Español</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="flex items-center gap-3">
           <Button 
