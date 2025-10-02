@@ -92,7 +92,8 @@ export async function processPartooRows(
   apiKey: string,
   mapping: PartooMapping,
   overwritePolicy: 'fill-only' | 'fill-improve' = 'fill-improve',
-  addLog?: (msg: string) => void
+  addLog?: (msg: string) => void,
+  costTracker?: any
 ): Promise<any[]> {
   const out: any[] = [];
 
@@ -238,6 +239,26 @@ export async function processPartooRows(
         apiKey,
         PARTOO_SYSTEM_PROMPT
       );
+
+      // Track cost with actual tokens from API response
+      if (costTracker && rawResponse.tokens) {
+        const costRecord = costTracker.trackOperation(
+          model.id,
+          userPrompt,
+          rawResponse.content || '',
+          {
+            inputTokens: rawResponse.tokens.inputTokens,
+            outputTokens: rawResponse.tokens.outputTokens
+          }
+        );
+        
+        // Log cost details
+        if (costRecord) {
+          const cost = costRecord.actualCost || costRecord.estimatedCost;
+          const totalTokens = rawResponse.tokens.inputTokens + rawResponse.tokens.outputTokens;
+          addLog?.(`${businessId} | partoo | COST: $${cost.toFixed(4)} (${rawResponse.tokens.inputTokens}→${rawResponse.tokens.outputTokens} = ${totalTokens} tokens)`);
+        }
+      }
 
       // Parse response - extract content from OptimizationResult
       const responseText = rawResponse.content || '';
