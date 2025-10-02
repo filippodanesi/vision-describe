@@ -8,7 +8,7 @@
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/filippodanesi/ai-product-description-optimizer"
+    "url": "git+https://github.com/filippodanesi/ai-copy-assistant"
   },
   "homepage": "https://www.filippodanesi.com",
   "keywords": ["ai", "copywriting", "content-generation", "ecommerce", "retail", "product-description", "store-description", "partoo", "amazon", "inriver", "openai", "anthropic", "gpt-5", "claude"],

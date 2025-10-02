@@ -144,8 +144,8 @@ graph TB
 
 ```bash
 # Clone the repository
-git clone https://github.com/filippodanesi/ai-product-description-optimizer.git
-cd ai-product-description-optimizer
+git clone https://github.com/filippodanesi/ai-copy-assistant.git
+cd ai-copy-assistant
 
 # Install dependencies
 npm install
@@ -362,9 +362,9 @@ For commercial licensing, please contact:
 ### Getting Help
 
 - **Technical Support**: [filippo.danesi93@gmail.com](mailto:filippo.danesi93@gmail.com)
-- **Bug Reports**: [GitHub Issues](https://github.com/filippodanesi/ai-product-description-optimizer/issues)
-- **Feature Requests**: [GitHub Discussions](https://github.com/filippodanesi/ai-product-description-optimizer/discussions)
-- **Documentation**: [Project Wiki](https://github.com/filippodanesi/ai-product-description-optimizer/wiki)
+- **Bug Reports**: [GitHub Issues](https://github.com/filippodanesi/ai-copy-assistant/issues)
+- **Feature Requests**: [GitHub Discussions](https://github.com/filippodanesi/ai-copy-assistant/discussions)
+- **Documentation**: [Project Wiki](https://github.com/filippodanesi/ai-copy-assistant/wiki)
 
 ### Contributing
 
