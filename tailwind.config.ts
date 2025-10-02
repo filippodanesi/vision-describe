@@ -71,9 +71,28 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
-			fontFamily: {
-				geist: ['Geist', 'sans-serif'],
-			},
+		fontFamily: {
+			sans: [
+				'-apple-system',
+				'BlinkMacSystemFont',
+				'"Segoe UI"',
+				'Roboto',
+				'"Helvetica Neue"',
+				'Arial',
+				'sans-serif',
+				'"Apple Color Emoji"',
+				'"Segoe UI Emoji"'
+			],
+			mono: [
+				'ui-monospace',
+				'SFMono-Regular',
+				'"SF Mono"',
+				'Menlo',
+				'Consolas',
+				'"Liberation Mono"',
+				'monospace'
+			]
+		},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',

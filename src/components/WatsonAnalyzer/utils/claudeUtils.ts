@@ -250,16 +250,16 @@ export const optimizeWithClaude = async (
           messages: [
             { role: 'user', content: prompt }
           ],
-          max_tokens: options.maxTokens ?? 2000
+          max_tokens: options.maxTokens ?? (isSonnet45 ? 16000 : 2000)
         };
 
         // Add extended thinking for Sonnet 4.5
         if (isSonnet45) {
           requestParams.thinking = {
             type: "enabled",
-            budget_tokens: 10000
+            budget_tokens: 5000
           };
-          console.log('🧠 Extended thinking enabled for Claude Sonnet 4.5 (budget: 10k tokens)');
+          console.log('🧠 Extended thinking enabled for Claude Sonnet 4.5 (budget: 5k tokens, max: 16k total)');
         }
 
         const sdkResponse = await client.messages.create(requestParams);

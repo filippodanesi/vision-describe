@@ -65,7 +65,6 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: 'Geist', sans-serif;
+    @apply bg-background text-foreground antialiased font-sans;
   }
 }
