@@ -34,12 +34,12 @@ INPUTS:
 - Zipcode: 20100
 ```
 
-### Expected Output (35-50 / 90-140 words)
+### Expected Output (max 80 / 750 characters)
 
 ```json
 {
-  "short_description": "Triumph Lingerie a Milano offre consulenze di bra fitting personalizzate e intimo per il quotidiano. In Via Roma 15 trovi reggiseni, coordinati e loungewear pensati per comfort e sostegno. Vieni a trovarci per trovare la tua misura ideale.",
-  "long_description": "Da Triumph Lingerie in Via Roma 15 a Milano ti accogliamo con un servizio di bra fitting accurato per trovare il sostegno che davvero ti serve. In negozio trovi reggiseni e lingerie per ogni giorno, set coordinati e proposte confortevoli da indossare quotidianamente. Siamo a Milano, in Via Roma 15, 20100. Ti aspettiamo per un'esperienza semplice e curata, con consigli pratici su modelli e vestibilità che rispondono alle tue esigenze reali."
+  "short_description": "Triumph a Milano: fitting e intimo in Via Roma 15. Vieni a trovarci!",
+  "long_description": "Triumph Lingerie a Milano offre consulenze di bra fitting personalizzate e intimo per il quotidiano. In Via Roma 15 trovi reggiseni, coordinati e loungewear pensati per comfort e sostegno. Vieni a trovarci per trovare la tua misura ideale."
 }
 ```
 
@@ -47,7 +47,7 @@ INPUTS:
 - ✅ Diretto, chiaro (non "sales speak")
 - ✅ Milano menzionata naturalmente
 - ✅ Fitting esperto + comfort quotidiano
-- ✅ 42 / 112 parole
+- ✅ 69 / 226 caratteri
 - ✅ Nessuna storia/mission corporate
 - ✅ Solo info fornite
 
@@ -68,12 +68,12 @@ INPUTS:
 - Zipcode: 75001
 ```
 
-### Expected Output (35-50 / 90-140 words)
+### Expected Output (max 80 / 750 characters)
 
 ```json
 {
-  "short_description": "Triumph Paris Centre vous propose un service de fitting expert et une lingerie adaptée au quotidien. Au 45 Rue de Rivoli, découvrez des soutiens-gorge, des ensembles coordonnés et des pièces confortables. Passez nous voir pour des conseils personnalisés sur votre taille.",
-  "long_description": "Chez Triumph Paris Centre, nous vous accueillons avec un service de fitting personnalisé pour trouver le soutien qui vous correspond vraiment. En magasin, vous découvrez des soutiens-gorge et de la lingerie pour le quotidien, des ensembles coordonnés et des propositions confortables à porter chaque jour. Nous sommes situés au 45 Rue de Rivoli, 75001 Paris. Nous vous attendons pour une expérience simple et soignée, avec des suggestions pratiques sur les modèles et l'ajustement qui répondent à vos besoins réels."
+  "short_description": "Triumph Paris: fitting expert, 45 Rue de Rivoli. Bienvenue!",
+  "long_description": "Triumph Paris Centre vous propose un service de fitting expert et une lingerie adaptée au quotidien. Au 45 Rue de Rivoli, découvrez des soutiens-gorge, des ensembles coordonnés et des pièces confortables. Passez nous voir pour des conseils personnalisés."
 }
 ```
 
@@ -81,7 +81,7 @@ INPUTS:
 - ✅ Formal "vous" throughout
 - ✅ Paris mentioned naturally
 - ✅ Fitting expert + confort quotidien
-- ✅ 44 / 118 words
+- ✅ 60 / 248 caractères
 - ✅ No corporate history
 - ✅ Only provided info
 
@@ -102,12 +102,12 @@ INPUTS:
 - Zipcode: 1200-203
 ```
 
-### Expected Output (35-50 / 90-140 words)
+### Expected Output (max 80 / 750 characters)
 
 ```json
 {
-  "short_description": "A Triumph Lisboa Centro oferece consultoria de fitting especializada e lingerie para o dia a dia. Na Rua Garrett 52, encontra uma seleção de soutiens, conjuntos coordenados e loungewear concebidos para conforto e suporte. Visite-nos para encontrar o seu tamanho ideal.",
-  "long_description": "Na Triumph Lisboa Centro, recebemo-lo com uma consultoria de fitting cuidadosa para encontrar o suporte que realmente sente como seu. Na loja, encontra soutiens e lingerie para o quotidiano, conjuntos coordenados e propostas confortáveis para usar todos os dias. Estamos na Rua Garrett 52, 1200-203 Lisboa. Esperamos por si para uma experiência simples e cuidada, com sugestões práticas sobre modelos e ajuste que respondem às suas necessidades reais."
+  "short_description": "Triumph Lisboa: fitting e lingerie na Rua Garrett 52. Visite-nos!",
+  "long_description": "A Triumph Lisboa Centro oferece consultoria de fitting especializada e lingerie para o dia a dia. Na Rua Garrett 52, encontra uma seleção de soutiens, conjuntos coordenados e loungewear concebidos para conforto e suporte. Visite-nos para encontrar o seu tamanho ideal."
 }
 ```
 
@@ -115,7 +115,7 @@ INPUTS:
 - ✅ Formal Portuguese ("recebemo-lo", "esperamos por si")
 - ✅ Lisboa mentioned naturally
 - ✅ Fitting + conforto diário
-- ✅ 41 / 110 words
+- ✅ 67 / 265 caractères
 - ✅ No corporate history
 - ✅ Only provided info
 
@@ -139,12 +139,12 @@ INPUTS:
 NOTE: Existing text is GENERIC (corporate/boilerplate). REWRITE FULLY using only the specific store details above. Do NOT copy corporate history, global statistics, or brand background.
 ```
 
-### Expected Output (AFTER - Localized)
+### Expected Output (AFTER - Localized, max 80 / 750 characters)
 
 ```json
 {
-  "short_description": "Triumph a Milano Cordusio offre consulenze di bra fitting e intimo per ogni giorno. In Piazza Cordusio trovi reggiseni, coordinati e loungewear pensati per comfort e sostegno. Vieni a trovarci per la tua misura giusta.",
-  "long_description": "Da Triumph in Piazza Cordusio a Milano ti accogliamo con un servizio di fitting accurato per trovare il sostegno che davvero ti serve. In negozio trovi reggiseni e lingerie per il quotidiano, set coordinati e proposte confortevoli da indossare ogni giorno. Siamo in Piazza Cordusio, 20123 Milano. Ti aspettiamo per un'esperienza curata, con suggerimenti pratici su modelli e vestibilità che rispondono alle tue esigenze."
+  "short_description": "Triumph a Milano Cordusio: fitting e intimo in Piazza Cordusio. Vieni!",
+  "long_description": "Triumph a Milano Cordusio offre consulenze di bra fitting e intimo per ogni giorno. In Piazza Cordusio trovi reggiseni, coordinati e loungewear pensati per comfort e sostegno. Vieni a trovarci per la tua misura giusta."
 }
 ```
 
@@ -206,8 +206,8 @@ Use this checklist to validate generated descriptions:
 - [ ] NO superlatives (best, perfect, ultimate)
 
 ### Format
-- [ ] Short: 35-50 words
-- [ ] Long: 90-140 words
+- [ ] Short: max 80 characters
+- [ ] Long: max 750 characters
 - [ ] Plain text (no HTML, markdown, emojis, links)
 - [ ] Correct language (no mixing)
 - [ ] Valid JSON with exact keys: "short_description", "long_description"
@@ -225,7 +225,7 @@ Use this checklist to validate generated descriptions:
 
 1. **Run test inputs** through the updated prompt system
 2. **Validate outputs** against the QA checklist above
-3. **Compare word counts**: Use a word counter to verify 35-50 / 90-140 ranges
+3. **Compare character counts**: Use a character counter to verify max 80 / 750 limits
 4. **Language check**: Ensure no language mixing (especially for CH stores)
 5. **Generic detection**: Confirm corporate descriptions are flagged and rewritten
 

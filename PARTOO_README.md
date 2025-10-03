@@ -13,7 +13,7 @@ This module is part of the **AI Copy Assistant** and generates optimized store d
 - **Smart Overwrite Policy**: Fill-only or fill-and-improve generic descriptions
 - **Brand ToV Compliance**: Follows Triumph brand guidelines strictly
 - **Format Validation**: Ensures plain text output (no HTML, emojis, links)
-- **Word Count Control**: Short (35-50 words), Long (90-140 words)
+- **Character Limit Control**: Short (max 80 characters), Long (max 750 characters)
 
 ## Input Format
 
@@ -125,14 +125,14 @@ Zipcode: 20100
 Status: open
 ```
 
-**Output Short (~40 words)**:
+**Output Short (80 chars max)**:
 ```
-Triumph Centro a Milano offre consulenza di bra fitting e intimo per ogni giorno. In Via Dante 15 trovi una selezione di reggiseni, coordinati e loungewear pensati per comfort e sostegno. Passa in negozio per trovare la misura giusta.
+Triumph a Milano: intimo e bra fitting in Via Dante 15. Vieni a trovarci!
 ```
 
-**Output Long (~110 words)**:
+**Output Long (750 chars max)**:
 ```
-Presso Triumph Centro a Milano ti accogliamo con una consulenza di fitting accurata per trovare il sostegno che senti davvero tuo. In negozio trovi reggiseni e lingerie per il quotidiano, set coordinati e proposte confortevoli da indossare ogni giorno. Siamo in Via Dante 15, 20100 Milano (IT). Ti aspettiamo per un'esperienza semplice e curata, con suggerimenti pratici su modelli e vestibilità.
+Triumph Centro a Milano offre consulenza di bra fitting e intimo per ogni giorno. In Via Dante 15 trovi una selezione di reggiseni, coordinati e loungewear pensati per comfort e sostegno. Passa in negozio per trovare la misura giusta con l'aiuto delle nostre esperte.
 ```
 
 ### Example 2: French Store (Open)
@@ -147,14 +147,14 @@ Zipcode: 75001
 Status: open
 ```
 
-**Output Short (~45 words, formal "vous")**:
+**Output Short (80 chars max, formal "vous")**:
 ```
-Triumph Paris Rivoli vous propose un service de fitting expert et une lingerie adaptée au quotidien. Au 45 Rue de Rivoli, découvrez des soutiens-gorge, des ensembles coordonnés et des pièces confortables. Passez en boutique pour bénéficier de conseils personnalisés sur votre taille.
+Triumph Paris: fitting expert et lingerie au 45 Rue de Rivoli. Bienvenue!
 ```
 
-**Output Long (~120 words, formal "vous")**:
+**Output Long (750 chars max, formal "vous")**:
 ```
-Chez Triumph Paris Rivoli, nous vous accueillons avec un service de fitting personnalisé pour trouver le soutien qui vous correspond vraiment. En magasin, vous découvrez des soutiens-gorge et de la lingerie pour le quotidien, des ensembles coordonnés et des propositions confortables à porter chaque jour. Nous sommes situés au 45 Rue de Rivoli, 75001 Paris (FR). Nous vous attendons pour une expérience simple et soignée, avec des suggestions pratiques sur les modèles et l'ajustement.
+Triumph Paris Rivoli vous propose un service de fitting expert et une lingerie adaptée au quotidien. Au 45 Rue de Rivoli, découvrez des soutiens-gorge, des ensembles coordonnés et des pièces confortables. Passez en boutique pour bénéficier de conseils personnalisés sur votre taille.
 ```
 
 ### Example 3: Portuguese Store (Open)
@@ -169,14 +169,14 @@ Zipcode: 1200-203
 Status: open
 ```
 
-**Output Short (~42 words, formal)**:
+**Output Short (80 chars max, formal)**:
 ```
-A Triumph Lisboa oferece consultoria de fitting especializada e lingerie para o dia a dia. Na Rua Garrett 52, encontra uma seleção de soutiens, conjuntos coordenados e loungewear concebidos para conforto e suporte. Visite-nos para encontrar o tamanho ideal.
+Triumph Lisboa: fitting e lingerie na Rua Garrett 52. Visite-nos hoje!
 ```
 
-**Output Long (~115 words, formal)**:
+**Output Long (750 chars max, formal)**:
 ```
-Na Triumph Lisboa, recebemo-lo com uma consultoria de fitting cuidadosa para encontrar o suporte que realmente sente como seu. Na loja, encontra soutiens e lingerie para o quotidiano, conjuntos coordenados e propostas confortáveis para usar todos os dias. Estamos na Rua Garrett 52, 1200-203 Lisboa (PT). Esperamos por si para uma experiência simples e cuidada, com sugestões práticas sobre modelos e ajuste.
+A Triumph Lisboa oferece consultoria de fitting especializada e lingerie para o dia a dia. Na Rua Garrett 52, encontra uma seleção de soutiens, conjuntos coordenados e loungewear concebidos para conforto e suporte. Visite-nos para encontrar o tamanho ideal.
 ```
 
 ### Example 4: Swiss Store (German-speaking city)
@@ -193,7 +193,12 @@ Status: open
 
 **Detected Language**: `de-CH` (German Swiss)
 
-**Output Short (~40 words)**:
+**Output Short (80 chars max)**:
+```
+Triumph Zürich: BH-Beratung an der Bahnhofstrasse 45. Besuchen Sie uns!
+```
+
+**Output Long (750 chars max)**:
 ```
 Triumph Zürich bietet professionelle BH-Beratung und Unterwäsche für den Alltag. An der Bahnhofstrasse 45 finden Sie eine Auswahl an BHs, koordinierten Sets und bequemer Loungewear. Besuchen Sie uns, um die richtige Größe zu finden.
 ```
@@ -212,7 +217,12 @@ Status: open
 
 **Detected Language**: `fr-CH` (French Swiss)
 
-**Output Short (~45 words, formal)**:
+**Output Short (80 chars max, formal)**:
+```
+Triumph Genève: fitting expert, Rue du Marché 12. Passez nous voir!
+```
+
+**Output Long (750 chars max, formal)**:
 ```
 Triumph Genève vous propose un service de fitting expert et une lingerie pour le quotidien. À la Rue du Marché 12, découvrez des soutiens-gorge, des ensembles coordonnés et des pièces confortables. Passez nous voir pour des conseils personnalisés.
 ```
@@ -288,7 +298,7 @@ Use the [Partoo ToV Checklist](./PARTOO_TOV_CHECKLIST.md) for manual QA review.
 ### Automated Validations
 
 The system automatically checks for:
-1. Word count (short: 35-50, long: 90-140)
+1. Character count (short: max 80, long: max 750)
 2. HTML tags presence
 3. Emoji characters
 4. URL links

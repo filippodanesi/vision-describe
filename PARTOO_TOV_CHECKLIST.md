@@ -31,9 +31,9 @@ Use this checklist when reviewing generated Partoo store descriptions to ensure 
 - [ ] **Portuguese (PT)**: MUST use formal language
 - [ ] **Other languages**: Professional but warm
 
-### 5. Word Count Compliance
-- [ ] **Short description**: 35-50 words
-- [ ] **Long description**: 90-140 words
+### 5. Character Count Compliance
+- [ ] **Short description**: max 80 characters
+- [ ] **Long description**: max 750 characters
 
 ### 6. Special Cases
 - [ ] **Permanently closed stores**: Use standard closure message

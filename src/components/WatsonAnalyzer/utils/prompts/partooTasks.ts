@@ -257,15 +257,15 @@ INPUTS:
   prompt += `\n\nReturn JSON ONLY (no other text):
 
 {
-  "short_description": "<35-50 words, plain text>",
-  "long_description": "<90-140 words, plain text>"
+  "short_description": "<max 80 characters, plain text>",
+  "long_description": "<max 750 characters, plain text>"
 }
 
 CRITICAL REQUIREMENTS:
 - Write in ${language}. Do not use any other language.
 - ALWAYS mention ${storeData.city} naturally in both descriptions.
 - ${storeData.address ? `Mention ${storeData.address} if it fits naturally.` : 'Address not provided - do not invent one.'}
-- Count words BEFORE responding. Short: 35-50 words. Long: 90-140 words.
+- Count characters BEFORE responding. Short: max 80 characters. Long: max 750 characters.
 - Use ONLY information from Inputs above. Do not invent details.
 - Focus on: expert bra fitting, lingerie for everyday comfort, coordinated sets.
 - NO company history, global stats, corporate background, certifications, or mission statements.
