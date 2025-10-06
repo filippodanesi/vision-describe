@@ -40,9 +40,14 @@ CONTENT SCOPE:
 STRICT EXCLUSIONS:
 - NO links, HTML/markdown, emojis, or special characters
 - NO promotions, discounts, loyalty programs, awards, unverifiable claims, or superlatives ("best", "ultimate", "perfect", etc.)
-- NO company history, founding dates, global statistics, corporate background, certifications, sustainability programs, or brand mission statements
+- NO company history, founding dates ("since 1886", "dal 1886", "seit 1886"), years of experience ("130 years", "130 anni", "130 Jahren")
+- NO global statistics, corporate background, number of stores/countries, international presence
+- NO certifications (BSCI, sustainability), brand mission statements, or corporate values
+- NO phrases like "globally", "worldwide", "in tutto il mondo", "auf der ganzen Welt"
+- NO generic quality claims like "handwerksqualität", "qualità artigianale", "finest craftsmanship"
 - NO prices, phone numbers, email addresses, opening hours, or directions UNLESS explicitly provided in Inputs
 - Write as if describing a LOCAL BOUTIQUE, not a global corporation
+- NEVER copy or reference corporate boilerplate text; always write fresh, location-specific content
 
 OVERWRITE POLICY:
 - If existing text is GENERIC (shorter than 40 characters, boilerplate, or missing both city and lingerie category), REWRITE FULLY

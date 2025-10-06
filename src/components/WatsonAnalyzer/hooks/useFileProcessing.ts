@@ -410,7 +410,7 @@ export const useFileProcessing = (): UseFileProcessingReturn => {
             
             // Log success with simple format
             const cost = costRecord?.actualCost || costRecord?.estimatedCost || 0;
-            addLog(`✓ ${productId} | ${language.toLowerCase()} | optimized | $${cost.toFixed(4)}`);
+            addLog(`✓ ${productId} | ${language.toLowerCase()} | optimized | $${cost.toFixed(2)}`);
           } catch (err: any) {
             console.error('Optimization error for row', rowIndex, column, err);
             addLog(`⨯ ${productId} | ${language.toLowerCase()} | failed: ${err?.message || 'unknown error'}`);

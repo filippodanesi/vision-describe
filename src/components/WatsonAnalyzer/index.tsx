@@ -519,7 +519,7 @@ const WatsonAnalyzer: React.FC = () => {
                     <span className="text-gray-600">Model</span>
                     <span className="font-mono text-gray-900">{getModelById(selectedModel)?.name || selectedModel}</span>
                   </div>
-                  {getProcessingTime() && (
+                {getProcessingTime() && (
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Time</span>
                       <span className="font-mono text-gray-900">{getProcessingTime()}</span>
@@ -532,8 +532,8 @@ const WatsonAnalyzer: React.FC = () => {
                   <div className="space-y-3 border-l border-gray-300 pl-8">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Total Cost</span>
-                      <span className="font-mono font-semibold text-gray-900">
-                        ${costTracker.getSessionStats().totalActualCost.toFixed(4)}
+                      <span className="font-mono font-semibold text-blue-600">
+                        ${costTracker.getSessionStats().totalActualCost.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -546,7 +546,7 @@ const WatsonAnalyzer: React.FC = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Avg Cost/Row</span>
                         <span className="font-mono text-gray-900">
-                          ${(costTracker.getSessionStats().totalActualCost / processedData.length).toFixed(4)}
+                          ${(costTracker.getSessionStats().totalActualCost / processedData.length).toFixed(2)}
                         </span>
                       </div>
                     )}

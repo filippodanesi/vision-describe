@@ -252,11 +252,12 @@ export async function processPartooRows(
           }
         );
         
-        // Log cost details
+        // Log cost details with actual token counts for verification
         if (costRecord) {
           const cost = costRecord.actualCost || costRecord.estimatedCost;
           const totalTokens = rawResponse.tokens.inputTokens + rawResponse.tokens.outputTokens;
-          addLog?.(`${businessId} | partoo | COST: $${cost.toFixed(4)} (${rawResponse.tokens.inputTokens}→${rawResponse.tokens.outputTokens} = ${totalTokens} tokens)`);
+          const costType = costRecord.actualCost ? 'ACTUAL' : 'ESTIMATED';
+          addLog?.(`${businessId} | partoo | COST: $${cost.toFixed(2)} (${costType}: ${rawResponse.tokens.inputTokens}→${rawResponse.tokens.outputTokens} = ${totalTokens} tokens)`);
         }
       }
 

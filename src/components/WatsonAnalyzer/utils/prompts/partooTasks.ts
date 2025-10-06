@@ -151,18 +151,24 @@ export function isGenericDescription(text: string | undefined, city: string): bo
   // These talk about the company history, global numbers, certifications
   // but NOT about the specific store location and services
   const corporatePatterns = [
-    /\d+\s*anni/i,                           // "130 anni", "oltre 130 anni"
-    /\d+\s*years/i,                          // "130 years"
-    /dal\s*\d{4}/i,                          // "Dal 1886"
-    /since\s*\d{4}/i,                        // "Since 1886"
-    /depuis\s*\d{4}/i,                       // "Depuis 1886"
-    /\d{2,}'?\d{3}\s*(negozi|stores|magasins|geschäfte)/i, // "4'050 negozi", "40'000 clienti"
-    /\d{2,}\s*paesi/i,                       // "120 paesi"
-    /\d{2,}\s*countries/i,                   // "120 countries"
+    /\d+\s*anni/i,                           // "130 anni", "oltre 130 anni" (IT)
+    /\d+\s*years/i,                          // "130 years" (EN)
+    /\d+\s*jahren/i,                         // "130 Jahren" (DE)
+    /\d+\s*ans/i,                            // "130 ans" (FR)
+    /dal\s*\d{4}/i,                          // "Dal 1886" (IT)
+    /since\s*\d{4}/i,                        // "Since 1886" (EN)
+    /seit\s*\d{4}/i,                         // "Seit 1886" (DE)
+    /depuis\s*\d{4}/i,                       // "Depuis 1886" (FR)
+    /desde\s*\d{4}/i,                        // "Desde 1886" (ES/PT)
+    /\d{2,}'?\d{3}\s*(negozi|stores|magasins|geschäfte|tiendas|lojas)/i, // "4'050 negozi"
+    /\d{2,}\s*(paesi|countries|länder|pays|países)/i, // "120 paesi/countries/länder"
     /triumph international/i,                // Corporate name
     /business social compliance initiative/i, // BSCI certification
-    /globally|globalmente|à l'échelle mondiale/i, // Global scale references
-    /worldwide|in tutto il mondo|dans le monde entier/i,
+    /globally|globalmente|à l'échelle mondiale|weltweit/i, // Global scale
+    /worldwide|in tutto il mondo|dans le monde entier|auf der ganzen welt/i, // Worldwide
+    /auf der ganzen welt|frauen auf der ganzen welt/i, // "donne in tutto il mondo" (DE)
+    /handwerksqualität|qualità artigianale|craftsmanship quality/i, // Generic quality claims
+    /già\s+dal|bereits\s+seit|déjà\s+depuis/i, // "Già dal/Bereits seit/Déjà depuis" + year
   ];
   
   let corporateMatchCount = 0;
@@ -235,22 +241,25 @@ INPUTS:
     prompt += `\n- Opening date: ${storeData.businessOpeningDate}`;
   }
 
-  if (storeData.existingShort) {
-    prompt += `\n- Existing short: ${storeData.existingShort}`;
+  // Check if existing descriptions are generic
+  const shortIsGeneric = overwritePolicy === 'fill-improve' && isGenericDescription(storeData.existingShort, storeData.city);
+  const longIsGeneric = overwritePolicy === 'fill-improve' && isGenericDescription(storeData.existingLong, storeData.city);
+
+  // Only include existing text if it's NOT generic (for reference/improvement)
+  // If generic, we completely IGNORE it and write fresh content
+  if (storeData.existingShort && !shortIsGeneric) {
+    prompt += `\n- Existing short (for reference): ${storeData.existingShort}`;
   }
   
-  if (storeData.existingLong) {
-    prompt += `\n- Existing long: ${storeData.existingLong}`;
+  if (storeData.existingLong && !longIsGeneric) {
+    prompt += `\n- Existing long (for reference): ${storeData.existingLong}`;
   }
 
-  // Overwrite policy guidance
-  if (overwritePolicy === 'fill-improve') {
-    const shortIsGeneric = isGenericDescription(storeData.existingShort, storeData.city);
-    const longIsGeneric = isGenericDescription(storeData.existingLong, storeData.city);
-    
-    if (shortIsGeneric || longIsGeneric) {
-      prompt += `\n\nNOTE: Existing text is GENERIC (corporate/boilerplate). REWRITE FULLY using only the specific store details above. Do NOT copy corporate history, global statistics, or brand background.`;
-    }
+  // Add explicit note if we're replacing generic text
+  if (shortIsGeneric || longIsGeneric) {
+    prompt += `\n\n⚠️ IMPORTANT: Previous description was GENERIC corporate text (company history, global stats).
+Write COMPLETELY NEW content using ONLY the store details above.
+DO NOT reference or copy any corporate history, founding dates, global statistics, or brand background.`;
   }
 
   // Output format

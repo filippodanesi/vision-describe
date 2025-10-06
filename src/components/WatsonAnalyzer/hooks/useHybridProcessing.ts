@@ -222,7 +222,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
 
           // Log success with simple format
           const cost = costRecord?.actualCost || costRecord?.estimatedCost || 0;
-          addLog(`✓ ${productId} | ${language.toLowerCase()} | optimized | $${cost.toFixed(4)}`);
+          addLog(`✓ ${productId} | ${language.toLowerCase()} | optimized | $${cost.toFixed(2)}`);
 
         } catch (error: any) {
           console.error('Client-side optimization error:', error);
@@ -338,7 +338,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         for (const row of result.processedRows) {
           const idxFallback = typeof processedRows === 'number' ? processedRows : 0;
           const productId = row['MaterialSAPMaterialNo'] || row['ColorSAPMaterialNo'] || row['ProductID'] || row['ID'] || `Row ${idxFallback + 1}`;
-          addLog(`✓ ${productId} | server batch | optimized | $${(result.cost.totalCost / result.processedRows.length).toFixed(4)}`);
+          addLog(`✓ ${productId} | server batch | optimized | $${(result.cost.totalCost / result.processedRows.length).toFixed(2)}`);
         }
         
         allProcessedRows.push(...result.processedRows);
