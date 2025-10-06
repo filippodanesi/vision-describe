@@ -54,9 +54,9 @@ OVERWRITE POLICY:
 - Otherwise, IMPROVE clarity and local specificity while keeping all constraints
 
 LENGTH & FORMAT:
-- Short description: 35-50 words
-- Long description: 90-140 words
-- COUNT words and ensure BOTH fields are within range BEFORE responding
+- Short description: maximum 80 characters
+- Long description: maximum 750 characters
+- COUNT characters and ensure BOTH fields are within limits BEFORE responding
 - Output JSON ONLY with these exact keys: "short_description", "long_description"
 - Do NOT include any text outside the JSON object
 

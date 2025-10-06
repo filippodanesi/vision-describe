@@ -9,8 +9,8 @@
  * 
  * Key Features:
  * - Processes Partoo store data from Excel/CSV files
- * - Generates localized short descriptions (35-50 words)
- * - Generates localized long descriptions (90-140 words)
+ * - Generates localized short descriptions (max 80 characters)
+ * - Generates localized long descriptions (max 750 characters)
  * - Automatic language detection from country code
  * - Special handling for Switzerland (multi-lingual)
  * - Handles permanently closed stores
@@ -81,8 +81,8 @@ function shouldSkipColumn(columnName: string): boolean {
  * 1. Extract store data using column mapping
  * 2. Detect language from country code (with special handling for CH)
  * 3. Check if store is permanently closed
- * 4. Generate or improve short description (35-50 words)
- * 5. Generate or improve long description (90-140 words)
+ * 4. Generate or improve short description (max 80 characters)
+ * 5. Generate or improve long description (max 750 characters)
  * 6. Validate output format (plain text, no HTML/emojis)
  * 7. Return enhanced store data
  */
@@ -270,15 +270,15 @@ export async function processPartooRows(
         // Keep original values unchanged
         processed.gen_error = 'Failed to parse AI response';
       } else {
-        // Validate word counts
-        const shortWords = parsed.short.split(/\s+/).length;
-        const longWords = parsed.long.split(/\s+/).length;
+        // Validate character counts
+        const shortChars = parsed.short.length;
+        const longChars = parsed.long.length;
 
-        if (shortWords < 35 || shortWords > 50) {
-          addLog?.(`${businessId} | partoo | WARN: Short description ${shortWords} words (target 35-50)`);
+        if (shortChars > 80) {
+          addLog?.(`${businessId} | partoo | WARN: Short description ${shortChars} chars (max 80)`);
         }
-        if (longWords < 90 || longWords > 140) {
-          addLog?.(`${businessId} | partoo | WARN: Long description ${longWords} words (target 90-140)`);
+        if (longChars > 750) {
+          addLog?.(`${businessId} | partoo | WARN: Long description ${longChars} chars (max 750)`);
         }
 
         // Clean output (remove any accidental HTML/markdown)
@@ -301,7 +301,7 @@ export async function processPartooRows(
           addLog?.(`${businessId} | partoo | MAP(long)->${longDescKey}`);
         }
 
-        addLog?.(`${businessId} | partoo | SUCCESS: Generated short=${shortWords}w, long=${longWords}w`);
+        addLog?.(`${businessId} | partoo | SUCCESS: Generated short=${shortChars}ch, long=${longChars}ch`);
       }
     } catch (error) {
       addLog?.(`${businessId} | partoo | ERROR: ${error}`);
@@ -355,15 +355,15 @@ export function validatePartooOutput(row: any): { valid: boolean; errors: string
     errors.push('Contains URLs');
   }
 
-  // Check word counts
-  const shortWords = short.split(/\s+/).filter(Boolean).length;
-  const longWords = long.split(/\s+/).filter(Boolean).length;
+  // Check character counts
+  const shortChars = short.length;
+  const longChars = long.length;
 
-  if (shortWords > 0 && (shortWords < 35 || shortWords > 50)) {
-    errors.push(`Short description: ${shortWords} words (target 35-50)`);
+  if (shortChars > 80) {
+    errors.push(`Short description: ${shortChars} characters (max 80)`);
   }
-  if (longWords > 0 && (longWords < 90 || longWords > 140)) {
-    errors.push(`Long description: ${longWords} words (target 90-140)`);
+  if (longChars > 750) {
+    errors.push(`Long description: ${longChars} characters (max 750)`);
   }
 
   return {
