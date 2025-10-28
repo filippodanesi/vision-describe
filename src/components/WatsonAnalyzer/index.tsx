@@ -6,10 +6,7 @@
  * @website https://www.filippodanesi.com
  * @created 2025
  * @copyright Copyright (c) 2025 Filippo Danesi. All rights reserved.
- * @license Dual-licensed: CC BY-NC-SA 4.0 (non-commercial) | Commercial l              <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Copy Assistant</h1>
-              <p className="text-gray-600">
-                Generate optimized content for products, stores, and marketplace platforms using AI
-              </p>se required
+ * @license Dual-licensed: CC BY-NC-SA 4.0 (non-commercial) | Commercial license required
  * 
  * @description Main orchestrator component for the AI-powered content generation assistant.
  *              Handles file upload, column mapping, model selection, processing, and results export
@@ -22,6 +19,7 @@
  * - Real-time cost tracking and token counting
  * - Multi-language content generation
  * - Export to optimized Excel format
+ * - [NEW] Optional business ID filtering for Partoo
  */
 
 import React, { useState, useEffect } from 'react';
@@ -50,6 +48,7 @@ import ColumnConfirmation from './components/ColumnConfirmation';
 import ModelSelector from './components/ModelSelector';
 import ProcessingView from './components/ProcessingView';
 import ExportResults from './components/ExportResults';
+import BusinessIdFilterUpload from './components/BusinessIdFilterUpload';  // ✨ NUOVO IMPORT
 import { getModelById } from '@/lib/models';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -73,6 +72,12 @@ const WatsonAnalyzer: React.FC = () => {
   
   // Selected model
   const [selectedModel, setSelectedModel] = useState<string>('');
+  
+  // ============================================================================
+  // ✨ NUOVO STATE: Business ID Filter
+  // ============================================================================
+  const [businessIdsFilter, setBusinessIdsFilter] = useState<Set<string> | null>(null);
+  // ============================================================================
   
   // Budget UI removed
   
@@ -110,6 +115,12 @@ const WatsonAnalyzer: React.FC = () => {
   // Handle file upload
   const handleFileUploaded = (data: { rows: any[]; columns: string[]; meta?: any }) => {
     setFileData(data);
+    
+    // ============================================================================
+    // ✨ RESET FILTER quando si carica un nuovo file
+    // ============================================================================
+    setBusinessIdsFilter(null);
+    // ============================================================================
     
     // For Partoo, auto-select all relevant columns (processor will filter what's needed)
     if (useCase === 'partoo') {
@@ -209,14 +220,24 @@ const WatsonAnalyzer: React.FC = () => {
         throw new Error('Invalid model selected');
       }
 
+      // ============================================================================
+      // ✨ MODIFICATO: Aggiungi businessIdsFilter al context
+      // ============================================================================
       const processedRowsData = await processFile(
         fileData.rows,
         selectedColumns,
         modelConfig,
         apiKey as string,
-        { useCase: useCase === 'amazon' ? 'amazon' : useCase === 'partoo' ? 'partoo' : 'ecommerce', mappings: columnMappings, dryRun: options?.dryRun, lang: options?.targetLanguage },
+        { 
+          useCase: useCase === 'amazon' ? 'amazon' : useCase === 'partoo' ? 'partoo' : 'ecommerce', 
+          mappings: columnMappings, 
+          dryRun: options?.dryRun, 
+          lang: options?.targetLanguage,
+          businessIdsFilter: businessIdsFilter  // ✨ PASSA IL FILTRO
+        },
         costTracker
       );
+      // ============================================================================
       
       setProcessedData(processedRowsData);
       setProcessingEndTime(new Date());
@@ -342,6 +363,7 @@ const WatsonAnalyzer: React.FC = () => {
     setProcessedData(null);
     setProcessingStartTime(null);
     setProcessingEndTime(null);
+    setBusinessIdsFilter(null);  // ✨ RESET FILTER
     setCurrentStep(ProcessingStep.UPLOAD);
   };
 
@@ -401,6 +423,20 @@ const WatsonAnalyzer: React.FC = () => {
 
               <FileUpload onFileUploaded={handleFileUploaded} useCase={useCase} />
             </div>
+
+            {/* ============================================================================ */}
+            {/* ✨ NUOVO: Business ID Filter Component (solo per Partoo) */}
+            {/* ============================================================================ */}
+            {fileData && useCase === 'partoo' && (
+              <div className="mt-4">
+                <BusinessIdFilterUpload
+                  onFilterLoaded={(ids) => setBusinessIdsFilter(ids)}
+                  onFilterCleared={() => setBusinessIdsFilter(null)}
+                  disabled={isProcessing}
+                />
+              </div>
+            )}
+            {/* ============================================================================ */}
           </div>
         );
 

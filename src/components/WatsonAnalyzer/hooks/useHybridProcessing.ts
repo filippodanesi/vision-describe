@@ -104,7 +104,13 @@ export interface HybridProcessingHook {
     columns: string[],
     model: Model,
     apiKey: string,
-    context?: { useCase?: 'ecommerce' | 'amazon' | 'partoo'; mappings?: any; lang?: string; dryRun?: boolean },
+    context?: { 
+      useCase?: 'ecommerce' | 'amazon' | 'partoo'; 
+      mappings?: any; 
+      lang?: string; 
+      dryRun?: boolean;
+      businessIdsFilter?: Set<string> | null;  // ✨ NUOVO CAMPO
+    },
     costTracker?: any
   ) => Promise<any[]>;
   cancelProcessing: () => void;
@@ -212,30 +218,28 @@ export const useHybridProcessing = (): HybridProcessingHook => {
               model.id,
               original,
               result.content,
-              result.tokens
+              {
+                inputTokens: result.tokens.inputTokens,
+                outputTokens: result.tokens.outputTokens
+              }
             );
           }
           
-          totalCost += costRecord?.actualCost || costRecord?.estimatedCost || 0;
+          const cost = costRecord?.actualCost || costRecord?.estimatedCost || 0;
+          totalCost += cost;
           totalInputTokens += result.tokens.inputTokens;
           totalOutputTokens += result.tokens.outputTokens;
 
-          // Log success with simple format
-          const cost = costRecord?.actualCost || costRecord?.estimatedCost || 0;
-          addLog(`✓ ${productId} | ${language.toLowerCase()} | optimized | $${cost.toFixed(2)}`);
-
-        } catch (error: any) {
-          console.error('Client-side optimization error:', error);
-          addLog(`⨯ ${productId} | ${language.toLowerCase()} | failed: ${error?.message || 'unknown error'}`);
-          // Keep original text on error
+        } catch (error) {
+          console.error(`Error processing column ${column}:`, error);
+          processedRow[column] = original;
         }
       }
 
       processedRows.push(processedRow);
       
-      // Update progress after each row using global count
+      // Update progress smoothly for each row
       const globalProcessedRows = globalRowOffset + processedRows.length;
-      setProcessedRows(globalProcessedRows);
       if (totalGlobalRows > 0) {
         setProgress(Math.round((globalProcessedRows / totalGlobalRows) * 100));
       }
@@ -260,7 +264,13 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     selectedColumns: string[],
     model: Model,
     apiKey: string,
-    context?: { useCase?: 'ecommerce' | 'amazon' | 'partoo'; mappings?: any; lang?: string; dryRun?: boolean },
+    context?: { 
+      useCase?: 'ecommerce' | 'amazon' | 'partoo'; 
+      mappings?: any; 
+      lang?: string; 
+      dryRun?: boolean;
+      businessIdsFilter?: Set<string> | null;  // ✨ NUOVO CAMPO
+    },
     costTracker?: any
   ): Promise<any[]> => {
     setIsProcessing(true);
@@ -378,7 +388,13 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     selectedColumns: string[],
     model: Model,
     apiKey: string,
-    context?: { useCase?: 'ecommerce' | 'amazon' | 'partoo'; mappings?: any; lang?: string; dryRun?: boolean }
+    context?: { 
+      useCase?: 'ecommerce' | 'amazon' | 'partoo'; 
+      mappings?: any; 
+      lang?: string; 
+      dryRun?: boolean;
+      businessIdsFilter?: Set<string> | null;  // ✨ NUOVO CAMPO
+    }
   ): Promise<any[]> => {
     // Use client-side keep-alive mechanism
     // Smaller chunks to surface per-row progress smoothly in UI
@@ -411,7 +427,29 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         } else if (context?.useCase === 'partoo') {
           const { processPartooRows } = await import('../processing/processPartoo');
           const mapped = context.mappings?.mapping || {};
-          const processed = await processPartooRows(chunk.rows, model, apiKey, mapped, 'fill-improve', (m) => addLog(m), costTracker);
+          
+          // ============================================================================
+          // ✨ BUSINESS ID FILTER - Extract and log filter status
+          // ============================================================================
+          const businessIdsFilter = context.businessIdsFilter || null;
+          
+          if (businessIdsFilter && businessIdsFilter.size > 0) {
+            addLog(`📋 FILTER ACTIVE: Processing only ${businessIdsFilter.size} business IDs`);
+          } else {
+            addLog(`📋 NO FILTER: Processing all ${chunk.rows.length} rows`);
+          }
+          // ============================================================================
+          
+          const processed = await processPartooRows(
+            chunk.rows, 
+            model, 
+            apiKey, 
+            mapped, 
+            'fill-improve', 
+            (m) => addLog(m), 
+            costTracker,
+            businessIdsFilter  // ✨ PASSA IL FILTRO
+          );
           allProcessedRows.push(...processed);
           const processedCount = Math.min(allProcessedRows.length, rows.length);
           setProcessedRows(processedCount);
@@ -448,4 +486,4 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     processFile,
     cancelProcessing,
   };
-}; 
+};

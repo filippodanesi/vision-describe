@@ -1,5 +1,4 @@
 /**
- * Partoo Store Processing Module
  * 
  * @author Filippo Danesi
  * @created September 30, 2025
@@ -16,6 +15,7 @@
  * - Handles permanently closed stores
  * - Brand Tone of Voice compliance (Triumph)
  * - Overwrite policy support (fill-only vs fill-improve)
+ * - Optional business ID filtering for selective processing
  */
 
 import { Model } from '@/lib/models';
@@ -75,16 +75,19 @@ function shouldSkipColumn(columnName: string): boolean {
  * @param mapping - Column mapping configuration for Partoo fields
  * @param overwritePolicy - 'fill-only' or 'fill-improve'
  * @param addLog - Optional logging function for progress tracking
+ * @param costTracker - Optional cost tracking utility
+ * @param businessIdsFilter - Optional Set of business IDs to process (if provided, only these will be processed)
  * @returns Promise<any[]> - Processed rows with generated descriptions
  * 
  * Processing Flow:
  * 1. Extract store data using column mapping
- * 2. Detect language from country code (with special handling for CH)
- * 3. Check if store is permanently closed
- * 4. Generate or improve short description (max 80 characters)
- * 5. Generate or improve long description (max 750 characters)
- * 6. Validate output format (plain text, no HTML/emojis)
- * 7. Return enhanced store data
+ * 2. [NEW] Check if business ID is in filter (if filter provided)
+ * 3. Detect language from country code (with special handling for CH)
+ * 4. Check if store is permanently closed
+ * 5. Generate or improve short description (max 80 characters)
+ * 6. Generate or improve long description (max 750 characters)
+ * 7. Validate output format (plain text, no HTML/emojis)
+ * 8. Return enhanced store data
  */
 export async function processPartooRows(
   rows: any[],
@@ -93,7 +96,8 @@ export async function processPartooRows(
   mapping: PartooMapping,
   overwritePolicy: 'fill-only' | 'fill-improve' = 'fill-improve',
   addLog?: (msg: string) => void,
-  costTracker?: any
+  costTracker?: any,
+  businessIdsFilter?: Set<string> | null
 ): Promise<any[]> {
   const out: any[] = [];
 
@@ -115,6 +119,24 @@ export async function processPartooRows(
 
     const name = String(row[nameKey] ?? '').trim();
     const businessId = String(row[businessIdKey] ?? (name || `row-${i + 1}`));
+
+    // ============================================================================
+    // BUSINESS ID FILTER - Skip processing if not in filter list
+    // ============================================================================
+    if (businessIdsFilter && businessIdsFilter.size > 0) {
+      if (!businessIdsFilter.has(businessId)) {
+        // Business ID not in filter list - skip processing and keep original values
+        addLog?.(`${businessId} | partoo | SKIP: Not in filter list (keeping original values)`);
+        out.push(processed);
+        continue;
+      }
+      // Business ID is in filter list - proceed with processing
+      addLog?.(`${businessId} | partoo | ✓ In filter list - will process`);
+    }
+    // ============================================================================
+    // END BUSINESS ID FILTER
+    // ============================================================================
+
     const address = String(row[addressKey] ?? '').trim();
     const city = String(row[cityKey] ?? '').trim();
     const zipcode = String(row[zipcodeKey] ?? '').trim();
