@@ -48,7 +48,7 @@ import ColumnConfirmation from './components/ColumnConfirmation';
 import ModelSelector from './components/ModelSelector';
 import ProcessingView from './components/ProcessingView';
 import ExportResults from './components/ExportResults';
-import BusinessIdFilterUpload from './components/BusinessIdFilterUpload';  // ✨ NUOVO IMPORT
+import BusinessIdFilterUpload from './components/BusinessIdFilterUpload';
 import { getModelById } from '@/lib/models';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -73,11 +73,8 @@ const WatsonAnalyzer: React.FC = () => {
   // Selected model
   const [selectedModel, setSelectedModel] = useState<string>('');
   
-  // ============================================================================
-  // ✨ NUOVO STATE: Business ID Filter
-  // ============================================================================
+  // Business ID Filter
   const [businessIdsFilter, setBusinessIdsFilter] = useState<Set<string> | null>(null);
-  // ============================================================================
   
   // Budget UI removed
   
@@ -115,12 +112,7 @@ const WatsonAnalyzer: React.FC = () => {
   // Handle file upload
   const handleFileUploaded = (data: { rows: any[]; columns: string[]; meta?: any }) => {
     setFileData(data);
-    
-    // ============================================================================
-    // ✨ RESET FILTER quando si carica un nuovo file
-    // ============================================================================
     setBusinessIdsFilter(null);
-    // ============================================================================
     
     // For Partoo, auto-select all relevant columns (processor will filter what's needed)
     if (useCase === 'partoo') {
@@ -220,9 +212,6 @@ const WatsonAnalyzer: React.FC = () => {
         throw new Error('Invalid model selected');
       }
 
-      // ============================================================================
-      // ✨ MODIFICATO: Aggiungi businessIdsFilter al context
-      // ============================================================================
       const processedRowsData = await processFile(
         fileData.rows,
         selectedColumns,
@@ -233,11 +222,10 @@ const WatsonAnalyzer: React.FC = () => {
           mappings: columnMappings, 
           dryRun: options?.dryRun, 
           lang: options?.targetLanguage,
-          businessIdsFilter: businessIdsFilter  // ✨ PASSA IL FILTRO
+          businessIdsFilter: businessIdsFilter
         },
         costTracker
       );
-      // ============================================================================
       
       setProcessedData(processedRowsData);
       setProcessingEndTime(new Date());
@@ -363,7 +351,7 @@ const WatsonAnalyzer: React.FC = () => {
     setProcessedData(null);
     setProcessingStartTime(null);
     setProcessingEndTime(null);
-    setBusinessIdsFilter(null);  // ✨ RESET FILTER
+    setBusinessIdsFilter(null);
     setCurrentStep(ProcessingStep.UPLOAD);
   };
 
@@ -380,8 +368,6 @@ const WatsonAnalyzer: React.FC = () => {
                 Generate optimized content for products, stores, and marketplace platforms using AI
               </p>
             </div>
-
-            {/* Budget UI removed */}
 
             {/* Upload Section */}
             <div className="bg-gray-50 rounded-lg p-4">
@@ -424,19 +410,14 @@ const WatsonAnalyzer: React.FC = () => {
               <FileUpload onFileUploaded={handleFileUploaded} useCase={useCase} />
             </div>
 
-            {/* ============================================================================ */}
-            {/* ✨ NUOVO: Business ID Filter Component (solo per Partoo) */}
-            {/* ============================================================================ */}
+            {/* Business ID Filter - Only show for Partoo after file is loaded */}
             {fileData && useCase === 'partoo' && (
-              <div className="mt-4">
-                <BusinessIdFilterUpload
-                  onFilterLoaded={(ids) => setBusinessIdsFilter(ids)}
-                  onFilterCleared={() => setBusinessIdsFilter(null)}
-                  disabled={isProcessing}
-                />
-              </div>
+              <BusinessIdFilterUpload
+                onFilterLoaded={(ids) => setBusinessIdsFilter(ids)}
+                onFilterCleared={() => setBusinessIdsFilter(null)}
+                disabled={isProcessing}
+              />
             )}
-            {/* ============================================================================ */}
           </div>
         );
 
