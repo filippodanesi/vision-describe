@@ -19,7 +19,7 @@ import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, X, FileText, Filter } from 'lucide-react';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
 
 interface BusinessIdFilterUploadProps {
   onFilterLoaded: (ids: Set<string>) => void;
@@ -40,37 +40,75 @@ const BusinessIdFilterUpload: React.FC<BusinessIdFilterUploadProps> = ({
   /**
    * Parse uploaded file and extract business IDs
    */
-  const parseBusinessIds = (fileContent: string, fileType: 'csv' | 'txt' | 'xlsx'): Set<string> => {
+  const parseBusinessIds = (fileContent: string): Set<string> => {
     const ids = new Set<string>();
     
-    if (fileType === 'csv' || fileType === 'txt') {
-      // Split by lines and trim
-      const lines = fileContent.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    // Split by lines and trim
+    const lines = fileContent.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    
+    // Check if first line is a header (contains common header keywords)
+    const firstLine = lines[0]?.toLowerCase() || '';
+    const isHeader = /business.?id|store.?id|id|identifier/i.test(firstLine);
+    
+    // Start from line 1 if header detected, otherwise line 0
+    const startIndex = isHeader ? 1 : 0;
+    
+    for (let i = startIndex; i < lines.length; i++) {
+      const line = lines[i];
       
-      // Check if first line is a header (contains common header keywords)
-      const firstLine = lines[0]?.toLowerCase() || '';
-      const isHeader = /business.?id|store.?id|id|identifier/i.test(firstLine);
-      
-      // Start from line 1 if header detected, otherwise line 0
-      const startIndex = isHeader ? 1 : 0;
-      
-      for (let i = startIndex; i < lines.length; i++) {
-        const line = lines[i];
-        
-        // Handle CSV with commas - take first column
-        if (line.includes(',')) {
-          const firstColumn = line.split(',')[0].trim();
-          if (firstColumn) {
-            ids.add(firstColumn);
-          }
-        } else {
-          // Plain text - one ID per line
-          if (line) {
-            ids.add(line);
-          }
+      // Handle CSV with commas - take first column
+      if (line.includes(',')) {
+        const firstColumn = line.split(',')[0].trim();
+        if (firstColumn) {
+          ids.add(firstColumn);
+        }
+      } else {
+        // Plain text - one ID per line
+        if (line) {
+          ids.add(line);
         }
       }
     }
+    
+    return ids;
+  };
+
+  /**
+   * Parse Excel file and extract business IDs from first column
+   */
+  const parseExcelFile = async (arrayBuffer: ArrayBuffer): Promise<Set<string>> => {
+    const ids = new Set<string>();
+    
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(arrayBuffer);
+    
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) {
+      return ids;
+    }
+    
+    // Check if first row is a header
+    const firstRow = worksheet.getRow(1);
+    const firstCellValue = firstRow.getCell(1).value;
+    const isHeader = firstCellValue && 
+      typeof firstCellValue === 'string' && 
+      /business.?id|store.?id|id|identifier/i.test(firstCellValue.toLowerCase());
+    
+    // Start from row 2 if header detected, otherwise row 1
+    const startRow = isHeader ? 2 : 1;
+    
+    // Iterate through rows
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber < startRow) return;
+      
+      const cellValue = row.getCell(1).value;
+      if (cellValue) {
+        const stringValue = String(cellValue).trim();
+        if (stringValue) {
+          ids.add(stringValue);
+        }
+      }
+    });
     
     return ids;
   };
@@ -98,14 +136,11 @@ const BusinessIdFilterUpload: React.FC<BusinessIdFilterUploadProps> = ({
       if (fileExtension === 'xlsx' || fileExtension === 'xls') {
         // Handle Excel files
         const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_csv(firstSheet);
-        businessIds = parseBusinessIds(data, 'csv');
+        businessIds = await parseExcelFile(arrayBuffer);
       } else {
         // Handle CSV/TXT files
         const text = await file.text();
-        businessIds = parseBusinessIds(text, fileExtension as 'csv' | 'txt');
+        businessIds = parseBusinessIds(text);
       }
 
       if (businessIds.size === 0) {
