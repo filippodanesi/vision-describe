@@ -55,6 +55,18 @@ LANGUAGE-SPECIFIC CRITICAL RULES:
 - FR (French): Maintain French elegance and natural flow
 - IT (Italian): Use Italian expressiveness and style
 
+WIRING & PADDING (FOR BRA PRODUCTS):
+- When wiring/padding info is provided, include as FIRST bullet
+- Format: "[Wiring], [padding] bra for [benefit]"
+- Examples: "Non-wired, padded bra for everyday comfort" / "Wired, non-padded bra for natural shaping"
+- SWIMWEAR: Skip wiring for one-pieces, mention padding only if relevant
+- BEACHWEAR: Do NOT include wiring/padding info
+
+SERIES NAME RULES:
+- Remove "O-" prefix (e.g., "O - Light Paonette" → "Light Paonette")
+- Remove trailing "T" (e.g., "Ladyform Soft T" → "Ladyform Soft")
+- Always use "the [Name] series" format
+
 TRUTHFULNESS & ANTI-INFERENCE (CRITICAL):
 - NEVER add technical specs not explicitly present in the input (e.g., removable, medical-grade, maximum/minimum levels)
 - NEVER infer features from generic terms (e.g., "padded" ≠ removable; "adjustable" ≠ fully/completely adjustable)

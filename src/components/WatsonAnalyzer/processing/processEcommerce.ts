@@ -35,7 +35,36 @@ export async function processEcommerceRows(
     const altTitleKey = `MaterialAlternativeStyle_${lang}`;
     const title = String(row[altTitleKey] ?? row['MaterialSeriesName'] ?? '');
 
-    addLog?.(`${id} | ecom:${lang} | shortHint=${Boolean(shortHint)}`);
+    // Wiring and Padding info - check multiple possible column names
+    const wiringInfo = String(
+      row['Wiring Info'] ??
+      row['WiringInfo'] ??
+      row['MaterialProductWiringTypeAI_en'] ??
+      row['Wiring'] ??
+      ''
+    ).trim();
+
+    const paddingInfo = String(
+      row['Padding info'] ??
+      row['PaddingInfo'] ??
+      row['MaterialProductLiningLevelTypeAI_en'] ??
+      row['Padding'] ??
+      ''
+    ).trim();
+
+    // Product group for swimwear/beachwear handling
+    const productGroup = String(
+      row['Product Group'] ??
+      row['MaterialProductGroup'] ??
+      ''
+    ).trim();
+
+    // Additional context fields
+    const usps = String(row['MaterialB2CUSPs_en'] ?? '').trim();
+    const seriesDescription = String(row['MaterialB2CSeriesDescription_en'] ?? '').trim();
+    const styleDescription = String(row['MaterialB2CStyleDescription_en'] ?? '').trim();
+
+    addLog?.(`${id} | ecom:${lang} | wiring=${wiringInfo || 'N/A'} | padding=${paddingInfo || 'N/A'}`);
 
     if (!description) {
       out.push(processed);
@@ -43,7 +72,18 @@ export async function processEcommerceRows(
     }
 
     const res = await optimizeTextWithAI(
-      buildEcomOptimizePrompt({ title, description, shortHint, language: lang }),
+      buildEcomOptimizePrompt({
+        title,
+        description,
+        shortHint,
+        language: lang,
+        wiringInfo: wiringInfo || undefined,
+        paddingInfo: paddingInfo || undefined,
+        productGroup: productGroup || undefined,
+        usps: usps || undefined,
+        seriesDescription: seriesDescription || undefined,
+        styleDescription: styleDescription || undefined
+      }),
       [],
       null,
       model,

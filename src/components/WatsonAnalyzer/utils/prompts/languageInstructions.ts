@@ -41,6 +41,33 @@ CRITICAL: Write in EUROPEAN PORTUGUESE (Portugal), NOT Brazilian Portuguese.
 - European Portuguese spelling and grammar
 - Natural Portuguese sentence structure (not translated from English)
 - Maintain sophisticated, premium tone appropriate for European market
+
+MANDATORY REPLACEMENTS (use these exact terms):
+- "Roupa de dormir" → use "sleepwear" (keep English term)
+- "Camisa de noite" → "Camisa de dormir"
+- "shorts" → "calções"
+- "roupão" → "robe" (keep English term)
+- "top sem mangas" → "top" (in PT, "top" already implies sleeveless)
+- "comprimento total" / "Full-length" → "comprido/comprida"
+- "The O-Nightdresses collection" → "A série Nightdresses"
+- "jersey de algodão suave e respirável" → "malha de algodão suave e respirável"
+- "bordas delicadas" → "rebordos delicados"
+- "Forro suave ao contacto com a pele" → "Forro suave"
+
+SPECIFIC TRANSLATIONS:
+- "Relaxed tank top" → "Top de alças com corte descontraído"
+- "Tank top" → "Top de alças"
+- "from city streets to seaside moments" → "das ruas da cidade aos momentos à beira-mar"
+- "as an elegant layering piece" → "como uma peça elegante para conjugar em camadas"
+- "Engineered for a flattering silhouette and invisible wear beneath clothing" → "Concebido para proporcionar uma silhueta favorecedora e um efeito invisível sob a roupa"
+- "unpadded bra" → "soutien não almofadado"
+- "fully lined cups" → "Copas totalmente forradas"
+- "Uniting feminine appeal with everyday wearability" → "Aliando a elegância feminina à praticidade do dia a dia"
+- "Delicate elastic edging along the interior cup line" → "Acabamento elástico delicado ao longo da borda interior da copa" (NOT "copo")
+
+BRAZILIAN BRIEF DESCRIPTION (use this adaptation):
+- Original: "This contemporary Brazilian brief is crafted to create a flattering shape with an invisible finish. The airy, open lace with delicate scalloped edges brings a feminine and refined aesthetic, while the seamless back ensures no visible lines for a smooth appearance beneath any outfit."
+- Use: "Cuecas brasileiras contemporâneas, com um design que modela a silhueta e garante um acabamento invisível. A renda leve e a parte traseira sem costuras proporcionam conforto e um visual suave sob qualquer look."
     `.trim(),
     vocabulary: {
       'mobile phone': 'telemóvel',
@@ -49,7 +76,14 @@ CRITICAL: Write in EUROPEAN PORTUGUESE (Portugal), NOT Brazilian Portuguese.
       'comfortable': 'confortável',
       'padding': 'acolchoamento',
       'support': 'suporte',
-      'adjustable': 'ajustável'
+      'adjustable': 'ajustável',
+      'sleepwear': 'sleepwear',
+      'nightdress': 'camisa de dormir',
+      'shorts': 'calções',
+      'robe': 'robe',
+      'tank top': 'top de alças',
+      'unpadded': 'não almofadado',
+      'cup': 'copa'
     },
     brandTone: 'Sofisticado, elegante, de qualidade premium'
   },
@@ -181,6 +215,11 @@ CRITICAL RULES:
 - THINK: "How would a native ${lang.name} copywriter write this?"
 - Use idiomatic expressions native to ${lang.name}
 - Maintain brand's sophisticated, quality-focused tone
+
+SERIES NAME FORMATTING (ALL LANGUAGES):
+- ALWAYS remove "O-" or "O -" prefix from series names (e.g., "O - Light Paonette" → "Light Paonette")
+- For series ending in "T" (e.g., "Ladyform Soft T"), use name without "T" (→ "Ladyform Soft")
+- ALWAYS refer to series as "the [Series Name] series" for clarity
   `.trim();
 };
 
