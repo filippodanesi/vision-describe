@@ -16,7 +16,7 @@ const Footer: React.FC = () => {
         </div>
         <div className="flex items-center gap-2 justify-end">
           <span className="text-xs text-muted-foreground">AI Copy Assistant</span>
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0">v2.2</Badge>
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0">v3.0</Badge>
         </div>
       </div>
     </footer>

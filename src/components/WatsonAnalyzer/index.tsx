@@ -42,6 +42,9 @@ import { validateEnv, OPENAI_API_KEY, ANTHROPIC_API_KEY } from '@/config/env';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import FileUpload from './components/FileUpload';
+
+// Re-export OptimizeMode for use by AppShell
+export { OptimizeMode } from './OptimizeMode';
 import TokenCounter from './components/TokenCounter';
 import ColumnSelector from './components/ColumnSelector';
 import ColumnConfirmation from './components/ColumnConfirmation';

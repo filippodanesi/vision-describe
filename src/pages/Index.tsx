@@ -1,11 +1,11 @@
 
-import WatsonAnalyzer from "@/components/WatsonAnalyzer";
+import { AppShell } from "@/components/AppShell";
 import { Toaster } from "@/components/ui/toaster";
 
 const Index = () => {
   return (
     <>
-      <WatsonAnalyzer />
+      <AppShell />
       <Toaster />
     </>
   );
