@@ -4,22 +4,39 @@ export interface Model {
   description: string;
   provider: 'openai' | 'anthropic';
   costEffective?: boolean;
+  speed: 'Fast' | 'Medium' | 'Slow';
+  cost: 'Low' | 'Medium' | 'High';
+  quality: 'Good' | 'Very Good' | 'Excellent';
 }
 
 export const models: Model[] = [
   {
-    id: 'gpt-5',
-    name: 'GPT-5',
-    description: 'Best model for coding and agentic tasks across domains (400K context)',
+    id: 'gpt-5.2',
+    name: 'GPT-5.2',
+    description: 'Flagship OpenAI model — best intelligence, reasoning, and 400K context',
     provider: 'openai',
-    costEffective: true
+    speed: 'Fast',
+    cost: 'Low',
+    quality: 'Excellent',
+  },
+{
+    id: 'claude-opus-4-6',
+    name: 'Claude Opus 4.6',
+    description: 'Latest Anthropic flagship — top-tier text quality (200K context)',
+    provider: 'anthropic',
+    speed: 'Medium',
+    cost: 'High',
+    quality: 'Excellent',
   },
   {
     id: 'claude-sonnet-4-5-20250929',
     name: 'Claude Sonnet 4.5',
-    description: 'Best model for complex agents and coding with highest intelligence (200K context)',
+    description: 'Fast Anthropic model, great balance of quality and speed (200K context)',
     provider: 'anthropic',
-    costEffective: true
+    costEffective: true,
+    speed: 'Fast',
+    cost: 'Medium',
+    quality: 'Excellent',
   }
 ];
 
@@ -37,4 +54,4 @@ export const getCostEffectiveModels = (): Model[] => {
 
 export const getHighPerformanceModels = (): Model[] => {
   return models.filter(model => !model.costEffective);
-}; 
+};

@@ -135,7 +135,14 @@ const makeClaudeApiCallWithProxy = async (
   
   const requestBody = {
     model: model,
-    system: systemPrompt,
+    // Prompt caching: send system as content blocks with cache_control
+    system: [
+      {
+        type: "text",
+        text: systemPrompt,
+        cache_control: { type: "ephemeral" }
+      }
+    ],
     messages: [
       {
         role: 'user',
@@ -224,7 +231,8 @@ export const optimizeWithClaude = async (
     const baseDelay = Math.max(100, options.retryBaseDelayMs ?? 300);
     // Claude Sonnet 4.5 with extended thinking can take up to 120s
     const isSonnet45 = claudeModel.includes('sonnet-4-5');
-    const defaultTimeout = isSonnet45 ? 120000 : 30000; // 120s for Sonnet 4.5, 30s for others
+    const isOpus = claudeModel.includes('opus');
+    const defaultTimeout = (isSonnet45 || isOpus) ? 120000 : 30000; // 120s for Sonnet 4.5, 30s for others
     const timeoutMs = Math.max(0, options.timeoutMs ?? defaultTimeout);
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     
@@ -246,7 +254,14 @@ export const optimizeWithClaude = async (
         const isSonnet45 = claudeModel.includes('sonnet-4-5');
         const requestParams: any = {
           model: claudeModel,
-          system: finalSystemPrompt,
+          // Prompt caching: send system as content blocks with cache_control
+          system: [
+            {
+              type: "text",
+              text: finalSystemPrompt,
+              cache_control: { type: "ephemeral" }
+            }
+          ],
           messages: [
             { role: 'user', content: prompt }
           ],
@@ -340,6 +355,11 @@ export const optimizeWithClaude = async (
     const outputTokens = response.usage?.output_tokens || 0;
     
     console.log(`Claude token usage: ${inputTokens} input + ${outputTokens} output = ${inputTokens + outputTokens} total tokens`);
+
+    const cacheCreation = response.usage?.cache_creation_input_tokens || 0;
+    const cacheRead = response.usage?.cache_read_input_tokens || 0;
+    if (cacheCreation > 0) console.log(`📝 Cache write: ${cacheCreation} tokens cached`);
+    if (cacheRead > 0) console.log(`⚡ Cache hit: ${cacheRead} tokens read from cache (90% savings)`);
 
     // Check if there's content in the response and handle different content types properly
     if (response.content && response.content.length > 0) {

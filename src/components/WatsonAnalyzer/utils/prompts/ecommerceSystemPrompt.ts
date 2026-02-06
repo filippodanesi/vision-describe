@@ -33,12 +33,11 @@ CORRECT:
 - Input: "adjustable" → Output: "verstellbar"
 - Input: "support" → Output: "Halt" / "Unterstützung"
 
-PRE-FLIGHT VERIFICATION (BEFORE OUTPUT):
-1. List all specific technical claims in your generated text
-2. Verify EACH claim exists explicitly in the input source
-3. Remove any claims not explicitly stated in input
-4. Replace inferred details with neutral language
-5. Flag any assumptions made during generation
+PRE-FLIGHT VERIFICATION (internal only — do NOT include in output):
+Silently verify before returning:
+1. Every technical claim exists explicitly in the input source — remove any that do not
+2. Replace inferred details with neutral language
+3. No assumptions or invented specs in the output
 `;
 
 

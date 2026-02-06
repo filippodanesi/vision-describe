@@ -92,12 +92,11 @@ RETURN RULE:
 - Return ONLY the requested text for the current task (bullets OR description OR APLUS_SHORT).
 - Do NOT prepend any labels (e.g., "Bullets:", "Description:", "A+ Short:").
  
-PRE-FLIGHT VERIFICATION (BEFORE OUTPUT):
-1. List all specific technical claims in your generated text
-2. Verify EACH claim exists explicitly in the input source
-3. Remove any claims not explicitly stated in input
-4. Replace inferred details with neutral language
-5. Flag any assumptions made during generation
+PRE-FLIGHT VERIFICATION (internal only — do NOT include in output):
+Silently verify before returning:
+1. Every technical claim exists explicitly in the input source — remove any that do not
+2. Replace inferred details with neutral language
+3. No assumptions or invented specs in the output
 `;
 
 export default amazonSystemPrompt;

@@ -93,6 +93,14 @@ const MODEL_COSTS: Record<string, ModelCostData> = {
     tokensPerCharInput: 0.25,
     tokensPerCharOutput: 0.25
   },
+  // OpenAI GPT-5.2 (Standard pricing)
+  'gpt-5.2': {
+    name: 'GPT-5.2',
+    inputCostPer1M: 1.75,
+    outputCostPer1M: 7.00,
+    tokensPerCharInput: 0.25,
+    tokensPerCharOutput: 0.25
+  },
   // Legacy OpenAI models
   'gpt-4o-mini': {
     name: 'GPT-4o-mini',
@@ -156,6 +164,14 @@ const MODEL_COSTS: Record<string, ModelCostData> = {
   // Claude Opus 4.1 (Base pricing)
   'claude-opus-4-1': {
     name: 'Claude 4.1 Opus',
+    inputCostPer1M: 15.00,
+    outputCostPer1M: 75.00,
+    tokensPerCharInput: 0.25,
+    tokensPerCharOutput: 0.25
+  },
+  // Claude Opus 4.6 (Latest flagship)
+  'claude-opus-4-6': {
+    name: 'Claude Opus 4.6',
     inputCostPer1M: 15.00,
     outputCostPer1M: 75.00,
     tokensPerCharInput: 0.25,

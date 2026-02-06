@@ -1,155 +1,150 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import Header from '@/components/WatsonAnalyzer/components/Header';
 import Footer from '@/components/WatsonAnalyzer/components/Footer';
-import ChangelogHeader from '@/components/Changelog/ChangelogHeader';
-import ChangelogContent from '@/components/Changelog/ChangelogContent';
-import { VersionData } from '@/components/Changelog/types';
+
+type ChangelogEntry = {
+  version: string;
+  date: string;
+  title: string;
+  description: string;
+  items?: string[];
+};
+
+const entries: ChangelogEntry[] = [
+  {
+    version: "v2.2.0",
+    date: "February 6, 2026",
+    title: "Models & UI Refresh",
+    description:
+      "Major UI redesign inspired by shadcn/ui, new flagship AI models, and Anthropic prompt caching for significant cost savings.",
+    items: [
+      "Complete UI redesign: step wizard, card-based layout, clean shadcn tokens",
+      "Added GPT-5.2 (OpenAI flagship, $1.75/MTok) and Claude Opus 4.6 (Anthropic flagship)",
+      "Implemented Anthropic prompt caching — ~90% savings on cached input tokens",
+      "Card-based model selector with speed, cost, and quality badges",
+      "Modern activity log panel with color-coded entries and auto-scroll",
+      "Full-width drag & drop file upload zone",
+      "Processing summary with cost breakdown and export actions in a single card",
+      "Step indicator adapts per use case (ecommerce, Amazon, Partoo, AboutYou, NEXT)",
+      "Removed deprecated GPT-5 model, replaced with GPT-5.2",
+    ],
+  },
+  {
+    version: "v2.1.0",
+    date: "September 30, 2025",
+    title: "Localization & Quality",
+    description:
+      "Critical localization improvements separating European Portuguese from Brazilian Portuguese, plus brand tone-of-voice guidelines.",
+    items: [
+      "Separated PT-PT (Portugal) from PT-BR (Brazil) — no more Brazilian terms in European Portuguese",
+      "Implemented intelligent localization system (cultural adaptation, not just translation)",
+      "Added language-specific instructions for natural, fluent output",
+      "Spanish translations now natural and idiomatic",
+      "Added brand Tone of Voice guidelines for Triumph and sloggi",
+      "Enhanced all language outputs (DE, FR, IT, ES, PT-PT, PT-BR) with cultural adaptation",
+    ],
+  },
+  {
+    version: "v2.0.0",
+    date: "September 30, 2025",
+    title: "Next-Gen AI Models & Marketplace Expansion",
+    description:
+      "Upgraded to the latest generation of AI models and added support for AboutYou and NEXT marketplace platforms.",
+    items: [
+      "Upgraded to GPT-5 and Claude Sonnet 4.5 (latest generation models)",
+      "Removed deprecated models (o4-mini, o3, Claude Opus 4)",
+      "Added AboutYou marketplace support with color translation tables",
+      "Added NEXT marketplace support with size EU-to-GB translation",
+      "Translator review panel for color and size mappings before processing",
+      "Updated cost tracking with official model pricing",
+      "Reduced hallucinations with next-gen model grounding",
+    ],
+  },
+  {
+    version: "v1.1.0",
+    date: "May 15, 2025",
+    title: "AI Optimization & Multi-Model Support",
+    description:
+      "Introduced AI-powered text optimization with support for both OpenAI and Anthropic models, plus real-time cost monitoring.",
+    items: [
+      "Added text optimization with OpenAI (o4-mini, o3) and Anthropic (Claude Sonnet, Opus)",
+      "Unified AnalyzerService for seamless model switching",
+      "Real-time API cost monitoring and token tracking",
+      "Cost-effective vs high-performance model categorization",
+      "Amazon marketplace support with bullet point optimization",
+      "Partoo store description generation with multi-language output",
+      "Business ID filtering for targeted Partoo processing",
+    ],
+  },
+  {
+    version: "v1.0.0",
+    date: "May 14, 2025",
+    title: "Initial Release",
+    description:
+      "First release of AI Copy Assistant — a tool for generating optimized product content from Inriver exports using AI.",
+    items: [
+      "Multi-format file support (Excel, CSV) with web worker parsing",
+      "Automatic column detection and mapping",
+      "E-commerce use case with MaterialLongDescriptionEcom optimization",
+      "Multi-language content generation",
+      "Export to optimized Excel format",
+    ],
+  },
+];
 
 const Changelog: React.FC = () => {
-  const versions: VersionData[] = [
-    {
-      version: "2.1.0",
-      date: "September 30, 2025",
-      type: "MAJOR",
-      features: [
-        "🌍 CRITICAL FIX: Separated PT-PT (Portugal) from PT-BR (Brazil) - no more Brazilian terms in European Portuguese",
-        "✨ MAJOR: Implemented intelligent localization system (not just translation)",
-        "🎯 ENHANCEMENT: Added language-specific instructions for natural, fluent output",
-        "📝 FIX: Spanish translations now natural and idiomatic (not literal word-for-word)",
-        "🔧 IMPROVEMENT: Added brand TOV (Tone of Voice) guidelines for Triumph and sloggi",
-        "🌐 UPDATE: Enhanced all language outputs (DE, FR, IT, ES, PT-PT, PT-BR) with cultural adaptation",
-        "📚 DOCUMENTATION: Added comprehensive translation testing guide and quality metrics"
-      ]
-    },
-    {
-      version: "2.0.0",
-      date: "September 30, 2025",
-      type: "MAJOR",
-      features: [
-        "🚀 BREAKING: Upgraded to latest AI models - GPT-5 and Claude Sonnet 4.5",
-        "✨ MAJOR: Removed deprecated models (o4-mini, o3, Claude Opus 4) - using only latest generation",
-        "🎯 ENHANCEMENT: Significantly reduced hallucinations with next-gen AI models",
-        "📊 UPDATE: Updated cost analysis with official pricing - GPT-5 ($1.25/$10) and Claude 4.5 ($3/$15)",
-        "🔒 IMPROVEMENT: Enhanced fact accuracy and grounding capabilities",
-        "⚡ OPTIMIZATION: Better cost than estimated - 31% cheaper for GPT-5!",
-        "📝 DOCUMENTATION: Updated all documentation to reflect new model architecture"
-      ]
-    },
-    {
-      version: "1.1.8",
-      date: "May 24, 2025",
-      type: "MAJOR",
-      features: [
-        "MAJOR: Added multi-model optimization support for OpenAI and Anthropic",
-        "IMPLEMENT: Integrated OpenAI models (o4-mini, o3) for text optimization",
-        "IMPLEMENT: Added Anthropic Claude models (Claude 4 Sonnet, Claude 4 Opus) support",
-        "ENHANCEMENT: Created unified AnalyzerService for seamless model switching",
-        "IMPLEMENT: Added cost-effective and high-performance model categorization",
-        "ENHANCEMENT: Improved model selection with provider-specific configurations",
-        "UPDATE: Enhanced optimization workflow with multiple AI provider support"
-      ]
-    },
-    {
-      version: "1.1.7",
-      date: "May 23, 2025",
-      type: "ADD",
-      features: [
-        "IMPLEMENT: Added support for Claude 4 Sonnet model with accurate pricing",
-        "ENHANCEMENT: Updated cost tracking with precise Claude model pricing ($3/$15 per MTok for Sonnet 4)",
-        "UPDATE: Restricted Claude models to only Sonnet 4 and Sonnet 3.7 for optimal performance",
-        "FIX: Corrected cost calculation dashboard to match actual Claude API usage",
-        "ENHANCEMENT: Improved model selection in Anthropic configuration with latest pricing",
-        "IMPLEMENT: Added detailed cost tooltips showing input/output token pricing"
-      ]
-    },
-    {
-      version: "1.1.6",
-      date: "May 20, 2025",
-      type: "IMPROVE",
-      features: [
-        "ENHANCEMENT: Improved entity detection visualization with type grouping",
-        "ENHANCEMENT: Added alerts for low entity detection",
-        "FIX: Added info variant to Alert component",
-        "IMPLEMENT: Enabled tone analysis by default",
-        "ENHANCE: Increased default keyword limit to 20"
-      ]
-    },
-    {
-      version: "1.1.5",
-      date: "May 20, 2025",
-      type: "FIX",
-      features: [
-        "FIX: Fixed import errors in useOptimizationProcess.ts",
-        "FIX: Corrected import paths for optimization modules",
-        "ENHANCEMENT: Improved error handling for AI models"
-      ]
-    },
-    {
-      version: "1.1.4",
-      date: "May 19, 2025",
-      type: "IMPROVE",
-      features: [
-        "ENHANCEMENT: Enhanced product entity identification in text analysis",
-        "ENHANCEMENT: Improved keyword matching in optimized texts",
-        "ENHANCEMENT: Enhanced entity recognition in optimized text"
-      ]
-    },
-    {
-      version: "1.1.3",
-      date: "May 18, 2025",
-      type: "FIX",
-      features: [
-        "FIX: Fixed issue with o4-mini model",
-        "UPDATE: Updated openAiUtils.ts to use max_completion_tokens instead of max_tokens",
-        "ENHANCEMENT: Improved AI model-specific error messages"
-      ]
-    },
-    {
-      version: "1.1.2",
-      date: "May 17, 2025",
-      type: "IMPROVE",
-      features: [
-        "ENHANCEMENT: Optimized user interface for text analysis",
-        "ENHANCEMENT: Enhanced user experience in the results panel",
-        "ENHANCEMENT: Refined keyword recognition system"
-      ]
-    },
-    {
-      version: "1.1.1",
-      date: "May 16, 2025",
-      type: "IMPROVE",
-      features: [
-        "IMPLEMENT: Added support for additional languages in tone analysis",
-        "ENHANCEMENT: Improved entity processing algorithm",
-        "ENHANCEMENT: Optimized performance for analyzing long texts"
-      ]
-    },
-    {
-      version: "1.1.0",
-      date: "May 15, 2025",
-      type: "MAJOR",
-      features: [
-        "MAJOR: Added text optimization functionality with AI",
-        "IMPLEMENT: Implemented support for OpenAI and Claude",
-        "IMPLEMENT: Integrated cost monitoring for AI APIs"
-      ]
-    },
-    {
-      version: "1.0.0",
-      date: "May 14, 2025",
-      type: "MAJOR",
-      features: [
-        "MAJOR: Initial application release",
-        "IMPLEMENT: Implemented basic interface for text analysis",
-        "IMPLEMENT: Integrated with IBM Watson Natural Language Understanding API",
-        "IMPLEMENT: Added support for keywords, entities, concepts, and categories analysis"
-      ]
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <ChangelogHeader />
-      <ChangelogContent versions={versions} />
+      <Header />
+
+      <main className="flex-1 container max-w-7xl mx-auto px-4 py-6">
+        <div className="max-w-3xl mx-auto">
+          <h1 className="mb-2 text-2xl font-bold tracking-tight md:text-3xl">
+            Changelog
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            All notable updates and improvements to AI Copy Assistant.
+          </p>
+        </div>
+
+        <div className="mx-auto mt-12 max-w-3xl space-y-12 md:mt-16 md:space-y-16">
+          {entries.map((entry, index) => (
+            <div
+              key={index}
+              className="relative flex flex-col gap-3 md:flex-row md:gap-12"
+            >
+              <div className="top-8 flex h-min w-56 shrink-0 items-center gap-3 md:sticky">
+                <Badge variant="secondary" className="text-xs">
+                  {entry.version}
+                </Badge>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {entry.date}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <h2 className="mb-2 text-base leading-tight font-semibold text-foreground md:text-lg">
+                  {entry.title}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {entry.description}
+                </p>
+                {entry.items && entry.items.length > 0 && (
+                  <ul className="mt-3 ml-4 space-y-1 text-sm text-muted-foreground">
+                    {entry.items.map((item, itemIndex) => (
+                      <li key={itemIndex} className="list-disc">
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+
       <Footer />
     </div>
   );

@@ -1,17 +1,17 @@
 /**
  * AI Copy Assistant - Main Component
- * 
+ *
  * @author Filippo Danesi
  * @email filippo.danesi93@gmail.com
  * @website https://www.filippodanesi.com
  * @created 2025
  * @copyright Copyright (c) 2025 Filippo Danesi. All rights reserved.
  * @license Dual-licensed: CC BY-NC-SA 4.0 (non-commercial) | Commercial license required
- * 
+ *
  * @description Main orchestrator component for the AI-powered content generation assistant.
  *              Handles file upload, column mapping, model selection, processing, and results export
  *              for multiple use cases: E-commerce products, Amazon listings, Partoo store descriptions.
- * 
+ *
  * Key Features:
  * - Multi-format file support (Excel, CSV)
  * - Automatic column detection and mapping
@@ -34,7 +34,7 @@ import { models } from '@/lib/models';
 import { ProcessingStep } from './types';
 import { UseCase, AVAILABLE_USE_CASES } from './usecases';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, RefreshCw, Download } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, Download, CheckCircle2 } from 'lucide-react';
 import * as ExcelJS from 'exceljs';
 import { validateEnv, OPENAI_API_KEY, ANTHROPIC_API_KEY } from '@/config/env';
 
@@ -51,33 +51,108 @@ import ExportResults from './components/ExportResults';
 import BusinessIdFilterUpload from './components/BusinessIdFilterUpload';
 import { getModelById } from '@/lib/models';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
+// ─── Step Indicator ───────────────────────────────────────────────────────────
+
+interface StepDef {
+  key: ProcessingStep;
+  label: string;
+}
+
+const getStepsForUseCase = (useCase: UseCase): StepDef[] => {
+  switch (useCase) {
+    case 'partoo':
+      return [
+        { key: ProcessingStep.UPLOAD, label: 'Upload' },
+        { key: ProcessingStep.SELECT_MODEL, label: 'Model' },
+        { key: ProcessingStep.PROCESSING, label: 'Processing' },
+        { key: ProcessingStep.COMPLETE, label: 'Complete' },
+      ];
+    case 'aboutyou':
+    case 'next':
+      return [
+        { key: ProcessingStep.UPLOAD, label: 'Upload' },
+        { key: ProcessingStep.SELECT_COLUMNS, label: 'Translations' },
+        { key: ProcessingStep.SELECT_MODEL, label: 'Model' },
+        { key: ProcessingStep.PROCESSING, label: 'Processing' },
+        { key: ProcessingStep.COMPLETE, label: 'Complete' },
+      ];
+    default: // ecommerce, amazon
+      return [
+        { key: ProcessingStep.UPLOAD, label: 'Upload' },
+        { key: ProcessingStep.SELECT_COLUMNS, label: 'Columns' },
+        { key: ProcessingStep.CONFIRM_COLUMNS, label: 'Confirm' },
+        { key: ProcessingStep.SELECT_MODEL, label: 'Model' },
+        { key: ProcessingStep.PROCESSING, label: 'Processing' },
+        { key: ProcessingStep.COMPLETE, label: 'Complete' },
+      ];
+  }
+};
+
+const StepIndicator: React.FC<{ steps: StepDef[]; currentStep: ProcessingStep }> = ({ steps, currentStep }) => {
+  const currentIndex = steps.findIndex(s => s.key === currentStep);
+
+  return (
+    <div className="flex items-center justify-center gap-0 mb-6">
+      {steps.map((step, idx) => {
+        const isPast = idx < currentIndex;
+        const isCurrent = idx === currentIndex;
+        return (
+          <React.Fragment key={step.key}>
+            {idx > 0 && (
+              <div className={`h-px w-8 sm:w-12 ${isPast ? 'bg-primary' : 'bg-border'}`} />
+            )}
+            <div className="flex flex-col items-center gap-1">
+              {isPast ? (
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+              ) : (
+                <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
+                  isCurrent ? 'border-primary bg-primary' : 'border-muted-foreground/30'
+                }`}>
+                  {isCurrent && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                </div>
+              )}
+              <span className={`text-[10px] font-medium ${
+                isCurrent ? 'text-foreground' : 'text-muted-foreground'
+              }`}>
+                {step.label}
+              </span>
+            </div>
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 const WatsonAnalyzer: React.FC = () => {
   // Current step
   const [currentStep, setCurrentStep] = useState<ProcessingStep>(ProcessingStep.UPLOAD);
-  
+
   // File data
   const [fileData, setFileData] = useState<{
     rows: any[];
     columns: string[];
     meta?: any;
   } | null>(null);
-  
+
   // Selected columns
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
-  
+
   // Column mappings (for confirmation step)
   const [columnMappings, setColumnMappings] = useState<any[]>([]);
-  
+
   // Selected model
   const [selectedModel, setSelectedModel] = useState<string>('');
-  
+
   // Business ID Filter
   const [businessIdsFilter, setBusinessIdsFilter] = useState<Set<string> | null>(null);
-  
-  // Budget UI removed
-  
+
   // Processing state
   const {
     isProcessing,
@@ -113,7 +188,7 @@ const WatsonAnalyzer: React.FC = () => {
   const handleFileUploaded = (data: { rows: any[]; columns: string[]; meta?: any }) => {
     setFileData(data);
     setBusinessIdsFilter(null);
-    
+
     // For Partoo, auto-select all relevant columns (processor will filter what's needed)
     if (useCase === 'partoo') {
       const partooColumns = data.columns.filter(col => {
@@ -133,16 +208,16 @@ const WatsonAnalyzer: React.FC = () => {
           colLower.startsWith('business default')
         );
       });
-      
+
       setSelectedColumns(partooColumns);
-      
+
       // Auto-create column mappings for Partoo based on detected columns
       const findColumn = (patterns: RegExp[]): string | undefined => {
-        return data.columns.find(col => 
+        return data.columns.find(col =>
           col && patterns.some(pattern => pattern.test(col))
         );
       };
-      
+
       const partooMapping = {
         mapping: {
           businessId: findColumn([/^Business identification$/i]),
@@ -157,7 +232,7 @@ const WatsonAnalyzer: React.FC = () => {
           businessOpeningDate: findColumn([/^business.?opening.?date$/i]),
         }
       };
-      
+
       setColumnMappings(partooMapping);
       setCurrentStep(ProcessingStep.SELECT_MODEL); // Skip column selection and confirmation
     } else {
@@ -203,7 +278,7 @@ const WatsonAnalyzer: React.FC = () => {
     setSelectedModel(model);
     setCurrentStep(ProcessingStep.PROCESSING);
     setProcessingStartTime(new Date());
-    
+
     if (!fileData) return;
 
     try {
@@ -217,16 +292,16 @@ const WatsonAnalyzer: React.FC = () => {
         selectedColumns,
         modelConfig,
         apiKey as string,
-        { 
-          useCase: useCase === 'amazon' ? 'amazon' : useCase === 'partoo' ? 'partoo' : 'ecommerce', 
-          mappings: columnMappings, 
-          dryRun: options?.dryRun, 
+        {
+          useCase: useCase === 'amazon' ? 'amazon' : useCase === 'partoo' ? 'partoo' : 'ecommerce',
+          mappings: columnMappings,
+          dryRun: options?.dryRun,
           lang: options?.targetLanguage,
           businessIdsFilter: businessIdsFilter
         },
         costTracker
       );
-      
+
       setProcessedData(processedRowsData);
       setProcessingEndTime(new Date());
       setCurrentStep(ProcessingStep.COMPLETE);
@@ -250,23 +325,23 @@ const WatsonAnalyzer: React.FC = () => {
       // Create a new workbook using ExcelJS
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Optimized Descriptions");
-      
+
       // Add headers
       if (processedData.length > 0) {
         const headers = Object.keys(processedData[0]);
         worksheet.addRow(headers);
-        
+
         // Add data rows
         processedData.forEach(row => {
           const values = headers.map(header => row[header] || '');
           worksheet.addRow(values);
         });
       }
-      
+
       // Generate filename with timestamp
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const filename = `optimized_descriptions_${timestamp}.xlsx`;
-      
+
       // Generate buffer and download
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -361,54 +436,46 @@ const WatsonAnalyzer: React.FC = () => {
       case ProcessingStep.UPLOAD:
         return (
           <div className="max-w-3xl mx-auto space-y-4">
-            {/* Welcome Section */}
-            <div className="text-center mb-4">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Copy Assistant</h1>
-              <p className="text-sm text-gray-600">
-                Generate optimized content for products, stores, and marketplace platforms using AI
-              </p>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Upload your file</CardTitle>
+                <CardDescription>Select a use case and upload your data file</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Use Case Selector */}
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Use Case</label>
+                  <Select value={useCase} onValueChange={(v) => setUseCase(v as UseCase)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select use case" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {([...AVAILABLE_USE_CASES].sort((a, b) => {
+                        const order: Record<string, number> = { ecommerce: 0, amazon: 1, partoo: 2, zalando: 3, aboutyou: 4, next: 5 };
+                        const ao = order[a.value] ?? 99;
+                        const bo = order[b.value] ?? 99;
+                        if (ao !== bo) return ao - bo;
+                        return a.label.localeCompare(b.label);
+                      })).map((uc) => {
+                        const isDisabled = uc.value === 'zalando';
+                        return (
+                          <SelectItem
+                            key={uc.value}
+                            value={uc.value}
+                            disabled={isDisabled}
+                            className={isDisabled ? 'text-muted-foreground cursor-not-allowed' : ''}
+                          >
+                            {uc.label}{isDisabled ? ' (Coming soon)' : ''}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            {/* Upload Section */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h2 className="text-lg font-medium mb-2">Upload Inriver Export</h2>
-              <p className="text-sm text-gray-600 mb-3">
-                Upload your Inriver file with product data (.xlsx, .xls, .csv)
-              </p>
-
-              {/* Use Case Selector */}
-              <div className="mb-3">
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Use Case</label>
-                <Select value={useCase} onValueChange={(v) => setUseCase(v as UseCase)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select use case" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {([...AVAILABLE_USE_CASES].sort((a, b) => {
-                      const order: Record<string, number> = { ecommerce: 0, amazon: 1, partoo: 2, zalando: 3, aboutyou: 4, next: 5 };
-                      const ao = order[a.value] ?? 99;
-                      const bo = order[b.value] ?? 99;
-                      if (ao !== bo) return ao - bo;
-                      return a.label.localeCompare(b.label);
-                    })).map((uc) => {
-                      const isDisabled = uc.value !== 'amazon' && uc.value !== 'ecommerce' && uc.value !== 'partoo';
-                      return (
-                        <SelectItem 
-                          key={uc.value} 
-                          value={uc.value} 
-                          disabled={isDisabled}
-                          className={isDisabled ? 'text-gray-400 cursor-not-allowed' : ''}
-                        >
-                          {uc.label}{isDisabled ? ' (Coming soon)' : ''}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <FileUpload onFileUploaded={handleFileUploaded} useCase={useCase} />
-            </div>
+                <FileUpload onFileUploaded={handleFileUploaded} useCase={useCase} />
+              </CardContent>
+            </Card>
 
             {/* Business ID Filter - Only show for Partoo after file is loaded */}
             {fileData && useCase === 'partoo' && (
@@ -428,29 +495,29 @@ const WatsonAnalyzer: React.FC = () => {
               {useCase === 'amazon' ? (
                 <>
                   <h2 className="text-lg font-medium mb-2">Select Columns (Amazon)</h2>
-                  <p className="text-sm text-gray-600">Choose input columns such as rtip_product_description#1.value and bullet_point#*.value</p>
+                  <p className="text-sm text-muted-foreground">Choose input columns such as rtip_product_description#1.value and bullet_point#*.value</p>
                 </>
               ) : useCase === 'partoo' ? (
                 <>
                   <h2 className="text-lg font-medium mb-2">Select Store Data Columns (Partoo)</h2>
-                  <p className="text-sm text-gray-600">Select columns like Name, City, Country, Short description, Long description</p>
+                  <p className="text-sm text-muted-foreground">Select columns like Name, City, Country, Short description, Long description</p>
                 </>
               ) : (
                 <>
                   <h2 className="text-lg font-medium mb-2">Select Language Variants</h2>
-                  <p className="text-sm text-gray-600">Choose MaterialLongDescriptionEcom columns to optimize (with or without Color prefix)</p>
+                  <p className="text-sm text-muted-foreground">Choose MaterialLongDescriptionEcom columns to optimize (with or without Color prefix)</p>
                 </>
               )}
             </div>
 
-            <ColumnSelector 
+            <ColumnSelector
               useCase={useCase}
               columns={(() => {
                 const cols = fileData?.columns || [];
                 if (useCase === 'amazon' || useCase === 'partoo') return cols;
                 return cols.filter((col) => {
                   const colLower = col.toLowerCase();
-                  return colLower.startsWith('colormateriallongdescriptionecom') || 
+                  return colLower.startsWith('colormateriallongdescriptionecom') ||
                          colLower.startsWith('materiallongdescriptionecom');
                 });
               })()}
@@ -475,7 +542,7 @@ const WatsonAnalyzer: React.FC = () => {
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-4">
               <h2 className="text-lg font-medium mb-2">Choose AI Model</h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Select the model for content optimization
               </p>
             </div>
@@ -487,14 +554,14 @@ const WatsonAnalyzer: React.FC = () => {
       case ProcessingStep.PROCESSING:
         const modelConfig = getModelById(selectedModel);
         const modelDisplayName = modelConfig ? modelConfig.name : selectedModel;
-        
+
         return (
           <div className="max-w-3xl mx-auto">
             <div className="mb-4">
               <h2 className="text-2xl font-bold">Processing File...</h2>
-              <p className="text-sm text-gray-600 mt-1">Using {modelDisplayName} for optimization</p>
+              <p className="text-sm text-muted-foreground mt-1">Using {modelDisplayName} for optimization</p>
             </div>
-            
+
             <ProcessingView
               progress={progress}
               totalRows={totalRows}
@@ -504,7 +571,7 @@ const WatsonAnalyzer: React.FC = () => {
               processingMode={processingMode}
               onCancel={cancelProcessing}
             />
-            
+
           </div>
         );
 
@@ -512,95 +579,102 @@ const WatsonAnalyzer: React.FC = () => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Processing Complete!</h3>
-              <p className="text-gray-600 mb-4">Your file has been processed successfully.</p>
+              <h3 className="text-xl font-semibold text-foreground mb-2">Processing Complete!</h3>
+              <p className="text-muted-foreground mb-4">Your file has been processed successfully.</p>
             </div>
 
-            {/* Processing Summary - Unified */}
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-6 border border-gray-200 shadow-sm">
-              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Processing Summary
-              </h4>
-              
-              <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                {/* Left Column */}
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Rows Processed</span>
-                    <span className="font-mono font-semibold text-gray-900">{processedData?.length || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Model</span>
-                    <span className="font-mono text-gray-900">{getModelById(selectedModel)?.name || selectedModel}</span>
-                  </div>
-                {getProcessingTime() && (
+            {/* Processing Summary */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  Processing Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                  {/* Left Column */}
+                  <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Time</span>
-                      <span className="font-mono text-gray-900">{getProcessingTime()}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Right Column - Cost */}
-                {costTracker && (
-                  <div className="space-y-3 border-l border-gray-300 pl-8">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Total Cost</span>
-                      <span className="font-mono font-semibold text-blue-600">
-                        ${costTracker.getSessionStats().totalActualCost.toFixed(2)}
-                      </span>
+                      <span className="text-muted-foreground">Rows Processed</span>
+                      <span className="font-mono font-semibold text-foreground">{processedData?.length || 0}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Total Tokens</span>
-                      <span className="font-mono text-gray-900">
-                        {costTracker.getSessionStats().totalTokens.toLocaleString()}
-                      </span>
+                      <span className="text-muted-foreground">Model</span>
+                      <span className="font-mono text-foreground">{getModelById(selectedModel)?.name || selectedModel}</span>
                     </div>
-                    {processedData && processedData.length > 0 && (
+                    {getProcessingTime() && (
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Avg Cost/Row</span>
-                        <span className="font-mono text-gray-900">
-                          ${(costTracker.getSessionStats().totalActualCost / processedData.length).toFixed(2)}
-                        </span>
+                        <span className="text-muted-foreground">Time</span>
+                        <span className="font-mono text-foreground">{getProcessingTime()}</span>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            </div>
 
+                  {/* Right Column - Cost */}
+                  {costTracker && (
+                    <div className="space-y-3 border-l border-border pl-8">
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Total Cost</span>
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 font-mono">
+                          ${costTracker.getSessionStats().totalActualCost.toFixed(2)}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Total Tokens</span>
+                        <span className="font-mono text-foreground">
+                          {costTracker.getSessionStats().totalTokens.toLocaleString()}
+                        </span>
+                      </div>
+                      {processedData && processedData.length > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">Avg Cost/Row</span>
+                          <span className="font-mono text-foreground">
+                            ${(costTracker.getSessionStats().totalActualCost / processedData.length).toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+              <CardFooter className="flex items-center justify-center gap-4 pt-4">
+                <ExportResults results={processedData} isDisabled={!processedData || processedData.length === 0} originalMeta={fileData?.meta} useCase={useCase === 'amazon' ? 'amazon' : useCase === 'partoo' ? 'partoo' : 'ecommerce'} />
+                <Button variant="outline" onClick={reloadFile}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Process Another File
+                </Button>
+              </CardFooter>
+            </Card>
 
             {/* Results Preview - First 10 rows */}
             {processedData && processedData.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold text-gray-700">Preview (first 10 rows)</h4>
-                  <span className="text-xs text-gray-500">
+                  <h4 className="text-sm font-semibold text-foreground">Preview (first 10 rows)</h4>
+                  <span className="text-xs text-muted-foreground">
                     Showing {Math.min(10, processedData.length)} of {processedData.length} rows
                   </span>
                 </div>
-                
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
+
+                <div className="border border-border rounded-lg overflow-hidden">
                   <div className="max-h-[500px] overflow-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-gray-50">
+                        <TableRow className="bg-muted/50">
                           {useCase === 'partoo' ? (
                             <>
-                              <TableHead className="font-semibold text-gray-700 text-xs">Business ID</TableHead>
-                              <TableHead className="font-semibold text-gray-700 text-xs">Name</TableHead>
-                              <TableHead className="font-semibold text-gray-700 text-xs">City</TableHead>
-                              <TableHead className="font-semibold text-gray-700 text-xs w-[200px]">Short Description</TableHead>
-                              <TableHead className="font-semibold text-gray-700 text-xs w-[300px]">Long Description</TableHead>
+                              <TableHead className="font-semibold text-foreground text-xs">Business ID</TableHead>
+                              <TableHead className="font-semibold text-foreground text-xs">Name</TableHead>
+                              <TableHead className="font-semibold text-foreground text-xs">City</TableHead>
+                              <TableHead className="font-semibold text-foreground text-xs w-[200px]">Short Description</TableHead>
+                              <TableHead className="font-semibold text-foreground text-xs w-[300px]">Long Description</TableHead>
                             </>
                           ) : (
                             <>
-                              <TableHead className="font-semibold text-gray-700 text-xs">SKU</TableHead>
-                              <TableHead className="font-semibold text-gray-700 text-xs">Product Name</TableHead>
-                              <TableHead className="font-semibold text-gray-700 text-xs w-[300px]">Optimized Text</TableHead>
+                              <TableHead className="font-semibold text-foreground text-xs">SKU</TableHead>
+                              <TableHead className="font-semibold text-foreground text-xs">Product Name</TableHead>
+                              <TableHead className="font-semibold text-foreground text-xs w-[300px]">Optimized Text</TableHead>
                             </>
                           )}
                         </TableRow>
@@ -615,18 +689,18 @@ const WatsonAnalyzer: React.FC = () => {
                             const city = row[mapping.city] || '-';
                             const shortDesc = row[mapping.shortDescription] || '';
                             const longDesc = row[mapping.longDescription] || '';
-                            
+
                             return (
-                              <TableRow key={index} className="hover:bg-gray-50/50">
-                                <TableCell className="font-mono text-xs text-gray-600">{businessId}</TableCell>
-                                <TableCell className="text-xs text-gray-900">{name}</TableCell>
-                                <TableCell className="text-xs text-gray-700">{city}</TableCell>
-                                <TableCell className="text-xs text-gray-600 max-w-[200px]">
+                              <TableRow key={index} className="hover:bg-muted/30">
+                                <TableCell className="font-mono text-xs text-muted-foreground">{businessId}</TableCell>
+                                <TableCell className="text-xs text-foreground">{name}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground">{city}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground max-w-[200px]">
                                   <div className="truncate" title={shortDesc}>
                                     {shortDesc ? shortDesc.substring(0, 60) + (shortDesc.length > 60 ? '...' : '') : '-'}
                                   </div>
                                 </TableCell>
-                                <TableCell className="text-xs text-gray-600 max-w-[300px]">
+                                <TableCell className="text-xs text-muted-foreground max-w-[300px]">
                                   <div className="truncate" title={longDesc}>
                                     {longDesc ? longDesc.substring(0, 100) + (longDesc.length > 100 ? '...' : '') : '-'}
                                   </div>
@@ -634,13 +708,13 @@ const WatsonAnalyzer: React.FC = () => {
                               </TableRow>
                             );
                           }
-                          
+
                           // For other use cases
                           return (
-                            <TableRow key={index} className="hover:bg-gray-50/50">
-                              <TableCell className="font-mono text-xs text-gray-600">{row.sku || row.asin || '-'}</TableCell>
-                              <TableCell className="text-xs text-gray-900">{row.productName || row.title || '-'}</TableCell>
-                              <TableCell className="text-xs text-gray-600 max-w-[300px]">
+                            <TableRow key={index} className="hover:bg-muted/30">
+                              <TableCell className="font-mono text-xs text-muted-foreground">{row.sku || row.asin || '-'}</TableCell>
+                              <TableCell className="text-xs text-foreground">{row.productName || row.title || '-'}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground max-w-[300px]">
                                 <div className="line-clamp-2" title={row.optimizedLongDescription || row.optimizedText}>
                                   {row.optimizedLongDescription || row.optimizedText || '-'}
                                 </div>
@@ -654,37 +728,32 @@ const WatsonAnalyzer: React.FC = () => {
                 </div>
               </div>
             )}
-
-            {/* Action Buttons */}
-            <div className="flex items-center justify-center gap-4">
-              <ExportResults results={processedData} isDisabled={!processedData || processedData.length === 0} originalMeta={fileData?.meta} useCase={useCase === 'amazon' ? 'amazon' : useCase === 'partoo' ? 'partoo' : 'ecommerce'} />
-              <Button variant="outline" onClick={reloadFile}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Process Another File
-              </Button>
-            </div>
           </div>
         );
     }
   };
 
   const canGoBack = currentStep !== ProcessingStep.UPLOAD && !isProcessing;
-  const canGoForward = 
+  const canGoForward =
     (currentStep === ProcessingStep.UPLOAD && fileData) ||
     (currentStep === ProcessingStep.SELECT_COLUMNS && selectedColumns.length > 0) ||
     (currentStep === ProcessingStep.SELECT_MODEL && selectedModel);
 
+  const steps = getStepsForUseCase(useCase);
+
   return (
     <ThemeProvider defaultTheme="light">
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen flex flex-col bg-background">
         <Header />
 
         <main className="flex-1 container max-w-7xl mx-auto px-4 py-6">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              {renderStep()}
+            <StepIndicator steps={steps} currentStep={currentStep} />
 
-              <div className="mt-6 flex items-center justify-between pt-4 border-t">
+            {renderStep()}
+
+            {currentStep !== ProcessingStep.COMPLETE && (
+              <div className="mt-6 flex items-center justify-between pt-4 border-t border-border">
                 <div className="flex items-center gap-2">
                   {canGoBack && (
                     <Button variant="ghost" onClick={goBack}>
@@ -692,7 +761,7 @@ const WatsonAnalyzer: React.FC = () => {
                       Back
                     </Button>
                   )}
-                  {currentStep !== ProcessingStep.PROCESSING && currentStep !== ProcessingStep.COMPLETE && (
+                  {currentStep !== ProcessingStep.UPLOAD && currentStep !== ProcessingStep.PROCESSING && (
                     <Button variant="ghost" onClick={reloadFile}>
                       <RefreshCw className="w-4 h-4 mr-2" />
                       Reload File
@@ -706,7 +775,7 @@ const WatsonAnalyzer: React.FC = () => {
                   </Button>
                 )}
               </div>
-            </div>
+            )}
           </div>
         </main>
 

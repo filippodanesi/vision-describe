@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { File, HelpCircle, Upload, Loader2 } from 'lucide-react';
+import { HelpCircle, Upload, Loader2 } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -8,7 +8,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Progress } from '@/components/ui/progress';
-import * as ExcelJS from 'exceljs';
 // @ts-ignore
 import XlsxParserWorker from '../workers/xlsxParser.worker.ts?worker';
 import Papa from 'papaparse';
@@ -156,76 +155,81 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUploaded, useCase = 'ecom
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col items-center gap-6">
-      <div 
-        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={handleDrop}
-        className={isDragging ? 'w-full p-1 rounded bg-blue-50' : 'w-full'}
-      >
-      <input
-        type="file"
-        accept=".xlsx,.xls,.xlsm,.csv"
-        className="hidden"
-        ref={inputRef}
-        onChange={handleFileChange}
-      />
-        
-      <Button 
-          variant="outline" 
+      <div className="flex flex-col items-center gap-4">
+        <input
+          type="file"
+          accept=".xlsx,.xls,.xlsm,.csv"
+          className="hidden"
+          ref={inputRef}
+          onChange={handleFileChange}
+        />
+
+        <div
           onClick={handleSelectFile}
-          disabled={isParsing}
-          className="border-dashed border-2 hover:border-blue-400 hover:bg-blue-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          className={`w-full flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 cursor-pointer transition-colors ${
+            isDragging
+              ? 'border-primary bg-primary/5'
+              : 'border-muted-foreground/25 hover:border-muted-foreground/40'
+          } ${isParsing ? 'opacity-60 cursor-not-allowed' : ''}`}
         >
           {isParsing ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           ) : (
-            <Upload className="h-4 w-4 mr-2" />
+            <Upload className="h-8 w-8 text-muted-foreground" />
           )}
-          {isParsing ? 'Parsing…' : 'Choose File'}
-      </Button>
-      </div>
-
-      {isParsing && (
-        <Button variant="ghost" size="sm" onClick={handleCancel} className="mt-1">Cancel</Button>
-      )}
-
-      {isParsing && parsingProgress && (
-        <div className="w-full">
-          <Progress value={parsingProgress.total ? Math.min(100, Math.round((parsingProgress.current / parsingProgress.total) * 100)) : 0} />
-          <div className="mt-1 text-xs text-gray-500">
-            Parsing {parsingProgress.current}/{parsingProgress.total} rows
+          <div className="text-center">
+            <p className="text-sm font-medium text-foreground">
+              {isParsing ? 'Parsing...' : 'Drag & drop or click to browse'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Excel (.xlsx, .xls, .xlsm) or CSV
+            </p>
           </div>
         </div>
-      )}
 
-      {preview && !isParsing && (
-        <div className="w-full text-xs text-gray-600">
-          ✓ Loaded {preview.rows} rows. Columns: {preview.columns.join(', ')}{preview.rows > 0 && (preview.columns.length < 5 ? '' : ' ...')}
-        </div>
-      )}
+        {isParsing && (
+          <Button variant="ghost" size="sm" onClick={handleCancel}>Cancel</Button>
+        )}
 
-      {error && (
-        <div className="w-full bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-xs">
-          {error.message}
-          <Button size="sm" variant="link" onClick={handleRetry} className="ml-2 p-0 h-auto">Retry</Button>
-        </div>
-      )}
-        
+        {isParsing && parsingProgress && (
+          <div className="w-full">
+            <Progress value={parsingProgress.total ? Math.min(100, Math.round((parsingProgress.current / parsingProgress.total) * 100)) : 0} />
+            <div className="mt-1 text-xs text-muted-foreground">
+              Parsing {parsingProgress.current}/{parsingProgress.total} rows
+            </div>
+          </div>
+        )}
+
+        {preview && !isParsing && (
+          <div className="w-full text-xs text-muted-foreground">
+            Loaded {preview.rows} rows. Columns: {preview.columns.join(', ')}{preview.rows > 0 && (preview.columns.length < 5 ? '' : ' ...')}
+          </div>
+        )}
+
+        {error && (
+          <div className="w-full bg-destructive/10 border border-destructive/20 text-destructive px-3 py-2 rounded text-xs">
+            {error.message}
+            <Button size="sm" variant="link" onClick={handleRetry} className="ml-2 p-0 h-auto">Retry</Button>
+          </div>
+        )}
+
         {useCase === 'amazon' && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground w-full justify-between">
             <div className="flex items-center gap-2">
-              <span>Excel (.xlsx, .xls, .xlsm) or CSV</span>
+              <span>Amazon template with bullet_point headers</span>
               <Tooltip>
                 <TooltipTrigger>
-                  <HelpCircle className="h-3 w-3 text-gray-400 hover:text-gray-600" />
+                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <div className="space-y-1">
                     <p className="text-xs font-medium">Amazon Template headers:</p>
                     <ul className="text-xs space-y-0.5">
-                      <li>• Detect technical key row (e.g., bullet_point#1.value)</li>
-                      <li>• Skip requiredness row; optionally skip sample row</li>
+                      <li>Detect technical key row (e.g., bullet_point#1.value)</li>
+                      <li>Skip requiredness row; optionally skip sample row</li>
                     </ul>
                   </div>
                 </TooltipContent>
@@ -245,30 +249,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUploaded, useCase = 'ecom
             </label>
           </div>
         )}
-        {useCase !== 'amazon' && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground w-full">
-            <span>Excel (.xlsx, .xls) or CSV</span>
-          <Tooltip>
-            <TooltipTrigger>
-              <HelpCircle className="h-3 w-3 text-gray-400 hover:text-gray-600" />
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              <div className="space-y-1">
-                <p className="text-xs font-medium">Required columns:</p>
-                <ul className="text-xs space-y-0.5">
-                  <li>• ColorSAPMaterialNo</li>
-                  <li>• ColorMaterialLongDescriptionEcom_[lang] or</li>
-                  <li>• MaterialLongDescriptionEcom_[lang]</li>
-                  <li>• Short description [lang]</li>
-                </ul>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-        )}
-    </div>
+      </div>
     </TooltipProvider>
   );
 };
 
-export default FileUpload; 
+export default FileUpload;
