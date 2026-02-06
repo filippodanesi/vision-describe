@@ -1,13 +1,10 @@
 import { useState, useRef, useCallback } from 'react';
 import { useCostTracker } from './useCostTracker';
 import { Model } from '@/lib/models';
-import { toast } from 'sonner';
-import { 
-  isServerProcessingAvailable, 
-  processChunkOnServer, 
+import {
   createProcessingChunks,
   ProcessingChunk,
-  ProcessingResult 
+  ProcessingResult
 } from '@/lib/api/serverProcessing';
 import { optimizeTextWithAI } from '../utils/optimizationUtils';
 import { processAmazonRows } from '../processing/processAmazon';
@@ -288,24 +285,9 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     startTimeRef.current = Date.now();
 
     try {
-      // Step 1: Check server availability
-      setProcessingMode('checking');
-      
-      const serverAvailable = await isServerProcessingAvailable();
-      
-      // For Amazon, Partoo, NEXT, and AboutYou, run client-side specialized processing
-      if (context?.useCase === 'amazon' || context?.useCase === 'partoo' || context?.useCase === 'next' || context?.useCase === 'aboutyou') {
-        setProcessingMode('client');
-        return await processWithClient(effectiveRows, selectedColumns, model, apiKey, context);
-      }
-
-      if (serverAvailable) {
-        setProcessingMode('server');
-        return await processWithServer(effectiveRows, selectedColumns, model, apiKey);
-      } else {
-        setProcessingMode('client');
-        return await processWithClient(effectiveRows, selectedColumns, model, apiKey, context);
-      }
+      // All processing is client-side (no backend server)
+      setProcessingMode('client');
+      return await processWithClient(effectiveRows, selectedColumns, model, apiKey, context);
 
     } catch (error) {
       console.error('Processing error:', error);
@@ -313,78 +295,6 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const processWithServer = async (
-    rows: any[],
-    selectedColumns: string[],
-    model: Model,
-    apiKey: string
-  ): Promise<any[]> => {
-    // Use 1-row chunks to reflect per-row progress even on full runs
-    const chunks = createProcessingChunks(rows, selectedColumns, model, apiKey, 1);
-    let allProcessedRows: any[] = [];
-    let totalCost = 0;
-
-    for (let i = 0; i < chunks.length; i++) {
-      if (cancelRequested.current) {
-        addLog('⚠ Processing cancelled');
-        break;
-      }
-
-      const chunk = chunks[i];
-
-      try {
-        const response = await processChunkOnServer(chunk);
-
-        if (response.shouldFallbackToClient) {
-          setProcessingMode('client');
-          return await processWithClient(rows, selectedColumns, model, apiKey);
-        }
-
-        if (!response.success || !response.result) {
-          throw new Error(response.error || 'Server processing failed');
-        }
-
-        const result = response.result;
-        
-        // Add server processing logs for visibility
-        for (const row of result.processedRows) {
-          const idxFallback = typeof processedRows === 'number' ? processedRows : 0;
-          const productId = row['MaterialSAPMaterialNo'] || row['ColorSAPMaterialNo'] || row['ProductID'] || row['ID'] || `Row ${idxFallback + 1}`;
-          addLog(`✓ ${productId} | server batch | optimized | $${(result.cost.totalCost / result.processedRows.length).toFixed(2)}`);
-        }
-        
-        allProcessedRows.push(...result.processedRows);
-        totalCost += result.cost.totalCost;
-
-        const processed = (i + 1) * chunk.rows.length;
-        setProcessedRows(Math.min(processed, rows.length));
-        setProgress(Math.round((processed / rows.length) * 100));
-
-        // Estimate remaining time
-        if (i > 0) {
-          const elapsed = Date.now() - startTimeRef.current;
-          const avgTimePerChunk = elapsed / (i + 1);
-          const remainingChunks = chunks.length - (i + 1);
-          const estimatedMs = remainingChunks * avgTimePerChunk;
-          
-          const minutes = Math.floor(estimatedMs / 60000);
-          if (minutes > 0) {
-            setEstimatedTimeRemaining(`~${minutes}m remaining`);
-          } else {
-            setEstimatedTimeRemaining('Almost done');
-          }
-        }
-
-      } catch (error) {
-        console.error('Server chunk processing error:', error);
-        setProcessingMode('client');
-        return await processWithClient(rows, selectedColumns, model, apiKey);
-      }
-    }
-
-    return allProcessedRows;
   };
 
   const processWithClient = async (
