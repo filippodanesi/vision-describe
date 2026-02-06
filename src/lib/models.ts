@@ -25,7 +25,7 @@ export const models: Model[] = [
     description: 'Latest Anthropic flagship — top-tier text quality (200K context)',
     provider: 'anthropic',
     speed: 'Medium',
-    cost: 'High',
+    cost: 'Medium',
     quality: 'Excellent',
   },
   {
