@@ -79,7 +79,7 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
   },
   aboutyou: {
     id: 'aboutyou-v0',
-    label: 'About You (TBD)',
+    label: 'About You',
     detectors: {
       productId: [],
       title: [],
@@ -95,7 +95,7 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
   },
   next: {
     id: 'next-v0',
-    label: 'Next (TBD)',
+    label: 'NEXT',
     detectors: {
       productId: [],
       title: [],

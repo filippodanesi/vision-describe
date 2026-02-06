@@ -105,11 +105,13 @@ export interface HybridProcessingHook {
     model: Model,
     apiKey: string,
     context?: { 
-      useCase?: 'ecommerce' | 'amazon' | 'partoo'; 
-      mappings?: any; 
-      lang?: string; 
+      useCase?: 'ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
+      mappings?: any;
+      lang?: string;
       dryRun?: boolean;
-      businessIdsFilter?: Set<string> | null;  // ✨ NUOVO CAMPO
+      businessIdsFilter?: Set<string> | null;
+      colorMappings?: any[];
+      sizeMappings?: any[];  // ✨ NUOVO CAMPO
     },
     costTracker?: any
   ) => Promise<any[]>;
@@ -265,11 +267,13 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     model: Model,
     apiKey: string,
     context?: { 
-      useCase?: 'ecommerce' | 'amazon' | 'partoo'; 
-      mappings?: any; 
-      lang?: string; 
+      useCase?: 'ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
+      mappings?: any;
+      lang?: string;
       dryRun?: boolean;
-      businessIdsFilter?: Set<string> | null;  // ✨ NUOVO CAMPO
+      businessIdsFilter?: Set<string> | null;
+      colorMappings?: any[];
+      sizeMappings?: any[];  // ✨ NUOVO CAMPO
     },
     costTracker?: any
   ): Promise<any[]> => {
@@ -289,8 +293,8 @@ export const useHybridProcessing = (): HybridProcessingHook => {
       
       const serverAvailable = await isServerProcessingAvailable();
       
-      // For Amazon and Partoo, run client-side specialized processing for now
-      if (context?.useCase === 'amazon' || context?.useCase === 'partoo') {
+      // For Amazon, Partoo, NEXT, and AboutYou, run client-side specialized processing
+      if (context?.useCase === 'amazon' || context?.useCase === 'partoo' || context?.useCase === 'next' || context?.useCase === 'aboutyou') {
         setProcessingMode('client');
         return await processWithClient(effectiveRows, selectedColumns, model, apiKey, context);
       }
@@ -389,11 +393,13 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     model: Model,
     apiKey: string,
     context?: { 
-      useCase?: 'ecommerce' | 'amazon' | 'partoo'; 
-      mappings?: any; 
-      lang?: string; 
+      useCase?: 'ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
+      mappings?: any;
+      lang?: string;
       dryRun?: boolean;
-      businessIdsFilter?: Set<string> | null;  // ✨ NUOVO CAMPO
+      businessIdsFilter?: Set<string> | null;
+      colorMappings?: any[];
+      sizeMappings?: any[];  // ✨ NUOVO CAMPO
     }
   ): Promise<any[]> => {
     // Use client-side keep-alive mechanism
@@ -449,6 +455,34 @@ export const useHybridProcessing = (): HybridProcessingHook => {
             (m) => addLog(m), 
             costTracker,
             businessIdsFilter  // ✨ PASSA IL FILTRO
+          );
+          allProcessedRows.push(...processed);
+          const processedCount = Math.min(allProcessedRows.length, rows.length);
+          setProcessedRows(processedCount);
+          setProgress(Math.round((processedCount / rows.length) * 100));
+          continue;
+        } else if (context?.useCase === 'next') {
+          const { processNextRows } = await import('../processing/processNext');
+          const { COLOR_TRANSLATIONS } = await import('../utils/translations/colorTranslations');
+          const { SIZE_TRANSLATION_TABLE } = await import('../utils/translations/sizeTranslations');
+          const processed = await processNextRows(
+            chunk.rows, model, apiKey, {},
+            context.colorMappings || COLOR_TRANSLATIONS,
+            context.sizeMappings || SIZE_TRANSLATION_TABLE,
+            (m) => addLog(m), costTracker
+          );
+          allProcessedRows.push(...processed);
+          const processedCount = Math.min(allProcessedRows.length, rows.length);
+          setProcessedRows(processedCount);
+          setProgress(Math.round((processedCount / rows.length) * 100));
+          continue;
+        } else if (context?.useCase === 'aboutyou') {
+          const { processAboutYouRows } = await import('../processing/processAboutYou');
+          const { COLOR_TRANSLATIONS } = await import('../utils/translations/colorTranslations');
+          const processed = await processAboutYouRows(
+            chunk.rows, model, apiKey, {},
+            context.colorMappings || COLOR_TRANSLATIONS,
+            (m) => addLog(m), costTracker
           );
           allProcessedRows.push(...processed);
           const processedCount = Math.min(allProcessedRows.length, rows.length);

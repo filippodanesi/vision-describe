@@ -49,6 +49,9 @@ import ModelSelector from './components/ModelSelector';
 import ProcessingView from './components/ProcessingView';
 import ExportResults from './components/ExportResults';
 import BusinessIdFilterUpload from './components/BusinessIdFilterUpload';
+import { TranslatorPanel } from './components/TranslatorPanel';
+import { COLOR_TRANSLATIONS, type ColorMapping } from './utils/translations/colorTranslations';
+import { SIZE_TRANSLATION_TABLE, type SizeMapping } from './utils/translations/sizeTranslations';
 import { getModelById } from '@/lib/models';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -62,7 +65,7 @@ interface StepDef {
   label: string;
 }
 
-const getStepsForUseCase = (useCase: UseCase): StepDef[] => {
+const getStepsForUseCase = (useCase: UseCase | ''): StepDef[] => {
   switch (useCase) {
     case 'partoo':
       return [
@@ -75,7 +78,7 @@ const getStepsForUseCase = (useCase: UseCase): StepDef[] => {
     case 'next':
       return [
         { key: ProcessingStep.UPLOAD, label: 'Upload' },
-        { key: ProcessingStep.SELECT_COLUMNS, label: 'Translations' },
+        { key: ProcessingStep.CONFIRM_COLUMNS, label: 'Translations' },
         { key: ProcessingStep.SELECT_MODEL, label: 'Model' },
         { key: ProcessingStep.PROCESSING, label: 'Processing' },
         { key: ProcessingStep.COMPLETE, label: 'Complete' },
@@ -153,6 +156,10 @@ const WatsonAnalyzer: React.FC = () => {
   // Business ID Filter
   const [businessIdsFilter, setBusinessIdsFilter] = useState<Set<string> | null>(null);
 
+  // Translation mappings for NEXT/AboutYou
+  const [colorMappings, setColorMappings] = useState<ColorMapping[]>([...COLOR_TRANSLATIONS]);
+  const [sizeMappings, setSizeMappings] = useState<SizeMapping[]>([...SIZE_TRANSLATION_TABLE]);
+
   // Processing state
   const {
     isProcessing,
@@ -171,8 +178,8 @@ const WatsonAnalyzer: React.FC = () => {
   const [processingStartTime, setProcessingStartTime] = useState<Date | null>(null);
   const [processingEndTime, setProcessingEndTime] = useState<Date | null>(null);
 
-  // Use case selection (E-commerce default)
-  const [useCase, setUseCase] = useState<UseCase>('ecommerce');
+  // Use case selection (no default — user must choose)
+  const [useCase, setUseCase] = useState<UseCase | ''>('');
 
   // Validate environment variables on component mount
   useEffect(() => {
@@ -235,6 +242,12 @@ const WatsonAnalyzer: React.FC = () => {
 
       setColumnMappings(partooMapping);
       setCurrentStep(ProcessingStep.SELECT_MODEL); // Skip column selection and confirmation
+    } else if (useCase === 'next' || useCase === 'aboutyou') {
+      // NEXT and AboutYou auto-detect columns, show translations review
+      setSelectedColumns(data.columns);
+      setColorMappings([...COLOR_TRANSLATIONS]);
+      setSizeMappings([...SIZE_TRANSLATION_TABLE]);
+      setCurrentStep(ProcessingStep.CONFIRM_COLUMNS);
     } else {
       setCurrentStep(ProcessingStep.SELECT_COLUMNS);
     }
@@ -293,11 +306,13 @@ const WatsonAnalyzer: React.FC = () => {
         modelConfig,
         apiKey as string,
         {
-          useCase: useCase === 'amazon' ? 'amazon' : useCase === 'partoo' ? 'partoo' : 'ecommerce',
+          useCase: useCase || 'ecommerce',
           mappings: columnMappings,
           dryRun: options?.dryRun,
           lang: options?.targetLanguage,
-          businessIdsFilter: businessIdsFilter
+          businessIdsFilter: businessIdsFilter,
+          colorMappings,
+          sizeMappings,
         },
         costTracker
       );
@@ -427,6 +442,9 @@ const WatsonAnalyzer: React.FC = () => {
     setProcessingStartTime(null);
     setProcessingEndTime(null);
     setBusinessIdsFilter(null);
+    setUseCase('');
+    setColorMappings([...COLOR_TRANSLATIONS]);
+    setSizeMappings([...SIZE_TRANSLATION_TABLE]);
     setCurrentStep(ProcessingStep.UPLOAD);
   };
 
@@ -473,7 +491,9 @@ const WatsonAnalyzer: React.FC = () => {
                   </Select>
                 </div>
 
-                <FileUpload onFileUploaded={handleFileUploaded} useCase={useCase} />
+                {useCase && (
+                  <FileUpload onFileUploaded={handleFileUploaded} useCase={useCase} />
+                )}
               </CardContent>
             </Card>
 
@@ -527,6 +547,25 @@ const WatsonAnalyzer: React.FC = () => {
         );
 
       case ProcessingStep.CONFIRM_COLUMNS:
+        // For NEXT/AboutYou, show TranslatorPanel instead of ColumnConfirmation
+        if (useCase === 'next' || useCase === 'aboutyou') {
+          return (
+            <div className="max-w-3xl mx-auto">
+              <TranslatorPanel
+                useCase={useCase}
+                colorMappings={colorMappings}
+                onColorMappingsChange={setColorMappings}
+                sizeMappings={useCase === 'next' ? sizeMappings : undefined}
+                onSizeMappingsChange={useCase === 'next' ? setSizeMappings : undefined}
+                onConfirm={() => setCurrentStep(ProcessingStep.SELECT_MODEL)}
+                onBack={() => {
+                  setCurrentStep(ProcessingStep.UPLOAD);
+                  setFileData(null);
+                }}
+              />
+            </div>
+          );
+        }
         return (
           <ColumnConfirmation
             fileData={fileData!}
@@ -639,7 +678,7 @@ const WatsonAnalyzer: React.FC = () => {
                 </div>
               </CardContent>
               <CardFooter className="flex items-center justify-center gap-4 pt-4">
-                <ExportResults results={processedData} isDisabled={!processedData || processedData.length === 0} originalMeta={fileData?.meta} useCase={useCase === 'amazon' ? 'amazon' : useCase === 'partoo' ? 'partoo' : 'ecommerce'} />
+                <ExportResults results={processedData} isDisabled={!processedData || processedData.length === 0} originalMeta={fileData?.meta} useCase={useCase || 'ecommerce'} />
                 <Button variant="outline" onClick={reloadFile}>
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Process Another File
