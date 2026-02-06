@@ -709,6 +709,18 @@ const WatsonAnalyzer: React.FC = () => {
                               <TableHead className="font-semibold text-foreground text-xs w-[200px]">Short Description</TableHead>
                               <TableHead className="font-semibold text-foreground text-xs w-[300px]">Long Description</TableHead>
                             </>
+                          ) : useCase === 'next' ? (
+                            <>
+                              <TableHead className="font-semibold text-foreground text-xs">Supplier Code</TableHead>
+                              <TableHead className="font-semibold text-foreground text-xs">Product Title</TableHead>
+                              <TableHead className="font-semibold text-foreground text-xs w-[300px]">Copy Design Features</TableHead>
+                            </>
+                          ) : useCase === 'aboutyou' ? (
+                            <>
+                              <TableHead className="font-semibold text-foreground text-xs">Style No</TableHead>
+                              <TableHead className="font-semibold text-foreground text-xs">Style Name</TableHead>
+                              <TableHead className="font-semibold text-foreground text-xs w-[300px]">Long Description</TableHead>
+                            </>
                           ) : (
                             <>
                               <TableHead className="font-semibold text-foreground text-xs">SKU</TableHead>
@@ -748,7 +760,43 @@ const WatsonAnalyzer: React.FC = () => {
                             );
                           }
 
-                          // For other use cases
+                          // For NEXT
+                          if (useCase === 'next') {
+                            const code = row['Next Supplier Code'] || row['Manufacturers Style No'] || '-';
+                            const title = row['Product Description (Item Title)'] || '-';
+                            const copy = row['Copy Design Features (Tone of Voice)'] || '';
+                            return (
+                              <TableRow key={index} className="hover:bg-muted/30">
+                                <TableCell className="font-mono text-xs text-muted-foreground">{code}</TableCell>
+                                <TableCell className="text-xs text-foreground">{title}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground max-w-[300px]">
+                                  <div className="line-clamp-2" title={copy}>
+                                    {copy ? copy.substring(0, 120) + (copy.length > 120 ? '...' : '') : '-'}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
+
+                          // For About You
+                          if (useCase === 'aboutyou') {
+                            const styleNo = row['Style No supplier'] || '-';
+                            const styleName = row['Supplier Style Name (Style wording for Shop)'] || row['Style name supplier'] || '-';
+                            const longDesc = row['Style Long Description for Shop'] || '';
+                            return (
+                              <TableRow key={index} className="hover:bg-muted/30">
+                                <TableCell className="font-mono text-xs text-muted-foreground">{styleNo}</TableCell>
+                                <TableCell className="text-xs text-foreground">{styleName}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground max-w-[300px]">
+                                  <div className="line-clamp-2" title={longDesc}>
+                                    {longDesc ? longDesc.substring(0, 120) + (longDesc.length > 120 ? '...' : '') : '-'}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
+
+                          // For ecommerce/amazon
                           return (
                             <TableRow key={index} className="hover:bg-muted/30">
                               <TableCell className="font-mono text-xs text-muted-foreground">{row.sku || row.asin || '-'}</TableCell>

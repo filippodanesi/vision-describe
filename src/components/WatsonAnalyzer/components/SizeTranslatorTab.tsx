@@ -87,8 +87,8 @@ export const SizeTranslatorTab: React.FC<SizeTranslatorTabProps> = ({ mappings, 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {grouped.map((group) => (
-              <React.Fragment key={group.band}>
+            {grouped.map((group, idx) => (
+              <React.Fragment key={`${group.band}-${idx}`}>
                 <TableRow className="bg-muted/50">
                   <TableCell colSpan={2} className="py-1.5 text-xs font-semibold text-muted-foreground">
                     Band {group.band}
