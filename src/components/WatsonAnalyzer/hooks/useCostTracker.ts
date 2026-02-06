@@ -169,10 +169,10 @@ const MODEL_COSTS: Record<string, ModelCostData> = {
     tokensPerCharInput: 0.25,
     tokensPerCharOutput: 0.25
   },
-  // Claude Opus 4.6 (Latest flagship)
+  // Claude Opus 4.6 (Latest flagship — $10/$75 per MTok, verified vs Console 2026-02-06)
   'claude-opus-4-6': {
     name: 'Claude Opus 4.6',
-    inputCostPer1M: 15.00,
+    inputCostPer1M: 10.00,
     outputCostPer1M: 75.00,
     tokensPerCharInput: 0.25,
     tokensPerCharOutput: 0.25
