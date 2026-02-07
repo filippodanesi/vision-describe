@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { CheckCircle2, Loader2, Upload, AlertCircle } from 'lucide-react';
+import { Loader2, Upload, AlertCircle } from 'lucide-react';
+import { StepIndicator, type StepDef } from '@/components/ui/step-indicator';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +18,7 @@ interface CsvTranslationFlowProps {
   onBack: () => void;
 }
 
-const STEP_DEFS = [
+const STEP_DEFS: StepDef<CsvTranslationStep>[] = [
   { key: CsvTranslationStep.UPLOAD, label: 'Upload' },
   { key: CsvTranslationStep.FORMAT_DETECT, label: 'Format' },
   { key: CsvTranslationStep.LANGUAGES, label: 'Languages' },
@@ -25,41 +26,6 @@ const STEP_DEFS = [
   { key: CsvTranslationStep.PROCESSING, label: 'Processing' },
   { key: CsvTranslationStep.RESULT, label: 'Result' },
 ];
-
-const StepIndicator: React.FC<{ currentStep: CsvTranslationStep }> = ({ currentStep }) => {
-  const currentIndex = STEP_DEFS.findIndex(s => s.key === currentStep);
-  return (
-    <div className="flex items-center justify-center gap-0 mb-6">
-      {STEP_DEFS.map((step, idx) => {
-        const isPast = idx < currentIndex;
-        const isCurrent = idx === currentIndex;
-        return (
-          <React.Fragment key={step.key}>
-            {idx > 0 && (
-              <div className={`h-px w-8 sm:w-12 ${isPast ? 'bg-primary' : 'bg-border'}`} />
-            )}
-            <div className="flex flex-col items-center gap-1">
-              {isPast ? (
-                <CheckCircle2 className="h-5 w-5 text-primary" />
-              ) : (
-                <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                  isCurrent ? 'border-primary bg-primary' : 'border-muted-foreground/30'
-                }`}>
-                  {isCurrent && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
-                </div>
-              )}
-              <span className={`text-[10px] font-medium ${
-                isCurrent ? 'text-foreground' : 'text-muted-foreground'
-              }`}>
-                {step.label}
-              </span>
-            </div>
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
-};
 
 export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }) => {
   const {
@@ -112,7 +78,7 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
 
   return (
     <div className="max-w-4xl mx-auto">
-      <StepIndicator currentStep={step} />
+      <StepIndicator steps={STEP_DEFS} currentStep={step} />
 
       {step === CsvTranslationStep.UPLOAD && (
         <Card className="max-w-xl mx-auto">
@@ -183,7 +149,7 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Products</span>
-                <span className="font-mono font-semibold">{products.length}</span>
+                <span className="font-mono font-normal">{products.length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">File</span>
@@ -222,7 +188,7 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
       {step === CsvTranslationStep.MODEL && (
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-4">
-            <h2 className="text-lg font-medium mb-2">Choose AI Model</h2>
+            <h2 className="text-lg font-medium mb-2 tracking-tight">Choose AI Model</h2>
             <p className="text-sm text-muted-foreground">
               {products.length} products × {selectedLanguages.length} languages = {products.length * selectedLanguages.length} translations
             </p>

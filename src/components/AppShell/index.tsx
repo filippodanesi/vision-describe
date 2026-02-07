@@ -1,45 +1,92 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ImageIcon, Sparkles, BarChart3 } from 'lucide-react';
+import { Logo } from '../Logo';
 import { ThemeProvider } from '../WatsonAnalyzer/ThemeProvider';
 import Header from '../WatsonAnalyzer/components/Header';
-import Footer from '../WatsonAnalyzer/components/Footer';
 import { OptimizeMode } from '../WatsonAnalyzer';
 import { GenerateMode } from '../GenerateMode';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ImageIcon, Sparkles } from 'lucide-react';
+import { Dashboard } from '../Dashboard';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from '@/components/ui/sidebar';
+
+const NAV_ITEMS = [
+  { id: 'generate', label: 'Generate', icon: ImageIcon },
+  { id: 'optimize', label: 'Optimize', icon: Sparkles },
+  { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+] as const;
+
+type TabId = (typeof NAV_ITEMS)[number]['id'];
 
 export const AppShell: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('generate');
+  const [activeTab, setActiveTab] = useState<TabId>('generate');
+
+  const activeLabel = NAV_ITEMS.find((item) => item.id === activeTab)?.label ?? '';
 
   return (
     <ThemeProvider defaultTheme="light">
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
+      <SidebarProvider defaultOpen={true}>
+        <Sidebar collapsible="icon" side="left">
+          <SidebarHeader className="p-4">
+            <Logo
+              size="sm"
+              showName={true}
+              className="gap-2 overflow-hidden [&>span]:whitespace-nowrap group-data-[collapsible=icon]:[&>span]:hidden"
+            />
+          </SidebarHeader>
 
-        <main className="flex-1 container max-w-7xl mx-auto px-4 py-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
-              <TabsTrigger value="generate" className="flex items-center gap-2">
-                <ImageIcon className="h-4 w-4" />
-                Generate
-              </TabsTrigger>
-              <TabsTrigger value="optimize" className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                Optimize
-              </TabsTrigger>
-            </TabsList>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarMenu>
+                {NAV_ITEMS.map((item) => (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      isActive={activeTab === item.id}
+                      tooltip={item.label}
+                      onClick={() => setActiveTab(item.id)}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
+          </SidebarContent>
 
-            <TabsContent value="generate">
-              <GenerateMode />
-            </TabsContent>
+          <SidebarFooter className="p-4">
+            <div className="flex items-center gap-2 overflow-hidden text-xs text-muted-foreground">
+              <span className="font-mono">v3.0</span>
+              <Link
+                to="/changelog"
+                className="hover:text-foreground transition-colors whitespace-nowrap group-data-[collapsible=icon]:hidden"
+              >
+                Changelog
+              </Link>
+            </div>
+          </SidebarFooter>
+        </Sidebar>
 
-            <TabsContent value="optimize">
-              <OptimizeMode />
-            </TabsContent>
-          </Tabs>
-        </main>
+        <SidebarInset>
+          <Header sectionTitle={activeLabel} />
 
-        <Footer />
-      </div>
+          <main className="flex-1 px-6 py-8">
+            {activeTab === 'generate' && <GenerateMode />}
+            {activeTab === 'optimize' && <OptimizeMode />}
+            {activeTab === 'dashboard' && <Dashboard />}
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
     </ThemeProvider>
   );
 };

@@ -53,13 +53,10 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-        vercel: {
-          DEFAULT: '#000000',
-          foreground: '#FFFFFF',
-          green: '#10b981',
-          pink: '#FF0080',
-          blue: '#0070F3'
-        },
+				vercel: {
+					DEFAULT: '#000000',
+					foreground: '#FFFFFF',
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -71,29 +68,31 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
-		fontFamily: {
-			sans: [
-				'-apple-system',
-				'BlinkMacSystemFont',
-				'"Segoe UI"',
-				'Roboto',
-				'"Helvetica Neue"',
-				'Arial',
-				'sans-serif',
-				'"Apple Color Emoji"',
-				'"Segoe UI Emoji"'
-			],
-			mono: [
-				'ui-monospace',
-				'SFMono-Regular',
-				'"SF Mono"',
-				'Menlo',
-				'Consolas',
-				'"Liberation Mono"',
-				'monospace'
-			]
-		},
-			borderRadius: {
+			fontFamily: {
+				sans: [
+					'"Geist"',
+					'-apple-system',
+					'BlinkMacSystemFont',
+					'"Segoe UI"',
+					'Roboto',
+					'"Helvetica Neue"',
+					'Arial',
+					'sans-serif',
+					'"Apple Color Emoji"',
+					'"Segoe UI Emoji"'
+				],
+				mono: [
+					'"Geist Mono"',
+					'ui-monospace',
+					'SFMono-Regular',
+					'"SF Mono"',
+					'Menlo',
+					'Consolas',
+					'"Liberation Mono"',
+					'monospace'
+				]
+			},
+borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
@@ -114,11 +113,22 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					from: {
+						opacity: '0',
+						transform: 'translateY(4px)'
+					},
+					to: {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out'
 			}
 		}
 	},

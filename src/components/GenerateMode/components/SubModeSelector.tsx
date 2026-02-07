@@ -11,7 +11,7 @@ export const SubModeSelector: React.FC<SubModeSelectorProps> = ({ onSelect }) =>
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-6">
-        <h2 className="text-lg font-semibold text-foreground">Generate New Content</h2>
+        <h2 className="text-lg font-medium text-foreground tracking-tight">Generate New Content</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Choose how you want to generate product descriptions
         </p>
@@ -19,14 +19,14 @@ export const SubModeSelector: React.FC<SubModeSelectorProps> = ({ onSelect }) =>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card
-          className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-sm"
+          className="group cursor-pointer transition-all hover:border-primary/40 hover:shadow-md"
           onClick={() => onSelect(GenerateSubMode.IMAGE_ANALYSIS)}
         >
           <CardHeader className="text-center">
-            <div className="mx-auto mb-3 h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div className="mx-auto mb-3 h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center transition-colors group-hover:bg-primary/10">
               <Camera className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle className="text-base">Image Analysis</CardTitle>
+            <CardTitle className="text-base tracking-tight">Image Analysis</CardTitle>
             <CardDescription className="text-xs">
               Generate product descriptions from photos
             </CardDescription>
@@ -34,14 +34,14 @@ export const SubModeSelector: React.FC<SubModeSelectorProps> = ({ onSelect }) =>
         </Card>
 
         <Card
-          className="cursor-pointer transition-all hover:border-primary/50 hover:shadow-sm"
+          className="group cursor-pointer transition-all hover:border-primary/40 hover:shadow-md"
           onClick={() => onSelect(GenerateSubMode.CSV_TRANSLATION)}
         >
           <CardHeader className="text-center">
-            <div className="mx-auto mb-3 h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div className="mx-auto mb-3 h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center transition-colors group-hover:bg-primary/10">
               <FileSpreadsheet className="h-6 w-6 text-primary" />
             </div>
-            <CardTitle className="text-base">CSV Translation</CardTitle>
+            <CardTitle className="text-base tracking-tight">CSV Translation</CardTitle>
             <CardDescription className="text-xs">
               Batch translate product descriptions in 20+ languages
             </CardDescription>

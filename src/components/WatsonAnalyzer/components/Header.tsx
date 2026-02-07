@@ -1,22 +1,42 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles } from "lucide-react";
+import { ThemeToggle } from '../ThemeToggle';
 import CorsProxy from './CorsProxy';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Separator } from '@/components/ui/separator';
+import { Logo } from '@/components/Logo';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  standalone?: boolean;
+  sectionTitle?: string;
+}
+
+const Header: React.FC<HeaderProps> = ({ standalone = false, sectionTitle }) => {
   return (
-    <header className="bg-background border-b border-border">
-      <div className="container max-w-7xl mx-auto py-3 px-4 flex items-center justify-between">
-        <Link
-          to="/"
-          className="flex items-center gap-2 text-foreground hover:opacity-80 transition-opacity"
-        >
-          <Sparkles className="h-5 w-5" />
-          <span className="font-semibold text-sm tracking-tight">AI Copy Assistant</span>
-        </Link>
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
+      <div className="px-4 py-3 flex items-center gap-2">
+        {!standalone ? (
+          <>
+            <SidebarTrigger className="-ml-1" />
+            {sectionTitle && (
+              <>
+                <Separator orientation="vertical" className="mx-2 h-4" />
+                <span className="text-sm font-medium text-foreground">{sectionTitle}</span>
+              </>
+            )}
+          </>
+        ) : (
+          <Link
+            to="/"
+            className="hover:opacity-80 transition-opacity"
+          >
+            <Logo size="sm" className="gap-2" />
+          </Link>
+        )}
 
-        <div className="flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-1">
           <CorsProxy />
+          <ThemeToggle />
         </div>
       </div>
     </header>

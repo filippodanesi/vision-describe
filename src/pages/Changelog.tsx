@@ -97,11 +97,11 @@ const entries: ChangelogEntry[] = [
 const Changelog: React.FC = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <Header standalone />
 
       <main className="flex-1 container max-w-7xl mx-auto px-4 py-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="mb-2 text-2xl font-bold tracking-tight md:text-3xl">
+          <h1 className="mb-2 text-2xl font-medium tracking-tighter md:text-3xl">
             Changelog
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -124,7 +124,7 @@ const Changelog: React.FC = () => {
                 </span>
               </div>
               <div className="flex flex-col">
-                <h2 className="mb-2 text-base leading-tight font-semibold text-foreground md:text-lg">
+                <h2 className="mb-2 text-base leading-tight font-medium text-foreground md:text-lg tracking-tight">
                   {entry.title}
                 </h2>
                 <p className="text-sm text-muted-foreground">

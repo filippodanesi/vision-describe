@@ -1,12 +1,8 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ExternalLink, Info } from "lucide-react";
-import { CorsProxyStatus } from './CorsProxyStatus';
-import { ProxyServices } from './ProxyServices';
-import { ProxyInfoBoxes } from './ProxyInfoBoxes';
+import { CheckCircle, XCircle, Info } from "lucide-react";
 
 interface CorsProxyContentProps {
   proxyUrl: string;
@@ -26,37 +22,47 @@ export const CorsProxyContent: React.FC<CorsProxyContentProps> = ({
   handleTestProxy
 }) => {
   return (
-    <div className="space-y-4 py-4">
-      <div className="text-sm text-muted-foreground">
-        {/* Removed duplicate description since it's now in DialogDescription */}
-        <ProxyInfoBoxes currentProxyUrl={currentProxyUrl} />
+    <div className="space-y-4 py-2">
+      {/* Status */}
+      <div className="flex items-center gap-2 text-sm">
+        {proxyStatus === 'working' ? (
+          <><CheckCircle className="h-4 w-4 text-foreground" /><span className="text-foreground">Proxy connected</span></>
+        ) : proxyStatus === 'error' ? (
+          <><XCircle className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Proxy unreachable</span></>
+        ) : (
+          <><Info className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Not tested yet</span></>
+        )}
+        {currentProxyUrl && (
+          <span className="text-xs text-muted-foreground font-mono ml-auto truncate max-w-[200px]">
+            {currentProxyUrl.replace(/https?:\/\//, '').replace(/\/$/, '')}
+          </span>
+        )}
       </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="proxy-url">CORS Proxy URL</Label>
+
+      {/* Input */}
+      <div className="space-y-1.5">
+        <Label htmlFor="proxy-url" className="text-xs">Custom Proxy URL</Label>
         <Input
           id="proxy-url"
           placeholder="https://corsproxy.io/?"
           value={proxyUrl}
           onChange={(e) => setProxyUrl(e.target.value)}
+          className="font-mono text-xs"
         />
-        <p className="text-xs text-muted-foreground">
-          Enter the URL of a CORS proxy service. Leave empty to use the default CORS.sh proxy.
+        <p className="text-[11px] text-muted-foreground">
+          Leave empty to use the default. Auto-fallback across 6 proxy services is built-in.
         </p>
       </div>
-      
-      <CorsProxyStatus />
-      
+
+      {/* Actions */}
       <div className="flex gap-2">
-        <Button onClick={handleSave} className="flex-1">
-          Save Settings
+        <Button onClick={handleSave} size="sm" className="flex-1">
+          Save
         </Button>
-        <Button onClick={handleTestProxy} variant="outline" className="flex-1">
-          Test Proxy
+        <Button onClick={handleTestProxy} variant="outline" size="sm" className="flex-1">
+          Test
         </Button>
       </div>
-      
-      <ProxyServices />
     </div>
   );
 };

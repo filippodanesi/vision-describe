@@ -11,7 +11,22 @@
     "url": "git+https://github.com/filippodanesi/ai-copy-assistant"
   },
   "homepage": "https://www.filippodanesi.com",
-  "keywords": ["ai", "copywriting", "content-generation", "ecommerce", "retail", "product-description", "store-description", "partoo", "amazon", "inriver", "openai", "anthropic", "gpt-5", "claude"],
+  "keywords": [
+    "ai",
+    "copywriting",
+    "content-generation",
+    "ecommerce",
+    "retail",
+    "product-description",
+    "store-description",
+    "partoo",
+    "amazon",
+    "inriver",
+    "openai",
+    "anthropic",
+    "gpt-5",
+    "claude"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -59,6 +74,7 @@
     "embla-carousel-react": "^8.3.0",
     "exceljs": "^4.4.0",
     "franc-min": "^6.2.0",
+    "geist": "^1.7.0",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.544.0",
     "next-themes": "^0.4.6",

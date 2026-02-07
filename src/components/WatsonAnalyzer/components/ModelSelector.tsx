@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import {
   Tooltip,
   TooltipContent,
@@ -17,28 +18,18 @@ import {
 interface ModelSelectorProps {
   onModelSelected: (modelId: string, options?: { dryRun?: boolean; targetLanguage?: string }) => void;
   useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
+  providerFilter?: 'openai' | 'anthropic';
 }
 
-const getBadgeClass = (value: string) => {
-  switch (value) {
-    case 'Fast':
-    case 'Low':
-    case 'Excellent':
-      return 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100';
-    case 'Medium':
-      return 'bg-amber-100 text-amber-700 hover:bg-amber-100';
-    case 'Slow':
-    case 'High':
-      return 'bg-red-100 text-red-700 hover:bg-red-100';
-    default:
-      return '';
-  }
+const getBadgeClass = (_value: string) => {
+  return 'bg-secondary text-secondary-foreground hover:bg-secondary';
 };
 
-const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelSelected, useCase = 'ecommerce' }) => {
+const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelSelected, useCase = 'ecommerce', providerFilter }) => {
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [targetLanguage, setTargetLanguage] = useState<string>('en');
   const [dryRun, setDryRun] = useState<boolean>(false);
+  const filteredModels = providerFilter ? models.filter(m => m.provider === providerFilter) : models;
 
   const handleConfirm = () => {
     if (selectedModel) onModelSelected(selectedModel, { dryRun, targetLanguage });
@@ -48,24 +39,25 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelSelected, useCase 
     <TooltipProvider>
       <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {models.map((m) => {
+          {filteredModels.map((m) => {
             const isSelected = selectedModel === m.id;
             const ProviderIcon = m.provider === 'openai' ? Zap : Brain;
             return (
               <Card
                 key={m.id}
                 onClick={() => setSelectedModel(m.id)}
-                className={`cursor-pointer p-4 transition-all ${
+                className={cn(
+                  'cursor-pointer p-4 transition-all',
                   isSelected
-                    ? 'ring-2 ring-primary border-primary'
-                    : 'hover:border-muted-foreground/30'
-                }`}
+                    ? 'ring-2 ring-primary border-primary bg-primary/[0.02] shadow-sm'
+                    : 'hover:border-border hover:shadow-sm'
+                )}
               >
                 <div className="flex items-start gap-3">
                   <ProviderIcon className="h-5 w-5 mt-0.5 shrink-0 text-muted-foreground" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-sm text-foreground">{m.name}</span>
+                      <span className="font-medium text-sm text-foreground">{m.name}</span>
                       <span className="text-xs text-muted-foreground capitalize">{m.provider}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{m.description}</p>
@@ -87,7 +79,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelSelected, useCase 
           })}
         </div>
 
-        {/* Language Selection - Only for E-commerce */}
         {useCase === 'ecommerce' && (
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground flex items-center gap-2">

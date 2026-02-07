@@ -16,6 +16,7 @@ import { ProcessingStep } from './types';
 import { UseCase, AVAILABLE_USE_CASES } from './usecases';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, ArrowRight, RefreshCw, Download, CheckCircle2 } from 'lucide-react';
+import { StepIndicator, type StepDef } from '@/components/ui/step-indicator';
 import * as ExcelJS from 'exceljs';
 import { validateEnv, OPENAI_API_KEY, ANTHROPIC_API_KEY } from '@/config/env';
 
@@ -36,14 +37,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-// ─── Step Indicator ───────────────────────────────────────────────────────────
+// ─── Step Definitions ─────────────────────────────────────────────────────────
 
-interface StepDef {
-  key: ProcessingStep;
-  label: string;
-}
-
-const getStepsForUseCase = (useCase: UseCase | ''): StepDef[] => {
+const getStepsForUseCase = (useCase: UseCase | ''): StepDef<ProcessingStep>[] => {
   switch (useCase) {
     case 'partoo':
       return [
@@ -71,42 +67,6 @@ const getStepsForUseCase = (useCase: UseCase | ''): StepDef[] => {
         { key: ProcessingStep.COMPLETE, label: 'Complete' },
       ];
   }
-};
-
-const StepIndicator: React.FC<{ steps: StepDef[]; currentStep: ProcessingStep }> = ({ steps, currentStep }) => {
-  const currentIndex = steps.findIndex(s => s.key === currentStep);
-
-  return (
-    <div className="flex items-center justify-center gap-0 mb-6">
-      {steps.map((step, idx) => {
-        const isPast = idx < currentIndex;
-        const isCurrent = idx === currentIndex;
-        return (
-          <React.Fragment key={step.key}>
-            {idx > 0 && (
-              <div className={`h-px w-8 sm:w-12 ${isPast ? 'bg-primary' : 'bg-border'}`} />
-            )}
-            <div className="flex flex-col items-center gap-1">
-              {isPast ? (
-                <CheckCircle2 className="h-5 w-5 text-primary" />
-              ) : (
-                <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                  isCurrent ? 'border-primary bg-primary' : 'border-muted-foreground/30'
-                }`}>
-                  {isCurrent && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
-                </div>
-              )}
-              <span className={`text-[10px] font-medium ${
-                isCurrent ? 'text-foreground' : 'text-muted-foreground'
-              }`}>
-                {step.label}
-              </span>
-            </div>
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
 };
 
 // ─── OptimizeMode Component ──────────────────────────────────────────────────
@@ -409,10 +369,10 @@ export const OptimizeMode: React.FC = () => {
     switch (currentStep) {
       case ProcessingStep.UPLOAD:
         return (
-          <div className="max-w-3xl mx-auto space-y-4">
+          <div className="max-w-3xl mx-auto space-y-4 animate-fade-in">
             <Card>
               <CardHeader>
-                <CardTitle>Upload your file</CardTitle>
+                <CardTitle className="tracking-tight">Upload your file</CardTitle>
                 <CardDescription>Select a use case and upload your data file</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -468,17 +428,17 @@ export const OptimizeMode: React.FC = () => {
             <div className="text-center mb-4">
               {useCase === 'amazon' ? (
                 <>
-                  <h2 className="text-lg font-medium mb-2">Select Columns (Amazon)</h2>
+                  <h2 className="text-lg font-medium mb-2 tracking-tight">Select Columns (Amazon)</h2>
                   <p className="text-sm text-muted-foreground">Choose input columns such as rtip_product_description#1.value and bullet_point#*.value</p>
                 </>
               ) : useCase === 'partoo' ? (
                 <>
-                  <h2 className="text-lg font-medium mb-2">Select Store Data Columns (Partoo)</h2>
+                  <h2 className="text-lg font-medium mb-2 tracking-tight">Select Store Data Columns (Partoo)</h2>
                   <p className="text-sm text-muted-foreground">Select columns like Name, City, Country, Short description, Long description</p>
                 </>
               ) : (
                 <>
-                  <h2 className="text-lg font-medium mb-2">Select Language Variants</h2>
+                  <h2 className="text-lg font-medium mb-2 tracking-tight">Select Language Variants</h2>
                   <p className="text-sm text-muted-foreground">Choose MaterialLongDescriptionEcom columns to optimize (with or without Color prefix)</p>
                 </>
               )}
@@ -533,7 +493,7 @@ export const OptimizeMode: React.FC = () => {
         return (
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-4">
-              <h2 className="text-lg font-medium mb-2">Choose AI Model</h2>
+              <h2 className="text-lg font-medium mb-2 tracking-tight">Choose AI Model</h2>
               <p className="text-sm text-muted-foreground">
                 Select the model for content optimization
               </p>
@@ -550,7 +510,7 @@ export const OptimizeMode: React.FC = () => {
         return (
           <div className="max-w-3xl mx-auto">
             <div className="mb-4">
-              <h2 className="text-2xl font-bold">Processing File...</h2>
+              <h2 className="text-2xl font-medium tracking-tighter">Processing File...</h2>
               <p className="text-sm text-muted-foreground mt-1">Using {modelDisplayName} for optimization</p>
             </div>
 
@@ -570,7 +530,7 @@ export const OptimizeMode: React.FC = () => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h3 className="text-xl font-semibold text-foreground mb-2">Processing Complete!</h3>
+              <h3 className="text-xl font-medium text-foreground mb-2 tracking-tight">Processing Complete!</h3>
               <p className="text-muted-foreground mb-4">Your file has been processed successfully.</p>
             </div>
 
@@ -586,7 +546,7 @@ export const OptimizeMode: React.FC = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Rows Processed</span>
-                      <span className="font-mono font-semibold text-foreground">{processedData?.length || 0}</span>
+                      <span className="font-mono font-normal text-foreground">{processedData?.length || 0}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Model</span>
@@ -604,7 +564,7 @@ export const OptimizeMode: React.FC = () => {
                     <div className="space-y-3 border-l border-border pl-8">
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Total Cost</span>
-                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 font-mono">
+                        <Badge variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary font-mono">
                           ${costTracker.getSessionStats().totalActualCost.toFixed(2)}
                         </Badge>
                       </div>
@@ -638,7 +598,7 @@ export const OptimizeMode: React.FC = () => {
             {processedData && processedData.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold text-foreground">Preview (first 10 rows)</h4>
+                  <h4 className="text-sm font-medium text-foreground">Preview (first 10 rows)</h4>
                   <span className="text-xs text-muted-foreground">
                     Showing {Math.min(10, processedData.length)} of {processedData.length} rows
                   </span>
@@ -651,29 +611,29 @@ export const OptimizeMode: React.FC = () => {
                         <TableRow className="bg-muted/50">
                           {useCase === 'partoo' ? (
                             <>
-                              <TableHead className="font-semibold text-foreground text-xs">Business ID</TableHead>
-                              <TableHead className="font-semibold text-foreground text-xs">Name</TableHead>
-                              <TableHead className="font-semibold text-foreground text-xs">City</TableHead>
-                              <TableHead className="font-semibold text-foreground text-xs w-[200px]">Short Description</TableHead>
-                              <TableHead className="font-semibold text-foreground text-xs w-[300px]">Long Description</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs">Business ID</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs">Name</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs">City</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs w-[200px]">Short Description</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs w-[300px]">Long Description</TableHead>
                             </>
                           ) : useCase === 'next' ? (
                             <>
-                              <TableHead className="font-semibold text-foreground text-xs">Supplier Code</TableHead>
-                              <TableHead className="font-semibold text-foreground text-xs">Product Title</TableHead>
-                              <TableHead className="font-semibold text-foreground text-xs w-[300px]">Copy Design Features</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs">Supplier Code</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs">Product Title</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs w-[300px]">Copy Design Features</TableHead>
                             </>
                           ) : useCase === 'aboutyou' ? (
                             <>
-                              <TableHead className="font-semibold text-foreground text-xs">Style No</TableHead>
-                              <TableHead className="font-semibold text-foreground text-xs">Style Name</TableHead>
-                              <TableHead className="font-semibold text-foreground text-xs w-[300px]">Long Description</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs">Style No</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs">Style Name</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs w-[300px]">Long Description</TableHead>
                             </>
                           ) : (
                             <>
-                              <TableHead className="font-semibold text-foreground text-xs">SKU</TableHead>
-                              <TableHead className="font-semibold text-foreground text-xs">Product Name</TableHead>
-                              <TableHead className="font-semibold text-foreground text-xs w-[300px]">Optimized Text</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs">SKU</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs">Product Name</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs w-[300px]">Optimized Text</TableHead>
                             </>
                           )}
                         </TableRow>
