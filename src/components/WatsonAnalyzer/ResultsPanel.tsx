@@ -67,7 +67,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-lg font-semibold">Analysis Results</CardTitle>
+            <CardTitle className="text-lg font-medium">Analysis Results</CardTitle>
             <CardDescription>
               Information extracted from the text
             </CardDescription>

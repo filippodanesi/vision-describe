@@ -82,7 +82,7 @@ const ToneTab: React.FC<ToneTabProps> = ({ classifications }) => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold">Tone Analysis</h3>
+      <h3 className="text-sm font-medium">Tone Analysis</h3>
       <div className="space-y-3">
         {sortedTones.map((tone, index) => (
           <div key={index} className="space-y-1">

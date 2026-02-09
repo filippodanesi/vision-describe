@@ -75,7 +75,7 @@ const TextOptimizationPanel: React.FC<TextOptimizationPanelProps> = ({
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-lg font-semibold">AI Optimization</CardTitle>
+              <CardTitle className="text-lg font-medium">AI Optimization</CardTitle>
               <CardDescription>
                 Optimize text for target keywords using AI
               </CardDescription>

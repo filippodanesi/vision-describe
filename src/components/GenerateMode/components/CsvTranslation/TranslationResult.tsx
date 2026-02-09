@@ -60,11 +60,11 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Products</span>
-              <span className="font-mono font-semibold">{results.length}</span>
+              <span className="font-mono font-medium">{results.length}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Translations</span>
-              <span className="font-mono font-semibold">{totalTranslations}</span>
+              <span className="font-mono font-medium">{totalTranslations}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Errors</span>
@@ -93,7 +93,7 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
       {results.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-foreground">Preview (first 10 rows)</h4>
+            <h4 className="text-sm font-medium text-foreground">Preview (first 10 rows)</h4>
             <span className="text-xs text-muted-foreground">
               Showing {Math.min(10, results.length)} of {results.length} products
             </span>
@@ -103,11 +103,11 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
             <div className="max-h-[400px] overflow-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="font-semibold text-foreground text-xs">Material No</TableHead>
-                    <TableHead className="font-semibold text-foreground text-xs">Product</TableHead>
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="font-medium text-foreground text-xs">Material No</TableHead>
+                    <TableHead className="font-medium text-foreground text-xs">Product</TableHead>
                     {selectedLanguages.slice(0, 3).map(lang => (
-                      <TableHead key={lang} className="font-semibold text-foreground text-xs">
+                      <TableHead key={lang} className="font-medium text-foreground text-xs">
                         {lang.toUpperCase()}
                       </TableHead>
                     ))}

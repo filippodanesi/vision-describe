@@ -108,7 +108,7 @@ const CostSummary: React.FC<CostSummaryProps> = ({ costTracker, activeProvider, 
                         <p>Output: {lastCostRecord.estimatedOutputTokens.toLocaleString()} tokens</p>
                       </>
                     )}
-                    <p className="font-semibold mt-1">Model pricing:</p>
+                    <p className="font-medium mt-1">Model pricing:</p>
                     {lastCostRecord.model && costTracker.getModelCostData(lastCostRecord.model) && (
                       <>
                         <p>Input: ${costTracker.getModelCostData(lastCostRecord.model).inputCostPer1M.toFixed(2)}/MTok</p>

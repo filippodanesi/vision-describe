@@ -38,7 +38,7 @@ const KeywordStatusBadge: React.FC<KeywordStatusBadgeProps> = ({ keyword, status
       className={`${badgeClass} font-medium`}
     >
       <span className="mr-1">{keyword}</span>
-      <span className="font-bold">{indicator}</span>
+      <span className="font-medium">{indicator}</span>
     </Badge>
   );
 };

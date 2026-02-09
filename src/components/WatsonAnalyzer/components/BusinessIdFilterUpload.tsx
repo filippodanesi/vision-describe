@@ -204,7 +204,7 @@ const BusinessIdFilterUpload: React.FC<BusinessIdFilterUploadProps> = ({
         </div>
         
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-blue-900 mb-1">
+          <h3 className="text-sm font-medium text-blue-900 mb-1">
             Business ID Filter (Optional)
           </h3>
           <p className="text-xs text-blue-700 mb-3">

@@ -182,7 +182,7 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Confirm Column Mappings</h2>
+        <h2 className="text-xl font-medium mb-2">Confirm Column Mappings</h2>
         {useCase === 'amazon' ? (
           <p className="text-gray-600">Map Amazon columns such as vendor_sku#1.value, item_name#1.value, rtip_product_description#1.value, bullet_point#*.value</p>
         ) : (

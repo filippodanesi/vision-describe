@@ -14,6 +14,25 @@ type ChangelogEntry = {
 
 const entries: ChangelogEntry[] = [
   {
+    version: "v2.3.0",
+    date: "February 9, 2026",
+    title: "Visual Refinement — Calm Precision Aesthetic",
+    description:
+      "Full UI restyling inspired by Vercel, Linear, and Cursor: softer contrasts, cool-gray tinting, lighter font weights, more whitespace, and barely-visible borders. Zero functional changes.",
+    items: [
+      "Cool-gray (220 hue) tinted design tokens across all light and dark mode CSS variables",
+      "Softer foreground/background: no pure black or white — reduced eye strain in both themes",
+      "Lighter font weights throughout: semibold/bold replaced with medium across all components",
+      "Increased whitespace: larger card padding (p-7), main content area (px-8 py-10), drop zones (p-10)",
+      "Subtler borders: border-border/30 on cards, border-border/60 on inputs, border-border/40 on header",
+      "Reduced shadow intensity: shadow-lg replaced with shadow-sm on dialogs, popovers, and toasts",
+      "Lighter overlays: dialog/sheet backdrops reduced from 80% to 50% opacity",
+      "Thinner progress bars (h-2), slightly rounder corners (radius 0.625rem), rounded-xl cards",
+      "Compact controls: buttons, inputs, selects, and tabs all reduced by one size step",
+      "Drop zones softened from double to single border with more padding",
+    ],
+  },
+  {
     version: "v2.2.0",
     date: "February 6, 2026",
     title: "Models & UI Refresh",
@@ -101,7 +120,7 @@ const Changelog: React.FC = () => {
 
       <main className="flex-1 container max-w-7xl mx-auto px-4 py-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="mb-2 text-2xl font-medium tracking-tighter md:text-3xl">
+          <h1 className="mb-2 text-2xl font-medium tracking-tight md:text-3xl">
             Changelog
           </h1>
           <p className="text-sm text-muted-foreground">

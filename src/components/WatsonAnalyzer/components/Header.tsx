@@ -13,15 +13,15 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ standalone = false, sectionTitle }) => {
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
-      <div className="px-4 py-3 flex items-center gap-2">
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40">
+      <div className="px-5 py-3.5 flex items-center gap-3">
         {!standalone ? (
           <>
             <SidebarTrigger className="-ml-1" />
             {sectionTitle && (
               <>
                 <Separator orientation="vertical" className="mx-2 h-4" />
-                <span className="text-sm font-medium text-foreground">{sectionTitle}</span>
+                <span className="text-sm font-normal text-foreground/80">{sectionTitle}</span>
               </>
             )}
           </>

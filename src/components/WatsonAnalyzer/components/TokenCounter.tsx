@@ -64,22 +64,22 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{stats.totalOperations}</div>
+              <div className="text-2xl font-medium text-blue-600">{stats.totalOperations}</div>
               <div className="text-sm text-gray-600">Products Processed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{formatNumber(stats.totalTokens)}</div>
+              <div className="text-2xl font-medium text-green-600">{formatNumber(stats.totalTokens)}</div>
               <div className="text-sm text-gray-600">Total Tokens</div>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{formatNumber(stats.totalTokensInput)}</div>
+              <div className="text-2xl font-medium text-purple-600">{formatNumber(stats.totalTokensInput)}</div>
               <div className="text-sm text-gray-600">Input Tokens</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{formatNumber(stats.totalTokensOutput)}</div>
+              <div className="text-2xl font-medium text-orange-600">{formatNumber(stats.totalTokensOutput)}</div>
               <div className="text-sm text-gray-600">Output Tokens</div>
             </div>
           </div>
@@ -107,7 +107,7 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-green-600">
+              <div className="text-lg font-medium text-green-600">
                 {formatCurrency(totalCost.openai)}
               </div>
               <div className="text-sm text-gray-600">Total Spent</div>
@@ -126,7 +126,7 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold text-orange-600">
+              <div className="text-lg font-medium text-orange-600">
                 {formatCurrency(totalCost.anthropic)}
               </div>
               <div className="text-sm text-gray-600">Total Spent</div>
@@ -137,7 +137,7 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
           <div className="border-t pt-3">
             <div className="flex items-center justify-between">
               <div className="font-medium">Total Session Cost</div>
-              <div className="text-xl font-bold text-blue-600">
+              <div className="text-xl font-medium text-blue-600">
                 {formatCurrency(stats.totalActualCost)}
               </div>
             </div>
@@ -201,13 +201,13 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <div className="text-xl font-bold text-blue-600">
+                <div className="text-xl font-medium text-blue-600">
                   {formatCurrency(stats.totalActualCost / stats.totalOperations)}
                 </div>
                 <div className="text-sm text-gray-600">Avg Cost per Product</div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold text-green-600">
+                <div className="text-xl font-medium text-green-600">
                   {formatNumber(Math.round(stats.totalTokens / stats.totalOperations))}
                 </div>
                 <div className="text-sm text-gray-600">Avg Tokens per Product</div>
@@ -217,7 +217,7 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
             {/* Projection for 100 products */}
             <div className="border-t pt-3">
               <div className="text-center">
-                <div className="text-lg font-bold text-purple-600">
+                <div className="text-lg font-medium text-purple-600">
                   {formatCurrency((stats.totalActualCost / stats.totalOperations) * 100)}
                 </div>
                 <div className="text-sm text-gray-600">Estimated cost for 100 products</div>

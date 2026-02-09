@@ -560,7 +560,7 @@ const WatsonAnalyzer: React.FC = () => {
         return (
           <div className="max-w-3xl mx-auto">
             <div className="mb-4">
-              <h2 className="text-2xl font-medium tracking-tighter">Processing File...</h2>
+              <h2 className="text-xl font-medium tracking-tight">Processing File...</h2>
               <p className="text-sm text-muted-foreground mt-1">Using {modelDisplayName} for optimization</p>
             </div>
 

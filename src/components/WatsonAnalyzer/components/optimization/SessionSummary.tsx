@@ -65,7 +65,7 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ costTracker, activeProv
   return (
     <Card className="bg-gray-50 border-gray-200">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold flex items-center text-gray-900">
+        <CardTitle className="text-lg font-medium flex items-center text-gray-900">
           <BarChart3 className="h-5 w-5 mr-2" />
           Session Summary - {activeProvider === 'openai' ? 'OpenAI' : 'Claude'}
         </CardTitle>
@@ -75,21 +75,21 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ costTracker, activeProv
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-100">
             <div className="text-sm text-gray-600">Operations</div>
-            <div className="text-xl font-bold text-gray-900">{providerStats.operations}</div>
+            <div className="text-xl font-medium text-gray-900">{providerStats.operations}</div>
           </div>
           <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-100">
             <div className="text-sm text-gray-600">Total Cost</div>
-            <div className="text-xl font-bold text-gray-800">${formatCurrency(providerStats.totalCost)}</div>
+            <div className="text-xl font-medium text-gray-800">${formatCurrency(providerStats.totalCost)}</div>
           </div>
           <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-100">
             <div className="text-sm text-gray-600">Total Tokens</div>
-            <div className="text-xl font-bold text-gray-700">
+            <div className="text-xl font-medium text-gray-700">
               {formatLargeNumber(providerStats.totalInputTokens + providerStats.totalOutputTokens)}
             </div>
           </div>
           <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-100">
             <div className="text-sm text-gray-600">Efficiency</div>
-            <div className="text-xl font-bold text-gray-600">
+            <div className="text-xl font-medium text-gray-600">
               {tokensPerDollar > 0 ? Math.round(tokensPerDollar).toLocaleString() : '0'} tok/$
             </div>
           </div>
@@ -97,7 +97,7 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ costTracker, activeProv
 
         {/* Token Breakdown */}
         <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-          <h4 className="font-semibold mb-2 flex items-center text-gray-800">
+          <h4 className="font-medium mb-2 flex items-center text-gray-800">
             <Calculator className="h-4 w-4 mr-1" />
             Token Usage Breakdown
           </h4>
@@ -121,7 +121,7 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ costTracker, activeProv
 
         {/* Cost Analysis */}
         <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-          <h4 className="font-semibold mb-2 flex items-center text-gray-800">
+          <h4 className="font-medium mb-2 flex items-center text-gray-800">
             <TrendingUp className="h-4 w-4 mr-1" />
             Cost Analysis
           </h4>
@@ -140,7 +140,7 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ costTracker, activeProv
           <div className="mt-3 pt-3 border-t border-gray-200">
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Budget Remaining</span>
-              <span className="font-semibold text-gray-800">${costTracker.remainingBudget[activeProvider].toFixed(2)}</span>
+              <span className="font-medium text-gray-800">${costTracker.remainingBudget[activeProvider].toFixed(2)}</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
               <div 
@@ -156,7 +156,7 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ costTracker, activeProv
         {/* Models Used */}
         {modelsUsed.length > 0 && (
           <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-            <h4 className="font-semibold mb-2 flex items-center text-gray-800">
+            <h4 className="font-medium mb-2 flex items-center text-gray-800">
               <Clock className="h-4 w-4 mr-1" />
               Models Used
             </h4>

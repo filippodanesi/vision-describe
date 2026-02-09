@@ -16,7 +16,7 @@ const TextStatsCard: React.FC<TextStatsCardProps> = ({ textStats, language }) =>
   return (
     <Card className="bg-secondary/30">
       <CardContent className="p-4 space-y-2">
-        <h3 className="text-xs uppercase font-semibold text-muted-foreground">Text Statistics</h3>
+        <h3 className="text-xs uppercase font-medium text-muted-foreground">Text Statistics</h3>
         <div className="grid grid-cols-3 gap-4">
           <div>
             <p className="text-sm font-medium">Words</p>

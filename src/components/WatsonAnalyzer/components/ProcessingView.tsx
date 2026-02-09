@@ -53,7 +53,7 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
       {logs.length > 0 && (
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-2">Activity Log</p>
-          <div className="max-h-60 overflow-y-auto bg-muted/50 border rounded-lg p-4 font-mono text-sm">
+          <div className="max-h-60 overflow-y-auto bg-muted/30 border rounded-xl p-4 font-mono text-xs">
             {logs.map((log, idx) => (
               <div key={idx} className={`mb-1 leading-relaxed ${getLogClass(log)}`}>
                 {log}

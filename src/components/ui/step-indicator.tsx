@@ -35,7 +35,7 @@ export function StepIndicator<K extends string>({ steps, currentStep }: StepIndi
                 className={cn(
                   'h-6 w-6 rounded-full flex items-center justify-center text-xs font-normal transition-all duration-300',
                   isPast && 'bg-primary text-primary-foreground',
-                  isCurrent && 'bg-primary text-primary-foreground ring-4 ring-primary/20',
+                  isCurrent && 'bg-primary text-primary-foreground ring-4 ring-primary/10',
                   !isPast && !isCurrent && 'bg-muted text-muted-foreground'
                 )}
               >

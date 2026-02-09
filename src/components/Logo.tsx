@@ -31,7 +31,7 @@ export function Logo({ className, size = "md", showName = true }: LogoProps) {
       {showName && (
         <span
           className={cn(
-            "font-semibold tracking-tight text-foreground",
+            "font-medium tracking-tight text-foreground",
             size === "sm" && "text-sm",
             size === "md" && "text-base",
             size === "lg" && "text-2xl",

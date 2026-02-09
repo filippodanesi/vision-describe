@@ -101,7 +101,7 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
               onClick={() => inputRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
-              className="flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 cursor-pointer transition-colors border-muted-foreground/25 hover:border-muted-foreground/40"
+              className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-10 cursor-pointer transition-colors border-muted-foreground/25 hover:border-muted-foreground/40"
             >
               <Upload className="h-8 w-8 text-muted-foreground" />
               <div className="text-center">

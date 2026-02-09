@@ -80,7 +80,7 @@ export const AppShell: React.FC = () => {
         <SidebarInset>
           <Header sectionTitle={activeLabel} />
 
-          <main className="flex-1 px-6 py-8">
+          <main className="flex-1 px-8 py-10">
             {activeTab === 'generate' && <GenerateMode />}
             {activeTab === 'optimize' && <OptimizeMode />}
             {activeTab === 'dashboard' && <Dashboard />}

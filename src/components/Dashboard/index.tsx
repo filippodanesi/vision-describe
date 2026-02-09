@@ -60,17 +60,17 @@ export const Dashboard: React.FC = () => {
   const budgetRemaining = remainingBudget.openai + remainingBudget.anthropic;
 
   return (
-    <div className="animate-in fade-in-0 duration-300 space-y-8">
+    <div className="animate-in fade-in-0 duration-300 space-y-10">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-medium tracking-tight">Usage Dashboard</h1>
+        <h1 className="text-xl font-medium tracking-tight">Usage Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Track your AI processing costs and model performance
         </p>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
         <StatCard label="Operations" value={sessionStats.totalOperations.toString()} sub="total" />
         <StatCard label="Tokens" value={formatTokens(sessionStats.totalTokens)} sub="total" />
         <StatCard label="Total Cost" value={formatCost(sessionStats.totalActualCost)} sub="all-time" />
@@ -79,11 +79,11 @@ export const Dashboard: React.FC = () => {
 
       {/* Model Leaderboard */}
       <section>
-        <h2 className="text-lg font-medium tracking-tight mb-3">Model Leaderboard</h2>
+        <h2 className="text-base font-medium tracking-tight mb-3">Model Leaderboard</h2>
         <div className="border rounded-lg">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-muted/30">
                 <TableHead className="w-12">#</TableHead>
                 <TableHead>Model</TableHead>
                 <TableHead className="text-right">Ops</TableHead>
@@ -94,7 +94,7 @@ export const Dashboard: React.FC = () => {
             </TableHeader>
             <TableBody>
               {modelStats.map((m, i) => (
-                <TableRow key={m.modelId} className="hover:bg-muted/30">
+                <TableRow key={m.modelId} className="hover:bg-muted/20">
                   <TableCell className="font-mono text-muted-foreground">{i + 1}</TableCell>
                   <TableCell>
                     <span className="font-medium">{m.modelName}</span>
@@ -113,7 +113,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Budget by Provider */}
       <section>
-        <h2 className="text-lg font-medium tracking-tight mb-3">Budget by Provider</h2>
+        <h2 className="text-base font-medium tracking-tight mb-3">Budget by Provider</h2>
         <div className="space-y-4">
           <BudgetRow label="OpenAI" used={totalCost.openai} budget={DEFAULT_BUDGET} />
           <BudgetRow label="Anthropic" used={totalCost.anthropic} budget={DEFAULT_BUDGET} />
@@ -149,7 +149,7 @@ export const Dashboard: React.FC = () => {
         <div className="border rounded-lg max-h-[400px] overflow-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-muted/30">
                 <TableHead>Time</TableHead>
                 <TableHead>Model</TableHead>
                 <TableHead className="text-right">Tokens In</TableHead>
@@ -166,7 +166,7 @@ export const Dashboard: React.FC = () => {
                 const cost = record.actualCost ?? record.estimatedCost;
 
                 return (
-                  <TableRow key={`${record.timestamp}-${i}`} className="hover:bg-muted/30">
+                  <TableRow key={`${record.timestamp}-${i}`} className="hover:bg-muted/20">
                     <TableCell className="text-muted-foreground">{timeAgo(record.timestamp)}</TableCell>
                     <TableCell>{displayName}</TableCell>
                     <TableCell className="text-right font-mono">{formatTokens(tokensIn)}</TableCell>
@@ -187,7 +187,7 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub: st
   return (
     <Card className="p-4">
       <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
-      <p className="text-2xl font-medium tracking-tighter font-mono mt-1">{value}</p>
+      <p className="text-xl font-normal tracking-tight font-mono mt-1">{value}</p>
       <p className="text-xs text-muted-foreground">{sub}</p>
     </Card>
   );

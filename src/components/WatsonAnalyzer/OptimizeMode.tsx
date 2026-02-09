@@ -428,17 +428,17 @@ export const OptimizeMode: React.FC = () => {
             <div className="text-center mb-4">
               {useCase === 'amazon' ? (
                 <>
-                  <h2 className="text-lg font-medium mb-2 tracking-tight">Select Columns (Amazon)</h2>
+                  <h2 className="text-base font-medium mb-2 tracking-tight">Select Columns (Amazon)</h2>
                   <p className="text-sm text-muted-foreground">Choose input columns such as rtip_product_description#1.value and bullet_point#*.value</p>
                 </>
               ) : useCase === 'partoo' ? (
                 <>
-                  <h2 className="text-lg font-medium mb-2 tracking-tight">Select Store Data Columns (Partoo)</h2>
+                  <h2 className="text-base font-medium mb-2 tracking-tight">Select Store Data Columns (Partoo)</h2>
                   <p className="text-sm text-muted-foreground">Select columns like Name, City, Country, Short description, Long description</p>
                 </>
               ) : (
                 <>
-                  <h2 className="text-lg font-medium mb-2 tracking-tight">Select Language Variants</h2>
+                  <h2 className="text-base font-medium mb-2 tracking-tight">Select Language Variants</h2>
                   <p className="text-sm text-muted-foreground">Choose MaterialLongDescriptionEcom columns to optimize (with or without Color prefix)</p>
                 </>
               )}
@@ -493,7 +493,7 @@ export const OptimizeMode: React.FC = () => {
         return (
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-4">
-              <h2 className="text-lg font-medium mb-2 tracking-tight">Choose AI Model</h2>
+              <h2 className="text-base font-medium mb-2 tracking-tight">Choose AI Model</h2>
               <p className="text-sm text-muted-foreground">
                 Select the model for content optimization
               </p>
@@ -510,7 +510,7 @@ export const OptimizeMode: React.FC = () => {
         return (
           <div className="max-w-3xl mx-auto">
             <div className="mb-4">
-              <h2 className="text-2xl font-medium tracking-tighter">Processing File...</h2>
+              <h2 className="text-xl font-medium tracking-tight">Processing File...</h2>
               <p className="text-sm text-muted-foreground mt-1">Using {modelDisplayName} for optimization</p>
             </div>
 
@@ -608,7 +608,7 @@ export const OptimizeMode: React.FC = () => {
                   <div className="max-h-[500px] overflow-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-muted/50">
+                        <TableRow className="bg-muted/30">
                           {useCase === 'partoo' ? (
                             <>
                               <TableHead className="font-normal text-foreground text-xs">Business ID</TableHead>
@@ -739,7 +739,7 @@ export const OptimizeMode: React.FC = () => {
       {renderStep()}
 
       {currentStep !== ProcessingStep.COMPLETE && (
-        <div className="mt-6 flex items-center justify-between pt-4 border-t border-border">
+        <div className="mt-8 flex items-center justify-between pt-5 border-t border-border/40">
           <div className="flex items-center gap-2">
             {canGoBack && (
               <Button variant="ghost" onClick={goBack}>

@@ -81,7 +81,7 @@ const InputPanel: React.FC<InputPanelProps> = ({
   return (
     <Card className="w-full bg-background border-border">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">Input</CardTitle>
+        <CardTitle className="text-lg font-medium">Input</CardTitle>
         <CardDescription>
           Enter text, upload a file, or input a URL to analyze
         </CardDescription>

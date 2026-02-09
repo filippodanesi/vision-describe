@@ -46,7 +46,7 @@ const BudgetConfigSection: React.FC<BudgetConfigSectionProps> = ({
         <div className="text-sm">
           <div className="flex justify-between items-center mb-2">
             <span className="text-gray-600">Current Budget:</span>
-            <span className="font-mono font-semibold text-gray-900">
+            <span className="font-mono font-medium text-gray-900">
               ${currentBudget.toFixed(2)}
             </span>
           </div>

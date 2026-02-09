@@ -77,7 +77,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
           className="hidden"
         />
         
-        <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-md p-6 cursor-pointer hover:bg-muted/50 transition-colors" onClick={handleUploadClick}>
+        <div className="flex flex-col items-center justify-center border border-dashed border-border rounded-lg p-10 cursor-pointer hover:bg-muted/50 transition-colors" onClick={handleUploadClick}>
           <File className="h-10 w-10 text-muted-foreground mb-2" />
           <p className="text-sm font-medium mb-1">
             {fileName ? fileName : "Click to upload a text file"}

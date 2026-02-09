@@ -13,7 +13,7 @@ const ChangelogHeader: React.FC = () => {
             <span>Back to Home</span>
           </Link>
         </div>
-        <h1 className="text-xl font-bold">Changelog</h1>
+        <h1 className="text-xl font-medium">Changelog</h1>
       </div>
     </header>
   );
