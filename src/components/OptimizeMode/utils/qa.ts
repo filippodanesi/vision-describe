@@ -1,4 +1,4 @@
-// src/components/WatsonAnalyzer/utils/qa.ts
+// src/components/OptimizeMode/utils/qa.ts
 // Mini-QA utilities for pre-export validation
 
 export function qaRowAmazon(row: any) {

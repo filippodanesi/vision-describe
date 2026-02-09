@@ -4,7 +4,7 @@ import { useAnalysisFeatures } from './useAnalysisFeatures';
 import { useInputManagement } from './useInputManagement';
 import { useAnalysisExecution } from './useAnalysisExecution';
 
-export const useWatsonAnalyzer = () => {
+export const useOptimizeMode = () => {
   // Get credentials configuration
   const credentials = useCredentialsConfig();
   
@@ -66,8 +66,8 @@ export const useWatsonAnalyzer = () => {
 
 // Re-export types for use in other components
 export type { 
-  WatsonFeatures, 
-  WatsonLimits 
+  AnalysisFeatures, 
+  AnalysisLimits 
 } from './useAnalysisFeatures';
 
 export type { 

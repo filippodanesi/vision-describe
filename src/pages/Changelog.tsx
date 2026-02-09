@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import Header from '@/components/WatsonAnalyzer/components/Header';
-import Footer from '@/components/WatsonAnalyzer/components/Footer';
+import Header from '@/components/OptimizeMode/components/Header';
+import Footer from '@/components/OptimizeMode/components/Footer';
 
 type ChangelogEntry = {
   version: string;

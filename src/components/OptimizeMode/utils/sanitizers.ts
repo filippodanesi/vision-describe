@@ -1,4 +1,4 @@
-// src/components/WatsonAnalyzer/utils/sanitizers.ts
+// src/components/OptimizeMode/utils/sanitizers.ts
 // Sanitization and validation utilities for Amazon content generation
 
 /**

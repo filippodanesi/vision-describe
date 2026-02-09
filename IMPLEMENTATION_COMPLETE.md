@@ -92,10 +92,10 @@
 1. ✅ `/src/lib/models.ts` - Models updated to GPT-5 and Claude 4.5
 
 ### Modified Code (v2.1.0):
-1. ✅ `/src/components/WatsonAnalyzer/components/config/LanguageSection.tsx` - PT-PT/PT-BR separated
-2. ✅ `/src/components/WatsonAnalyzer/utils/prompts/languageInstructions.ts` - NEW file with guidelines
-3. ✅ `/src/components/WatsonAnalyzer/utils/prompts/amazonSystemPrompt.ts` - Localization section added
-4. ✅ `/src/components/WatsonAnalyzer/utils/prompts/amazonTasks.ts` - All tasks updated
+1. ✅ `/src/components/OptimizeMode/components/config/LanguageSection.tsx` - PT-PT/PT-BR separated
+2. ✅ `/src/components/OptimizeMode/utils/prompts/languageInstructions.ts` - NEW file with guidelines
+3. ✅ `/src/components/OptimizeMode/utils/prompts/amazonSystemPrompt.ts` - Localization section added
+4. ✅ `/src/components/OptimizeMode/utils/prompts/amazonTasks.ts` - All tasks updated
 5. ✅ `/src/pages/Changelog.tsx` - v2.0.0 and v2.1.0 documented
 
 ### Documentation Created:

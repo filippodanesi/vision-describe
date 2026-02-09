@@ -10,7 +10,7 @@ import { useCsvTranslation } from '../../hooks/useCsvTranslation';
 import { CsvTranslationStep } from '../../types';
 import { LanguageMultiSelect } from './LanguageMultiSelect';
 import { TranslationResult } from './TranslationResult';
-import ModelSelector from '@/components/WatsonAnalyzer/components/ModelSelector';
+import ModelSelector from '@/components/OptimizeMode/components/ModelSelector';
 import { ANTHROPIC_API_KEY, OPENAI_API_KEY } from '@/config/env';
 import { toast } from 'sonner';
 

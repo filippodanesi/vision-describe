@@ -1,4 +1,4 @@
-// Environment variable helper utilities for WatsonAnalyzer
+// Environment variable helper utilities for VisionDescribe
 
 // Vite exposes env variables prefixed with VITE_ via import.meta.env
 // For local development a .env[.local] file can be used.

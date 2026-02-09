@@ -24,7 +24,7 @@ After an in-depth code analysis, several **critical points** have been identifie
 ### Current Situation
 
 ```typescript
-// File: src/components/WatsonAnalyzer/components/config/LanguageSection.tsx
+// File: src/components/OptimizeMode/components/config/LanguageSection.tsx
 <SelectItem value="pt">Portuguese</SelectItem>
 ```
 
@@ -42,7 +42,7 @@ When AI receives the instruction to write in "Portuguese" or "PT", the AI model:
 ### Current Prompt (Amazon)
 
 ```typescript
-// File: src/components/WatsonAnalyzer/utils/prompts/amazonTasks.ts
+// File: src/components/OptimizeMode/utils/prompts/amazonTasks.ts
 FORMAT:
 - Write in ${lang.toUpperCase()} language for the target market.
 ```
@@ -56,7 +56,7 @@ FORMAT:
 ### System Prompt Attuale (Amazon)
 
 ```typescript
-// File: src/components/WatsonAnalyzer/utils/prompts/amazonSystemPrompt.ts
+// File: src/components/OptimizeMode/utils/prompts/amazonSystemPrompt.ts
 
 TRUTHFULNESS & ANTI-INFERENCE (CRITICAL):
 - NEVER add technical specs not explicitly present in the input
@@ -77,7 +77,7 @@ WRONG:
 ### Generic Prompt (Ecommerce/Inriver)
 
 ```typescript
-// File: src/components/WatsonAnalyzer/utils/prompts/openaiSystemPrompt.ts
+// File: src/components/OptimizeMode/utils/prompts/openaiSystemPrompt.ts
 
 10. Preserve the authentic voice of the original text, including paragraph count, 
     structure, tone, punctuation, and spacing. Do not reformat or restructure content.
@@ -98,7 +98,7 @@ WRONG:
 ### Current Checks
 
 ```typescript
-// File: src/components/WatsonAnalyzer/utils/sanitizers.ts
+// File: src/components/OptimizeMode/utils/sanitizers.ts
 
 const POLICY_RX = /\b(best|heals?|cures?|100%\s*(?:eco|sustainable))\b/i;
 

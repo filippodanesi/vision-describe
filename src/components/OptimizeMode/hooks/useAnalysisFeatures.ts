@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-export interface WatsonFeatures {
+export interface AnalysisFeatures {
   keywords: boolean;
   entities: boolean;
   concepts: boolean;
@@ -9,7 +9,7 @@ export interface WatsonFeatures {
   classifications: boolean; // Support for tone analysis
 }
 
-export interface WatsonLimits {
+export interface AnalysisLimits {
   keywords: number;
   entities: number;
   concepts: number;
@@ -21,7 +21,7 @@ export const TONE_SUPPORTED_LANGUAGES = ["en", "fr", "auto"];
 
 export const useAnalysisFeatures = () => {
   // Features state
-  const [features, setFeatures] = useState<WatsonFeatures>({
+  const [features, setFeatures] = useState<AnalysisFeatures>({
     keywords: true,
     entities: true,
     concepts: true,
@@ -30,7 +30,7 @@ export const useAnalysisFeatures = () => {
   });
   
   // Limits state
-  const [limits, setLimits] = useState<WatsonLimits>({
+  const [limits, setLimits] = useState<AnalysisLimits>({
     keywords: 20,
     entities: 10,
     concepts: 10,

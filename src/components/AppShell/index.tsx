@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ImageIcon, Sparkles, BarChart3 } from 'lucide-react';
 import { Logo } from '../Logo';
-import { ThemeProvider } from '../WatsonAnalyzer/ThemeProvider';
-import Header from '../WatsonAnalyzer/components/Header';
-import { OptimizeMode } from '../WatsonAnalyzer';
+import { ThemeProvider } from '../OptimizeMode/ThemeProvider';
+import Header from '../OptimizeMode/components/Header';
+import { OptimizeMode } from '../OptimizeMode';
 import { GenerateMode } from '../GenerateMode';
 import { Dashboard } from '../Dashboard';
 import {

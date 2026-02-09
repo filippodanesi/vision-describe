@@ -260,7 +260,7 @@ export const generateMockClassifications = (text: string) => {
   };
 };
 
-interface WatsonFeatures {
+interface AnalysisFeatures {
   keywords: boolean;
   entities: boolean;
   concepts: boolean;
@@ -268,7 +268,7 @@ interface WatsonFeatures {
   classifications: boolean;
 }
 
-interface WatsonLimits {
+interface AnalysisLimits {
   keywords: number;
   entities: number;
   concepts: number;
@@ -277,15 +277,15 @@ interface WatsonLimits {
 
 export const generateMockResponse = (
   text: string,
-  features: WatsonFeatures,
-  limits: WatsonLimits
+  features: AnalysisFeatures,
+  limits: AnalysisLimits
 ): any => {
   const response: any = {
     language: "en",
     usage: {
       text_units: 1,
       text_characters: text.length,
-      features: Object.keys(features).filter((key) => features[key as keyof WatsonFeatures]).length,
+      features: Object.keys(features).filter((key) => features[key as keyof AnalysisFeatures]).length,
     },
   };
 

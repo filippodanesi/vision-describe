@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useCostTracker, type CostRecord } from '../WatsonAnalyzer/hooks/useCostTracker';
+import { useCostTracker, type CostRecord } from '../OptimizeMode/hooks/useCostTracker';
 import { getModelById } from '@/lib/models';
 
 export interface ModelStats {

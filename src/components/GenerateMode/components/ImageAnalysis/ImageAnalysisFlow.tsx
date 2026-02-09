@@ -5,7 +5,7 @@ import { ImageAnalysisStep } from '../../types';
 import { ProductSettingsForm } from './ProductSettingsForm';
 import { ImageUploadZone } from './ImageUploadZone';
 import { GenerationResult } from './GenerationResult';
-import ModelSelector from '@/components/WatsonAnalyzer/components/ModelSelector';
+import ModelSelector from '@/components/OptimizeMode/components/ModelSelector';
 import { ANTHROPIC_API_KEY, OPENAI_API_KEY } from '@/config/env';
 import { toast } from 'sonner';
 import { StepIndicator, type StepDef } from '@/components/ui/step-indicator';

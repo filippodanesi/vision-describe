@@ -2,12 +2,12 @@
 import { useState, useEffect } from 'react';
 import { toast } from "@/components/ui/use-toast";
 import { TextStats } from './useInputManagement';
-import { WatsonFeatures, WatsonLimits, TONE_SUPPORTED_LANGUAGES } from './useAnalysisFeatures';
+import { AnalysisFeatures, AnalysisLimits, TONE_SUPPORTED_LANGUAGES } from './useAnalysisFeatures';
 
 interface AnalysisExecutionProps {
   text: string;
-  features: WatsonFeatures;
-  limits: WatsonLimits;
+  features: AnalysisFeatures;
+  limits: AnalysisLimits;
   language: string;
   toneModel: string;
   getCurrentApiKey: () => string;
@@ -30,7 +30,7 @@ export const useAnalysisExecution = ({
   // Analysis state
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState<any>(null);
-  const [lastAnalyzedFeatures, setLastAnalyzedFeatures] = useState<WatsonFeatures | null>(null);
+  const [lastAnalyzedFeatures, setLastAnalyzedFeatures] = useState<AnalysisFeatures | null>(null);
 
   // Reset results when features change significantly from last analyzed features
   useEffect(() => {

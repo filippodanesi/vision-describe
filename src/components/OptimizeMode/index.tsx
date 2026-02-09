@@ -96,7 +96,7 @@ const getStepsForUseCase = (useCase: UseCase | ''): StepDef<ProcessingStep>[] =>
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const WatsonAnalyzer: React.FC = () => {
+const VisionDescribe: React.FC = () => {
   // Current step
   const [currentStep, setCurrentStep] = useState<ProcessingStep>(ProcessingStep.UPLOAD);
 
@@ -835,4 +835,4 @@ const WatsonAnalyzer: React.FC = () => {
   );
 };
 
-export default WatsonAnalyzer;
+export default VisionDescribe;

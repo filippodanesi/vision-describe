@@ -1,7 +1,6 @@
 /**
- * OptimizeMode — The inner content of the original WatsonAnalyzer component,
+ * OptimizeMode — The inner content of the Optimize flow,
  * extracted for use within AppShell tabs. No ThemeProvider, Header, or Footer wrapper.
- * All logic is identical to the original WatsonAnalyzer.
  */
 
 import React, { useState, useEffect } from 'react';
