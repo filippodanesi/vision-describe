@@ -1,16 +1,16 @@
 /**
- * AI Copy Assistant - Main Component
+ * VisionDescribe — AI Copy Assistant
  *
  * @author Filippo Danesi
  * @email filippo.danesi93@gmail.com
  * @website https://www.filippodanesi.com
  * @created 2025
- * @copyright Copyright (c) 2025 Filippo Danesi. All rights reserved.
+ * @copyright Copyright (c) 2025-present Filippo Danesi. All rights reserved.
  * @license Dual-licensed: CC BY-NC-SA 4.0 (non-commercial) | Commercial license required
  *
  * @description Main orchestrator component for the AI-powered content generation assistant.
  *              Handles file upload, column mapping, model selection, processing, and results export
- *              for multiple use cases: E-commerce products, Amazon listings, Partoo store descriptions.
+ *              for multiple use cases: E-commerce, Amazon, Partoo, NEXT, AboutYou.
  *
  * Key Features:
  * - Multi-format file support (Excel, CSV)
