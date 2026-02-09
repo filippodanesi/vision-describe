@@ -1,0 +1,10 @@
+Business identification,Business identification,Business identification,Business identification,Address,Address,Address,Descriptions,Descriptions
+business default en,business default en,business default en,business default en,business default en,business default en,business default en,business default en,business default en
+business_id,name,code,city,zipcode,country,status,short_description,long_description
+Business identification,Name,Code,City,Zipcode,Country,Status,Short description,Long description
+Do not delete,Read only,Read only,Required,Required,Required ISO 2-letter code,Read only,80 character maximum,750 character maximum
+STR-001,Triumph Flagship Store Vienna,triumph-vienna,Wien,1010,AT,OPEN,,
+STR-002,Triumph Boutique Munich,triumph-munich,München,80331,DE,OPEN,,
+STR-003,Triumph Store Zürich Bahnhofstrasse,triumph-zurich,Zürich,8001,CH,OPEN,,
+STR-004,Triumph Outlet Paris,triumph-paris,Paris,75001,FR,OPEN,,
+STR-005,Triumph Store Milano,triumph-milano,Milano,20121,IT,OPEN,,

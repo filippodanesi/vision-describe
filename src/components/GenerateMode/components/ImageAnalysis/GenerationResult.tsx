@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Copy, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+
+/** Convert \n to <br> in plain-text portions while preserving HTML block elements */
+function formatForDisplay(raw: string): string {
+  return raw
+    .split(/(<(?:ul|ol|div|table|blockquote)[\s\S]*?<\/(?:ul|ol|div|table|blockquote)>)/gi)
+    .map(part =>
+      part.match(/^<(?:ul|ol|div|table|blockquote)/i) ? part : part.replace(/\n/g, '<br>')
+    )
+    .join('');
+}
 
 interface GenerationResultProps {
   result: string;
@@ -19,6 +29,7 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
   onReset,
 }) => {
   const [copied, setCopied] = useState(false);
+  const displayHtml = useMemo(() => formatForDisplay(result), [result]);
 
   const handleCopy = async () => {
     try {
@@ -51,7 +62,7 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
         <CardContent>
           <div
             className="prose prose-sm max-w-none text-foreground"
-            dangerouslySetInnerHTML={{ __html: result }}
+            dangerouslySetInnerHTML={{ __html: displayHtml }}
           />
         </CardContent>
         <CardFooter className="flex items-center gap-3 pt-4">
