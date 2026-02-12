@@ -7,7 +7,7 @@
  * - Optimized for fast, reliable results (~20-30s)
  * - Good balance between quality and speed
  */
-import openAISystemPrompt from './prompts/openaiSystemPrompt';
+import { defaultSystemPrompt as openAISystemPrompt } from './prompts/systemPrompt';
 
 export interface OpenAIResponse {
   content: string;

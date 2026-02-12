@@ -8,7 +8,7 @@
  * - Budget: 10,000 thinking tokens per request
  */
 import Anthropic from '@anthropic-ai/sdk';
-import claudeSystemPrompt from './prompts/claudeSystemPrompt';
+import { claudeSystemPrompt } from './prompts/systemPrompt';
 import { toast } from "@/hooks/use-toast";
 import { fetchWithCorsProxy } from './corsProxyUtils';
 
