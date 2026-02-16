@@ -1,6 +1,6 @@
 
 /*
- * AI Copy Assistant
+ * VisionDescribe
  * 
  * @author Filippo Danesi
  * @email filippo.danesi93@gmail.com
@@ -8,7 +8,7 @@
  * @created 2025
  * @copyright Copyright (c) 2025 Filippo Danesi. All rights reserved.
  * 
- * This file is part of AI Copy Assistant.
+ * This file is part of VisionDescribe.
  * 
  * This software is dual-licensed:
  * - For non-commercial use: CC BY-NC-SA 4.0

@@ -1,5 +1,5 @@
 /**
- * VisionDescribe — AI Copy Assistant
+ * VisionDescribe
  *
  * @author Filippo Danesi
  * @email filippo.danesi93@gmail.com

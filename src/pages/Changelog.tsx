@@ -102,7 +102,7 @@ const entries: ChangelogEntry[] = [
     date: "May 14, 2025",
     title: "Initial Release",
     description:
-      "First release of AI Copy Assistant — a tool for generating optimized product content from Inriver exports using AI.",
+      "First release of VisionDescribe — a tool for generating optimized product content from Inriver exports using AI.",
     items: [
       "Multi-format file support (Excel, CSV) with web worker parsing",
       "Automatic column detection and mapping",
@@ -124,7 +124,7 @@ const Changelog: React.FC = () => {
             Changelog
           </h1>
           <p className="text-sm text-muted-foreground">
-            All notable updates and improvements to AI Copy Assistant.
+            All notable updates and improvements to VisionDescribe.
           </p>
         </div>
 
