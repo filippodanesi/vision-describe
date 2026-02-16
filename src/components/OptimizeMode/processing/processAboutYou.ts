@@ -102,6 +102,12 @@ export async function processAboutYouRows(
       }
     }
 
+    // Step 1b: Translate Color name supplier to English
+    if (colorNameSupplier && colorTranslation && colorTranslation !== colorNameSupplier) {
+      processed[colorNameKey] = colorTranslation;
+      addLog?.(`${rowId} | aboutyou | SUPPLIER COLOUR: "${colorNameSupplier}" -> "${colorTranslation}"`);
+    }
+
     addLog?.(`${rowId} | aboutyou | ${styleName} | color=${colorNameSupplier} | group=${productGroup}`);
 
     // Step 2: Build prompt and call AI

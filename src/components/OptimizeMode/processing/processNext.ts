@@ -137,6 +137,12 @@ export async function processNextRows(
       }
     }
 
+    // Step 2b: Translate Manufacturers Colour Name to English
+    if (colorName && standardColor && standardColor !== colorName) {
+      processed[colorNameKey] = standardColor;
+      addLog?.(`${rowId} | next | MFG COLOUR: "${colorName}" -> "${standardColor}"`);
+    }
+
     addLog?.(
       `${rowId} | next | ${existingTitle.slice(0, 40)}... | color=${colorName} | size=${sizeValue}`,
     );

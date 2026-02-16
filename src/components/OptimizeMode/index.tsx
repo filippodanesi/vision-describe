@@ -684,6 +684,12 @@ const VisionDescribe: React.FC = () => {
                               <TableHead className="font-normal text-foreground text-xs">Style Name</TableHead>
                               <TableHead className="font-normal text-foreground text-xs w-[300px]">Long Description</TableHead>
                             </>
+                          ) : useCase === 'amazon' ? (
+                            <>
+                              <TableHead className="font-normal text-foreground text-xs">SKU</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs">Product Name</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs w-[300px]">Description</TableHead>
+                            </>
                           ) : (
                             <>
                               <TableHead className="font-normal text-foreground text-xs">SKU</TableHead>
@@ -759,7 +765,25 @@ const VisionDescribe: React.FC = () => {
                             );
                           }
 
-                          // For ecommerce/amazon
+                          // For Amazon
+                          if (useCase === 'amazon') {
+                            const sku = row['vendor_sku#1.value'] || row['external_product_id#1.value'] || '-';
+                            const title = row['item_name#1.value'] || '-';
+                            const desc = row['gen_description'] || '';
+                            return (
+                              <TableRow key={index} className="hover:bg-muted/30">
+                                <TableCell className="font-mono text-xs text-muted-foreground">{sku}</TableCell>
+                                <TableCell className="text-xs text-foreground">{title}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground max-w-[300px]">
+                                  <div className="line-clamp-2" title={desc}>
+                                    {desc ? desc.substring(0, 120) + (desc.length > 120 ? '...' : '') : '-'}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
+
+                          // For ecommerce (fallback)
                           return (
                             <TableRow key={index} className="hover:bg-muted/30">
                               <TableCell className="font-mono text-xs text-muted-foreground">{row.sku || row.asin || '-'}</TableCell>
