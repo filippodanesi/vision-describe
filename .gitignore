@@ -26,3 +26,8 @@ ibm-credentials.env
 .env
 .env.*
 .vercel
+.next/
+
+# Test files and generated output
+test-files/
+optimized_*.xlsx

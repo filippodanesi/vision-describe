@@ -1,6 +1,6 @@
 <div align="center">
 
-# AI Copy Assistant
+# VisionDescribe
 
 **Enterprise-grade AI-powered content generation for e-commerce, retail locations, and marketplace platforms**
 
