@@ -243,10 +243,6 @@ INPUTS:
   if (storeData.zipcode) {
     prompt += `\n- Zipcode: ${storeData.zipcode}`;
   }
-  
-  if (storeData.businessOpeningDate) {
-    prompt += `\n- Opening date: ${storeData.businessOpeningDate}`;
-  }
 
   // Check if existing descriptions are generic
   const shortIsGeneric = overwritePolicy === 'fill-improve' && isGenericDescription(storeData.existingShort, storeData.city);
@@ -447,10 +443,6 @@ INPUTS:
 
   if (storeData.isOutlet) {
     prompt += `\n- Outlet store: yes`;
-  }
-
-  if (storeData.businessOpeningDate) {
-    prompt += `\n- Opening date: ${storeData.businessOpeningDate}`;
   }
 
   // Existing About for reference
