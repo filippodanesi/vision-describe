@@ -187,7 +187,7 @@ export const OptimizeMode: React.FC = () => {
       };
 
       setColumnMappings(partooMapping);
-      setCurrentStep(ProcessingStep.SELECT_MODEL);
+      // Stay on UPLOAD step so user can see/use filters before proceeding
     } else if (useCase === 'next' || useCase === 'aboutyou') {
       setSelectedColumns(data.columns);
       setColorMappings([...COLOR_TRANSLATIONS]);
@@ -327,7 +327,8 @@ export const OptimizeMode: React.FC = () => {
         setColumnMappings([]);
         break;
       case ProcessingStep.SELECT_MODEL:
-        setCurrentStep(ProcessingStep.CONFIRM_COLUMNS);
+        // Partoo goes back to UPLOAD (filters), others to CONFIRM_COLUMNS
+        setCurrentStep(useCase === 'partoo' ? ProcessingStep.UPLOAD : ProcessingStep.CONFIRM_COLUMNS);
         setSelectedModel('');
         break;
       case ProcessingStep.PROCESSING:
@@ -342,7 +343,8 @@ export const OptimizeMode: React.FC = () => {
     switch (currentStep) {
       case ProcessingStep.UPLOAD:
         if (fileData) {
-          setCurrentStep(ProcessingStep.SELECT_COLUMNS);
+          // Partoo skips column selection — go straight to model
+          setCurrentStep(useCase === 'partoo' ? ProcessingStep.SELECT_MODEL : ProcessingStep.SELECT_COLUMNS);
         }
         break;
       case ProcessingStep.SELECT_COLUMNS:
