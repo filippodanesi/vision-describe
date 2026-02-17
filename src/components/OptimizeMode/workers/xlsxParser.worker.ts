@@ -1,7 +1,7 @@
-// Web Worker: Heavy XLSX/XLSM parsing off the main thread
+// Web Worker: Fast XLSX/XLSM parsing off the main thread using SheetJS
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - Workers run in a different context
-import * as ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 
 type UseCase = 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
 
@@ -44,40 +44,99 @@ type WorkerMessage =
 // Minimal GlobalScope type for TS without DOM lib
 type DWGS = { postMessage: (msg: WorkerMessage) => void };
 
-const normalizeValue = (val: unknown, trimValues: boolean): string | number => {
-  if (val == null) return '';
-  // ExcelJS formula cell structure may have .formula and .result
-  if (typeof val === 'object' && val !== null && 'formula' in (val as any)) {
-    const formulaResult = (val as any).result;
-    if (formulaResult instanceof Date) return formulaResult.toISOString();
-    return (trimValues && typeof formulaResult === 'string') ? (formulaResult as string).trim() : (formulaResult ?? '');
-  }
-  if (val instanceof Date) return val.toISOString();
-  const s = String((val as any)?.result ?? (val as any)?.text ?? (val as any)?.value ?? val);
-  return trimValues ? s.trim() : s;
-};
-
-const getRowValues = (ws: ExcelJS.Worksheet, rowIndex: number, trimValues: boolean): string[] => {
-  const r = ws.getRow(rowIndex);
+/**
+ * Read a single row from a SheetJS worksheet as an array of string values.
+ * rowIndex is 0-based.
+ */
+const getRowValues = (ws: XLSX.WorkSheet, rowIndex: number, trimValues: boolean): string[] => {
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
   const vals: string[] = [];
-  r.eachCell((cell, colNumber) => {
-    vals[colNumber - 1] = String(normalizeValue(cell.value, trimValues));
-  });
+  for (let c = range.s.c; c <= range.e.c; c++) {
+    const addr = XLSX.utils.encode_cell({ r: rowIndex, c });
+    const cell = ws[addr];
+    if (!cell) {
+      vals.push('');
+      continue;
+    }
+    // Use formatted value (w), or raw value (v)
+    let v = cell.w ?? cell.v;
+    if (v == null) { vals.push(''); continue; }
+    if (v instanceof Date) { vals.push(v.toISOString()); continue; }
+    const s = String(v);
+    vals.push(trimValues ? s.trim() : s);
+  }
   return vals;
 };
 
-const detectAmazonHeader = (ws: ExcelJS.Worksheet, maxScan: number = 8, trimValues: boolean): number | null => {
+/**
+ * Detect Amazon header row by signature patterns.
+ * Returns 0-based row index or null.
+ */
+const detectAmazonHeader = (ws: XLSX.WorkSheet, maxScan: number, trimValues: boolean): number | null => {
   const sig = [/vendor_sku#1\.value/i, /item_name#1\.value/i, /brand#1\.value/i, /bullet_point#1\.value/i, /rtip_product_description#1\.value/i];
-  const limit = Math.min(ws.rowCount, maxScan);
-  for (let r = 1; r <= limit; r++) {
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  const limit = Math.min(range.e.r, maxScan - 1);
+  for (let r = 0; r <= limit; r++) {
     const line = getRowValues(ws, r, trimValues).join(' ');
     if (sig.every(rx => rx.test(line))) return r;
   }
   return null;
 };
 
-self.onmessage = async (ev: MessageEvent<ParseRequest>) => {
+/**
+ * Convert a worksheet to an array of RowData objects given header columns.
+ * dataStartRow and headerRow are 0-based.
+ */
+const sheetToRows = (
+  ws: XLSX.WorkSheet,
+  columns: string[],
+  dataStartRow: number,
+  maxRows: number,
+  trimValues: boolean,
+  progressEvery: number,
+  post: (msg: WorkerMessage) => void
+): RowData[] => {
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  const lastRow = Math.min(range.e.r, dataStartRow + maxRows - 1);
+  const totalToProcess = Math.max(0, lastRow - dataStartRow + 1);
+
+  post({ type: 'progress', current: 0, total: totalToProcess });
+
+  const rows: RowData[] = [];
+  for (let r = dataStartRow; r <= lastRow; r++) {
+    const rowObj: RowData = {};
+    let hasValue = false;
+
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const colName = columns[c] || `Column${c + 1}`;
+      const addr = XLSX.utils.encode_cell({ r, c });
+      const cell = ws[addr];
+      if (!cell) continue;
+
+      let v = cell.w ?? cell.v;
+      if (v == null) continue;
+      if (v instanceof Date) v = v.toISOString();
+      const s = String(v);
+      const val = trimValues ? s.trim() : s;
+      if (val !== '') hasValue = true;
+      rowObj[colName] = val;
+    }
+
+    if (hasValue) rows.push(rowObj);
+
+    const processedCount = r - dataStartRow + 1;
+    if (processedCount % progressEvery === 0 || processedCount === totalToProcess) {
+      post({ type: 'progress', current: processedCount, total: totalToProcess });
+    }
+  }
+
+  return rows;
+};
+
+self.onmessage = (ev: MessageEvent<ParseRequest>) => {
   const { arrayBuffer, useCase, skipSampleRow, config } = ev.data;
+  const post = (msg: WorkerMessage) => (self as unknown as DWGS).postMessage(msg);
+
   try {
     if (!arrayBuffer || arrayBuffer.byteLength === 0) {
       throw new Error('Invalid or empty file');
@@ -86,128 +145,88 @@ self.onmessage = async (ev: MessageEvent<ParseRequest>) => {
     const progressEvery = config?.progressEvery ?? 1000;
     const trimValues = config?.trimValues ?? true;
 
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(arrayBuffer);
+    const data = new Uint8Array(arrayBuffer);
+    const workbook = XLSX.read(data, { type: 'array', cellDates: true, cellText: true });
+
+    if (!workbook.SheetNames.length) throw new Error('No worksheets found');
+
     // Pick the correct worksheet per use case
-    let firstWorksheet = workbook.worksheets[0];
-    if (!firstWorksheet) throw new Error('No worksheets found');
+    let sheetName = workbook.SheetNames[0];
     if (useCase === 'ecommerce') {
-      const material = workbook.worksheets.find(ws => ws.name.toLowerCase() === 'material');
-      if (material) firstWorksheet = material;
+      const materialName = workbook.SheetNames.find(n => n.toLowerCase() === 'material');
+      if (materialName) sheetName = materialName;
     } else if (useCase === 'amazon') {
-      const withKeys = workbook.worksheets.find(ws => !!detectAmazonHeader(ws, 8, trimValues));
-      if (withKeys) firstWorksheet = withKeys;
+      for (const sn of workbook.SheetNames) {
+        if (detectAmazonHeader(workbook.Sheets[sn], 8, trimValues) !== null) {
+          sheetName = sn;
+          break;
+        }
+      }
     }
 
+    const ws = workbook.Sheets[sheetName];
+    if (!ws) throw new Error('Worksheet not found');
+
     let columns: string[] = [];
-    let dataStartRow = 2;
-    let headerRowIndex = 1;
+    // dataStartRow and headerRowIndex are 0-based internally
+    let dataStartRow = 1;
+    let headerRowIndex = 0;
 
     if (useCase === 'amazon') {
-      const keyRow = detectAmazonHeader(firstWorksheet, 8, trimValues);
-      if (keyRow) {
-        columns = getRowValues(firstWorksheet, keyRow, trimValues);
+      const keyRow = detectAmazonHeader(ws, 8, trimValues);
+      if (keyRow !== null) {
+        columns = getRowValues(ws, keyRow, trimValues);
+        // Skip: keyRow (headers), requiredness row, optionally sample row
         dataStartRow = keyRow + (skipSampleRow ? 3 : 2);
         headerRowIndex = keyRow;
       }
     } else if (useCase === 'partoo') {
       // Partoo files have a specific structure:
-      // Row 1: Header groupings ("Business identification", "Address", "Descriptions")
-      // Row 2: Sample data ("business default en" repeated)
-      // Row 3: Technical IDs ("business_id", "name", "code", "status", etc.)
-      // Row 4: Display names ("Business Id", "Name", "Code", "Status", etc.) ← USE THIS
-      // Row 5: Field descriptions ("Do not delete", "Read only", "80 character maximum", etc.) ← SKIP
-      // Row 6+: Actual data
-      columns = getRowValues(firstWorksheet, 4, trimValues);
-      dataStartRow = 6; // Skip first 5 rows (header structure + notes row)
-      headerRowIndex = 4;
+      // Row 1 (idx 0): Header groupings ("Business identification", "Address", "Descriptions")
+      // Row 2 (idx 1): Sample data ("business default en" repeated)
+      // Row 3 (idx 2): Technical IDs ("business_id", "name", "code", "status", etc.)
+      // Row 4 (idx 3): Display names ("Business Id", "Name", "Code", "Status", etc.) ← USE THIS
+      // Row 5 (idx 4): Field descriptions ("Do not delete", "Read only", etc.) ← SKIP
+      // Row 6+ (idx 5+): Actual data
+      columns = getRowValues(ws, 3, trimValues);
+      dataStartRow = 5;
+      headerRowIndex = 3;
     }
-    
+
     if (columns.length === 0) {
-      columns = getRowValues(firstWorksheet, 1, trimValues);
-      dataStartRow = 2;
-      headerRowIndex = 1;
+      columns = getRowValues(ws, 0, trimValues);
+      dataStartRow = 1;
+      headerRowIndex = 0;
     }
 
-    const totalRows = Math.min(firstWorksheet.rowCount, Math.max(dataStartRow - 1, maxRows + dataStartRow - 1));
-    const totalToProcess = Math.max(0, totalRows - (dataStartRow - 1));
-    // progress: initial
-    (self as unknown as DWGS).postMessage({ type: 'progress', current: 0, total: totalToProcess });
-
-    const rows: RowData[] = [];
-    for (let r = dataStartRow; r <= totalRows; r++) {
-      const rowObj: RowData = {};
-      const row = firstWorksheet.getRow(r);
-      if (!row || row.cellCount === 0) continue;
-      row.eachCell((cell, colNumber) => {
-        try {
-          const colName = columns[colNumber - 1] || `Column${colNumber}`;
-          const val = normalizeValue(cell.value, trimValues);
-          rowObj[colName] = val as any;
-        } catch (cellError) {
-          const colName = columns[colNumber - 1] || `Column${colNumber}`;
-          rowObj[colName] = '';
-          // eslint-disable-next-line no-console
-          console.warn(`Cell parse error [r=${r},c=${colNumber}]`, cellError);
-        }
-      });
-      if (Object.values(rowObj).some(v => String(v ?? '').trim() !== '')) rows.push(rowObj);
-      const processedCount = (r - dataStartRow + 1);
-      if (processedCount % progressEvery === 0 || processedCount === totalToProcess) {
-        (self as unknown as DWGS).postMessage({ type: 'progress', current: processedCount, total: totalToProcess });
-      }
-    }
+    const rows = sheetToRows(ws, columns, dataStartRow, maxRows, trimValues, progressEvery, post);
 
     // Capture Sheet1 for e-commerce joins
     let sheet1: { columns: string[]; rows: any[] } | undefined;
     if (useCase === 'ecommerce') {
-      const s1 = workbook.worksheets.find(ws => ws.name.toLowerCase() === 'sheet1');
-      if (s1) {
-        const s1Columns: string[] = [];
-        const s1Header = s1.getRow(1);
-        s1Header.eachCell((cell, idx) => s1Columns[idx - 1] = String(normalizeValue(cell.value, trimValues)));
-        const s1Rows: any[] = [];
-        const s1Limit = Math.min(s1.rowCount, maxRows);
-        for (let r = 2; r <= s1Limit; r++) {
-          const rObj: any = {};
-          const rr = s1.getRow(r);
-          rr.eachCell((cell, idx) => {
-            rObj[s1Columns[idx - 1]] = normalizeValue(cell.value, trimValues);
-          });
-          if (Object.values(rObj).some(v => String(v ?? '').trim() !== '')) s1Rows.push(rObj);
-        }
+      const s1Name = workbook.SheetNames.find(n => n.toLowerCase() === 'sheet1');
+      if (s1Name) {
+        const s1ws = workbook.Sheets[s1Name];
+        const s1Columns = getRowValues(s1ws, 0, trimValues);
+        const s1Rows = sheetToRows(s1ws, s1Columns, 1, maxRows, trimValues, progressEvery, () => {});
         sheet1 = { columns: s1Columns, rows: s1Rows };
       }
     }
 
+    // Convert to 1-based for output (matches original ExcelJS-based output contract)
     const meta: ParseResult['meta'] = {
-      worksheetName: firstWorksheet.name,
+      worksheetName: sheetName,
       useCase,
-      headerRowIndex,
-      dataStartRow,
+      headerRowIndex: headerRowIndex + 1,
+      dataStartRow: dataStartRow + 1,
       fileType: 'xlsx',
       sheet1,
     };
 
     const result: ParseResult = { rows, columns, meta };
-    (self as unknown as DWGS).postMessage({ type: 'done', success: true, result });
+    post({ type: 'done', success: true, result });
 
-    // Attempt to free memory references aggressively
-    try {
-      // @ts-ignore
-      meta.sheet1 = undefined;
-      const ids = (workbook.worksheets || []).map(ws => ws.id);
-      ids.forEach(id => {
-        try { workbook.removeWorksheet(id as any); } catch { /* ignore */ }
-      });
-      // @ts-ignore
-      (workbook as any).model = null;
-    } catch {
-      // ignore cleanup errors
-    }
   } catch (error: any) {
-    (self as unknown as DWGS).postMessage({ type: 'done', success: false, error: error?.message || 'Worker parse error' });
+    post({ type: 'done', success: false, error: error?.message || 'Worker parse error' });
   }
 };
-
-
