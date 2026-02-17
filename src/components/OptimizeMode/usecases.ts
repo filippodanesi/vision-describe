@@ -23,7 +23,7 @@ const rx = (pattern: string): RegExp => new RegExp(pattern, 'i');
 export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
   amazon: {
     id: 'amazon-bra-v1',
-    label: 'Amazon (Template-BRA)',
+    label: 'Amazon (Distance Retail)',
     detectors: {
       productId: [rx('^vendor_sku#1\\.value$'), rx('external_product_id#1\\.value'), rx('asin'), rx('sku')],
       title: [rx('^item_name#1\\.value$')],
@@ -47,7 +47,7 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
   },
   ecommerce: {
     id: 'inriver-ecommerce-v1',
-    label: 'E-commerce (InRiver)',
+    label: 'E-commerce',
     detectors: {
       productId: [rx('^MaterialSAPMaterialNo$')],
       title: [rx('^MaterialSeriesName$')],
@@ -79,7 +79,7 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
   },
   aboutyou: {
     id: 'aboutyou-v0',
-    label: 'About You',
+    label: 'About You (Distance Retail)',
     detectors: {
       productId: [],
       title: [],
@@ -95,7 +95,7 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
   },
   next: {
     id: 'next-v0',
-    label: 'NEXT',
+    label: 'NEXT (Distance Retail)',
     detectors: {
       productId: [],
       title: [],
@@ -111,7 +111,7 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
   },
   partoo: {
     id: 'partoo-stores-v1',
-    label: 'Partoo (Store Descriptions)',
+    label: 'Partoo (Store Locator)',
     detectors: {
       productId: [rx('^Business Id$'), rx('^Business identification$'), rx('^Code$')],
       title: [rx('^Name$')],
@@ -127,8 +127,12 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
   },
 };
 
+const HIDDEN_USE_CASES: UseCase[] = ['zalando'];
+
 export const AVAILABLE_USE_CASES: { value: UseCase; label: string }[] = (
   Object.keys(USECASE_PROFILES) as UseCase[]
-).map((key) => ({ value: key, label: USECASE_PROFILES[key].label }));
+)
+  .filter((key) => !HIDDEN_USE_CASES.includes(key))
+  .map((key) => ({ value: key, label: USECASE_PROFILES[key].label }));
 
 

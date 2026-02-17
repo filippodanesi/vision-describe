@@ -390,24 +390,16 @@ export const OptimizeMode: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {([...AVAILABLE_USE_CASES].sort((a, b) => {
-                        const order: Record<string, number> = { ecommerce: 0, amazon: 1, partoo: 2, zalando: 3, aboutyou: 4, next: 5 };
+                        const order: Record<string, number> = { ecommerce: 0, amazon: 1, partoo: 2, aboutyou: 3, next: 4 };
                         const ao = order[a.value] ?? 99;
                         const bo = order[b.value] ?? 99;
                         if (ao !== bo) return ao - bo;
                         return a.label.localeCompare(b.label);
-                      })).map((uc) => {
-                        const isDisabled = uc.value === 'zalando';
-                        return (
-                          <SelectItem
-                            key={uc.value}
-                            value={uc.value}
-                            disabled={isDisabled}
-                            className={isDisabled ? 'text-muted-foreground cursor-not-allowed' : ''}
-                          >
-                            {uc.label}{isDisabled ? ' (Coming soon)' : ''}
+                      })).map((uc) => (
+                          <SelectItem key={uc.value} value={uc.value}>
+                            {uc.label}
                           </SelectItem>
-                        );
-                      })}
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
