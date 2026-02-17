@@ -4,15 +4,23 @@ import { Filter } from 'lucide-react';
 /**
  * Categorize a store based on its Groups column value.
  *
- * - "Triumph Stores": contains "Triumph Stores" but NOT "Partner"
- * - "Partner Stores": contains "Partner" (Triumph Partner, Sloggi Partner, etc.)
- * - "Other": anything else
+ * Groups is semicolon-separated, e.g.:
+ *   "IT - Italy; Presence Management (Triumph Stores); Triumph Stores"
+ *   "IT - Italy; Store Locator (Triumph Stores & WHS partners)"
+ *   "Triumph Partner Stores; HU - Hungary; Sloggi Partner Stores"
+ *
+ * Logic (applied to individual group entries split by ";"):
+ * - "Partner Stores": has an entry matching "...Partner Stores" (e.g. "Triumph Partner Stores", "Sloggi Partner Stores")
+ * - "Triumph Stores": has an entry containing "Triumph Stores" (standalone or inside locator/presence names)
+ * - "Other": neither of the above
  */
 export function categorizeStoreType(groups: string | undefined | null): string {
   if (!groups) return 'Other';
-  const g = groups.toLowerCase();
-  if (g.includes('partner')) return 'Partner Stores';
-  if (g.includes('triumph stores')) return 'Triumph Stores';
+  const entries = groups.split(';').map(s => s.trim().toLowerCase());
+  // Partner: dedicated "...Partner Stores" group entry (not "WHS partners" inside a locator name)
+  if (entries.some(e => /partner\s+stores/.test(e))) return 'Partner Stores';
+  // Own store: "Triumph Stores" appears as entry or inside a group name
+  if (entries.some(e => /triumph\s+stores/.test(e))) return 'Triumph Stores';
   return 'Other';
 }
 
