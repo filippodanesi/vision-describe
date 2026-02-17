@@ -47,7 +47,7 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
   },
   ecommerce: {
     id: 'inriver-ecommerce-v1',
-    label: 'E-commerce',
+    label: 'E-commerce (triumph.com)',
     detectors: {
       productId: [rx('^MaterialSAPMaterialNo$')],
       title: [rx('^MaterialSeriesName$')],
