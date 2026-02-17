@@ -111,10 +111,17 @@ const sheetToRows = (
       const colName = columns[c] || `Column${c + 1}`;
       const addr = XLSX.utils.encode_cell({ r, c });
       const cell = ws[addr];
-      if (!cell) continue;
+      if (!cell) {
+        // Keep key with empty string so `key in row` works (matches ExcelJS behavior)
+        rowObj[colName] = '';
+        continue;
+      }
 
       let v = cell.w ?? cell.v;
-      if (v == null) continue;
+      if (v == null) {
+        rowObj[colName] = '';
+        continue;
+      }
       if (v instanceof Date) v = v.toISOString();
       const s = String(v);
       const val = trimValues ? s.trim() : s;
