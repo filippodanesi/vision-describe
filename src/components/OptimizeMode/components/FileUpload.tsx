@@ -103,7 +103,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUploaded, useCase = 'ecom
               });
             } catch {}
             setPreview({ rows: result.rows?.length || 0, columns: (result.columns || []).slice(0, 5) });
-            onFileUploaded({ rows: result.rows, columns: result.columns, meta: result.meta });
+            onFileUploaded({ rows: result.rows, columns: result.columns, meta: { ...result.meta, arrayBuffer } });
           }
         };
         worker.postMessage({ arrayBuffer, useCase, skipSampleRow, config: { maxRows: 250000, progressEvery: 1000, trimValues: true } });
