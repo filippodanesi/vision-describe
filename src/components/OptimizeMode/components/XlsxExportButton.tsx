@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import * as ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 import { generateFileName } from '../utils/fileUtils';
 
 interface XlsxExportButtonProps {
@@ -27,25 +28,29 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
       let worksheet: ExcelJS.Worksheet;
 
       if (originalMeta?.arrayBuffer && useCase === 'partoo') {
-        // Partoo: preserve original file structure (multi-row headers) and write back by Business ID
-        workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.load(originalMeta.arrayBuffer);
-        const wsName = originalMeta.worksheetName || (workbook.worksheets[0]?.name || 'Sheet1');
-        worksheet = workbook.getWorksheet(wsName) || workbook.worksheets[0];
+        // Partoo: use SheetJS (same lib the worker uses) to preserve original structure
+        const wb = XLSX.read(new Uint8Array(originalMeta.arrayBuffer), { type: 'array', cellDates: true, cellText: true });
+        const wsName = originalMeta.worksheetName || wb.SheetNames[0];
+        const ws = wb.Sheets[wsName];
+        if (!ws || !ws['!ref']) throw new Error('Worksheet not found');
 
-        const headerRowIndex = originalMeta.headerRowIndex || 1;
-        const headerRow = worksheet.getRow(headerRowIndex);
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        // meta indices are 1-based; SheetJS is 0-based
+        const headerRow0 = (originalMeta.headerRowIndex || 4) - 1;
+        const dataStart0 = (originalMeta.dataStartRow || 6) - 1;
 
-        // Build column name → column index map from the header row
+        // Build column name → 0-based column index map from the header row
         const colMap = new Map<string, number>();
-        headerRow.eachCell((cell, colIdx) => {
-          const name = String(cell.value ?? '').trim();
-          if (name) colMap.set(name, colIdx);
-        });
+        for (let c = range.s.c; c <= range.e.c; c++) {
+          const addr = XLSX.utils.encode_cell({ r: headerRow0, c });
+          const cell = ws[addr];
+          const name = cell ? String(cell.w ?? cell.v ?? '').trim() : '';
+          if (name) colMap.set(name, c);
+        }
 
         // Find the Business ID column
-        const bizIdColIdx = colMap.get('Business identification') || colMap.get('Business Id') || 0;
-        if (!bizIdColIdx) {
+        const bizIdCol = colMap.get('Business identification') ?? colMap.get('Business Id');
+        if (bizIdCol == null) {
           console.warn('Partoo export: could not find Business ID column');
         }
 
@@ -57,28 +62,35 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
         }
 
         // Iterate data rows and overwrite cells from processed results
-        const startDataRow = originalMeta.dataStartRow || (headerRowIndex + 1);
-        const lastRow = worksheet.rowCount;
-        for (let r = startDataRow; r <= lastRow; r++) {
-          const wsRow = worksheet.getRow(r);
-          if (!bizIdColIdx) break;
-          const cellBizId = String(wsRow.getCell(bizIdColIdx).value ?? '').trim();
+        for (let r = dataStart0; r <= range.e.r; r++) {
+          if (bizIdCol == null) break;
+          const bizIdAddr = XLSX.utils.encode_cell({ r, c: bizIdCol });
+          const bizIdCell = ws[bizIdAddr];
+          const cellBizId = bizIdCell ? String(bizIdCell.w ?? bizIdCell.v ?? '').trim() : '';
           if (!cellBizId) continue;
           const processed = resultsByBizId.get(cellBizId);
           if (!processed) continue; // row was filtered out — leave original values
 
-          // Write all columns from the processed row into the original cells
+          // Write all columns from the processed row, preserving existing cell properties
           for (const [colName, colIdx] of colMap) {
             if (colName in processed) {
-              wsRow.getCell(colIdx).value = processed[colName] ?? '';
+              const addr = XLSX.utils.encode_cell({ r, c: colIdx });
+              const newVal = String(processed[colName] ?? '');
+              const existing = ws[addr];
+              if (existing) {
+                existing.v = newVal;
+                existing.t = 's';
+                delete existing.w; // clear cached formatted value
+              } else if (newVal) {
+                ws[addr] = { t: 's', v: newVal };
+              }
             }
           }
-          wsRow.commit();
         }
 
-        const buffer = await workbook.xlsx.writeBuffer();
+        const wbOut = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const fileName = generateFileName('optimized', useCase, 'xlsx');
-        downloadBuffer(buffer, fileName);
+        downloadBuffer(wbOut, fileName);
       } else if (originalMeta?.arrayBuffer) {
         // Clone original workbook structure (ecommerce/amazon)
         workbook = new ExcelJS.Workbook();
