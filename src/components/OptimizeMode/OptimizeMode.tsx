@@ -166,7 +166,7 @@ export const OptimizeMode: React.FC = () => {
 
       const partooMapping = {
         mapping: {
-          businessId: findColumn([/^Business identification$/i]),
+          businessId: findColumn([/^Business identification$/i, /^Business\s*Id$/i]),
           name: findColumn([/^Name$/i, /^Nom$/i]),
           address: findColumn([/^Address$/i, /^Adresse$/i]),
           city: findColumn([/^City$/i, /^Ville$/i]),
