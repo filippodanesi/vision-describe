@@ -107,8 +107,9 @@ export interface HybridProcessingHook {
       lang?: string;
       dryRun?: boolean;
       businessIdsFilter?: Set<string> | null;
+      storeTypeFilter?: Set<string> | null;
       colorMappings?: any[];
-      sizeMappings?: any[];  // ✨ NUOVO CAMPO
+      sizeMappings?: any[];
     },
     costTracker?: any
   ) => Promise<any[]>;
@@ -263,14 +264,15 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     selectedColumns: string[],
     model: Model,
     apiKey: string,
-    context?: { 
+    context?: {
       useCase?: 'ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
       mappings?: any;
       lang?: string;
       dryRun?: boolean;
       businessIdsFilter?: Set<string> | null;
+      storeTypeFilter?: Set<string> | null;
       colorMappings?: any[];
-      sizeMappings?: any[];  // ✨ NUOVO CAMPO
+      sizeMappings?: any[];
     },
     costTracker?: any
   ): Promise<any[]> => {
@@ -302,14 +304,15 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     selectedColumns: string[],
     model: Model,
     apiKey: string,
-    context?: { 
+    context?: {
       useCase?: 'ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
       mappings?: any;
       lang?: string;
       dryRun?: boolean;
       businessIdsFilter?: Set<string> | null;
+      storeTypeFilter?: Set<string> | null;
       colorMappings?: any[];
-      sizeMappings?: any[];  // ✨ NUOVO CAMPO
+      sizeMappings?: any[];
     }
   ): Promise<any[]> => {
     // Use client-side keep-alive mechanism
@@ -348,23 +351,28 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           // ✨ BUSINESS ID FILTER - Extract and log filter status
           // ============================================================================
           const businessIdsFilter = context.businessIdsFilter || null;
-          
+          const storeTypeFilter = context.storeTypeFilter || null;
+
           if (businessIdsFilter && businessIdsFilter.size > 0) {
             addLog(`📋 FILTER ACTIVE: Processing only ${businessIdsFilter.size} business IDs`);
           } else {
             addLog(`📋 NO FILTER: Processing all ${chunk.rows.length} rows`);
           }
+          if (storeTypeFilter && storeTypeFilter.size > 0) {
+            addLog(`🏪 STORE TYPE FILTER: ${Array.from(storeTypeFilter).join(', ')}`);
+          }
           // ============================================================================
-          
+
           const processed = await processPartooRows(
-            chunk.rows, 
-            model, 
-            apiKey, 
-            mapped, 
-            'fill-improve', 
-            (m) => addLog(m), 
+            chunk.rows,
+            model,
+            apiKey,
+            mapped,
+            'fill-improve',
+            (m) => addLog(m),
             costTracker,
-            businessIdsFilter  // ✨ PASSA IL FILTRO
+            businessIdsFilter,
+            storeTypeFilter
           );
           allProcessedRows.push(...processed);
           const processedCount = Math.min(allProcessedRows.length, rows.length);

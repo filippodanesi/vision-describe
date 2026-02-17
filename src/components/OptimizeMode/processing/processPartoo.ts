@@ -19,6 +19,7 @@
  */
 
 import { Model } from '@/lib/models';
+import { categorizeStoreType } from '../components/StoreTypeFilter';
 import { optimizeTextWithAI } from '../utils/optimizationUtils';
 import { PARTOO_SYSTEM_PROMPT, PARTOO_ABOUT_SYSTEM_PROMPT } from '../utils/prompts/partooSystemPrompt';
 import {
@@ -106,7 +107,8 @@ export async function processPartooRows(
   overwritePolicy: 'fill-only' | 'fill-improve' = 'fill-improve',
   addLog?: (msg: string) => void,
   costTracker?: any,
-  businessIdsFilter?: Set<string> | null
+  businessIdsFilter?: Set<string> | null,
+  storeTypeFilter?: Set<string> | null
 ): Promise<any[]> {
   const out: any[] = [];
 
@@ -151,6 +153,21 @@ export async function processPartooRows(
     }
     // ============================================================================
     // END BUSINESS ID FILTER
+    // ============================================================================
+
+    // ============================================================================
+    // STORE TYPE FILTER - Skip if store type not selected
+    // ============================================================================
+    if (storeTypeFilter && storeTypeFilter.size > 0) {
+      const groups = String(row[groupsKey] ?? '').trim() || undefined;
+      const storeType = categorizeStoreType(groups);
+      if (!storeTypeFilter.has(storeType)) {
+        addLog?.(`${businessId} | partoo | SKIP: Store type "${storeType}" not selected`);
+        continue; // Skip entirely — don't include in output
+      }
+    }
+    // ============================================================================
+    // END STORE TYPE FILTER
     // ============================================================================
 
     const address = String(row[addressKey] ?? '').trim();

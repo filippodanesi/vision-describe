@@ -27,6 +27,7 @@ import ModelSelector from './components/ModelSelector';
 import ProcessingView from './components/ProcessingView';
 import ExportResults from './components/ExportResults';
 import BusinessIdFilterUpload from './components/BusinessIdFilterUpload';
+import StoreTypeFilter from './components/StoreTypeFilter';
 import { TranslatorPanel } from './components/TranslatorPanel';
 import { COLOR_TRANSLATIONS, type ColorMapping } from './utils/translations/colorTranslations';
 import { SIZE_TRANSLATION_TABLE, type SizeMapping } from './utils/translations/sizeTranslations';
@@ -93,6 +94,9 @@ export const OptimizeMode: React.FC = () => {
   // Business ID Filter
   const [businessIdsFilter, setBusinessIdsFilter] = useState<Set<string> | null>(null);
 
+  // Store Type Filter (Partoo)
+  const [storeTypeFilter, setStoreTypeFilter] = useState<Set<string> | null>(null);
+
   // Translation mappings for NEXT/AboutYou
   const [colorMappings, setColorMappings] = useState<ColorMapping[]>([...COLOR_TRANSLATIONS]);
   const [sizeMappings, setSizeMappings] = useState<SizeMapping[]>([...SIZE_TRANSLATION_TABLE]);
@@ -132,6 +136,7 @@ export const OptimizeMode: React.FC = () => {
   const handleFileUploaded = (data: { rows: any[]; columns: string[]; meta?: any }) => {
     setFileData(data);
     setBusinessIdsFilter(null);
+    setStoreTypeFilter(null);
 
     if (useCase === 'partoo') {
       const partooColumns = data.columns.filter(col => {
@@ -242,6 +247,7 @@ export const OptimizeMode: React.FC = () => {
           dryRun: options?.dryRun,
           lang: options?.targetLanguage,
           businessIdsFilter: businessIdsFilter,
+          storeTypeFilter: storeTypeFilter,
           colorMappings,
           sizeMappings,
         },
@@ -365,6 +371,7 @@ export const OptimizeMode: React.FC = () => {
     setProcessingStartTime(null);
     setProcessingEndTime(null);
     setBusinessIdsFilter(null);
+    setStoreTypeFilter(null);
     setUseCase('');
     setColorMappings([...COLOR_TRANSLATIONS]);
     setSizeMappings([...SIZE_TRANSLATION_TABLE]);
@@ -411,11 +418,19 @@ export const OptimizeMode: React.FC = () => {
             </Card>
 
             {fileData && useCase === 'partoo' && (
-              <BusinessIdFilterUpload
-                onFilterLoaded={(ids) => setBusinessIdsFilter(ids)}
-                onFilterCleared={() => setBusinessIdsFilter(null)}
-                disabled={isProcessing}
-              />
+              <>
+                <BusinessIdFilterUpload
+                  onFilterLoaded={(ids) => setBusinessIdsFilter(ids)}
+                  onFilterCleared={() => setBusinessIdsFilter(null)}
+                  disabled={isProcessing}
+                />
+                <StoreTypeFilter
+                  rows={fileData.rows}
+                  groupsColumnKey={columnMappings?.mapping?.groups || 'Groups'}
+                  onFilterChange={(types) => setStoreTypeFilter(types)}
+                  disabled={isProcessing}
+                />
+              </>
             )}
           </div>
         );
