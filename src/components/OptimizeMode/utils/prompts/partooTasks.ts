@@ -403,10 +403,10 @@ export function getClosedStoreMessage(language: string, city: string): { short: 
 export function buildPartooAboutPrompt(storeData: PartooStoreData, overwritePolicy: 'fill-only' | 'fill-improve' = 'fill-improve'): string {
   const language = detectLanguage(storeData.country, storeData.city);
 
-  // Determine store type from groups
-  const groupsLower = (storeData.groups || '').toLowerCase();
-  const isOwnStore = groupsLower.includes('triumph stores') && !groupsLower.includes('partner');
-  const isPartner = groupsLower.includes('partner');
+  // Determine store type from groups (same logic as categorizeStoreType)
+  const entries = (storeData.groups || '').split(';').map(s => s.trim().toLowerCase());
+  const isPartner = entries.some(e => /partner\s+stores/.test(e));
+  const isOwnStore = !isPartner && entries.some(e => /triumph\s+stores/.test(e));
 
   let prompt = `Language: ${language}
 
