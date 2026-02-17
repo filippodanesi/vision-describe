@@ -281,9 +281,11 @@ CRITICAL REQUIREMENTS:
 - Write in ${language}. Do not use any other language.
 - ALWAYS mention ${storeData.city} naturally in both descriptions.
 - ${storeData.address ? `Mention ${storeData.address} if it fits naturally.` : 'Address not provided - do not invent one.'}
-- Count characters BEFORE responding. Short: max 80 characters. Long: max 750 characters.
+- Short description: max 80 characters. Long description: AIM for 600-750 characters — use the full budget for a rich, informative text.
+- Count characters BEFORE responding and ensure both fields are within limits.
 - Use ONLY information from Inputs above. Do not invent details.
 - Focus on: expert bra fitting, lingerie for everyday comfort, coordinated sets.
+- Write naturally to answer local search intents (e.g. "lingerie store in ${storeData.city}", "Triumph near me"). Describe the in-store experience.
 - NO company history, global stats, corporate background, certifications, or mission statements.
 - NO prices, hours, phone, email, directions, promotions, or loyalty programs.
 - Plain text only - no HTML, markdown, links, emojis.`;

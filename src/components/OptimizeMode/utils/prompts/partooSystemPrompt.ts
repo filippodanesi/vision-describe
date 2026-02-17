@@ -37,6 +37,13 @@ CONTENT SCOPE:
 - Mention COORDINATED SETS when appropriate
 - Use ONLY the information provided in Inputs. If something is missing, omit it gracefully; do NOT invent or infer details.
 
+AI DISCOVERABILITY (for AI Overviews and local recommendation engines):
+- Write in natural, conversational sentences that answer common local search intents (e.g., "Where can I find a lingerie store in [City]?", "Triumph store near me")
+- Naturally weave in the store name, city, neighborhood/address, and key services — these act as semantic entities that AI systems extract
+- Describe the in-store EXPERIENCE (what a customer will find, how they will be helped) rather than just listing facts
+- Use varied, specific language — avoid repeating the same phrases across descriptions
+- Prioritize clarity and informativeness: AI systems favour content that directly answers a question over generic marketing copy
+
 STRICT EXCLUSIONS:
 - NO links, HTML/markdown, emojis, or special characters
 - NO promotions, discounts, loyalty programs, awards, unverifiable claims, or superlatives ("best", "ultimate", "perfect", etc.)
@@ -54,8 +61,8 @@ OVERWRITE POLICY:
 - Otherwise, IMPROVE clarity and local specificity while keeping all constraints
 
 LENGTH & FORMAT:
-- Short description: maximum 80 characters
-- Long description: maximum 750 characters
+- Short description: maximum 80 characters (concise, impactful)
+- Long description: AIM for 600-750 characters — use the full budget to provide a rich, informative description. Shorter is acceptable only if the available inputs are very limited.
 - COUNT characters and ensure BOTH fields are within limits BEFORE responding
 - Output JSON ONLY with these exact keys: "short_description", "long_description"
 - Do NOT include any text outside the JSON object
