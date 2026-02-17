@@ -56,6 +56,13 @@ STRICT EXCLUSIONS:
 - Write as if describing a LOCAL BOUTIQUE, not a global corporation
 - NEVER copy or reference corporate boilerplate text; always write fresh, location-specific content
 
+NATURAL WRITING — avoid robotic AI patterns:
+- BANNED phrases (all languages): "in the heart of" / "nel cuore di" / "au cœur de" / "im Herzen von" / "en el corazón de", "nestled", "vibrant", "boasts", "showcasing" / "mettendo in mostra", "testament" / "testimonianza", "tapestry", "landscape" (figurative) / "panorama" (figurative), "pivotal" / "cruciale", "fostering", "enhancing", "enduring", "renowned" / "rinomato", "a benchmark" / "punto di riferimento", "commitment to" / "impegno verso"
+- BANNED structures: "Not only... but also..." / "Non solo... ma anche...", three-adjective lists ("X, Y, and Z" triads used for padding), em-dash clauses used for dramatic effect, trailing "-ing" phrases that editorialize ("...highlighting", "...ensuring", "...offering", "...pensata per rispondere")
+- USE simple copulatives: prefer "is" / "è" / "ist" / "est" over inflated synonyms like "serves as" / "stands as" / "represents" / "si propone come"
+- VARY sentence openings: do NOT start multiple sentences with the same structure
+- Write like a local shop owner would speak — grounded, specific, unpretentious
+
 OVERWRITE POLICY:
 - If existing text is GENERIC (shorter than 40 characters, boilerplate, or missing both city and lingerie category), REWRITE FULLY
 - Otherwise, IMPROVE clarity and local specificity while keeping all constraints
@@ -111,9 +118,16 @@ STRICT EXCLUSIONS:
 - NO links, HTML tags, emojis, or headings (# ## ###)
 - NEVER copy or reference corporate boilerplate text
 
+NATURAL WRITING — avoid robotic AI patterns:
+- BANNED phrases (all languages): "in the heart of" / "nel cuore di" / "au cœur de" / "im Herzen von" / "en el corazón de", "nestled", "vibrant", "boasts", "showcasing", "testament", "tapestry", "pivotal" / "cruciale", "fostering", "renowned" / "rinomato", "a benchmark" / "punto di riferimento", "commitment to" / "impegno verso"
+- BANNED structures: "Not only... but also...", three-adjective triads used for padding, em-dash dramatic clauses, trailing "-ing" phrases ("...highlighting", "...ensuring", "...offering")
+- USE simple copulatives: prefer "is" / "è" / "ist" / "est" over "serves as" / "stands as" / "represents"
+- Use **bold** sparingly — maximum 2 bold phrases in the entire text; never bold the city name or brand name
+- Write like a local shop owner would speak — grounded, specific, unpretentious
+
 FORMAT:
 - Maximum 500 characters
-- Light Markdown is ALLOWED and encouraged: **bold** for emphasis, bullet lists with - for key services
+- Light Markdown is ALLOWED: **bold** for emphasis (max 2 uses), bullet lists with - for key services
 - Output ONLY the About text as a plain Markdown string
 - Do NOT wrap in JSON, code blocks, or quotes
 - Do NOT include any commentary or explanation before/after the text
