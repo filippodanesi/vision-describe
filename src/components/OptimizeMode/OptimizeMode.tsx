@@ -162,15 +162,22 @@ export const OptimizeMode: React.FC = () => {
       const partooMapping = {
         mapping: {
           businessId: findColumn([/^Business identification$/i]),
-          name: findColumn([/^Name$/i]),
-          address: findColumn([/^Address$/i]),
-          city: findColumn([/^City$/i]),
-          zipcode: findColumn([/^Zipcode$/i]),
-          country: findColumn([/^Country$/i]),
-          status: findColumn([/^Status$/i]),
+          name: findColumn([/^Name$/i, /^Nom$/i]),
+          address: findColumn([/^Address$/i, /^Adresse$/i]),
+          city: findColumn([/^City$/i, /^Ville$/i]),
+          zipcode: findColumn([/^Zipcode$/i, /^Code postal$/i]),
+          country: findColumn([/^Country$/i, /^Pays$/i]),
+          status: findColumn([/^Status$/i, /^Statut$/i]),
           shortDescription: findColumn([/^Short description/i]),
           longDescription: findColumn([/^Long description/i]),
-          businessOpeningDate: findColumn([/^business.?opening.?date$/i]),
+          businessOpeningDate: findColumn([/^business.?opening.?date$/i, /^Date d'ouverture$/i]),
+          about: findColumn([/^About$/i]),
+          groups: findColumn([/^Groupes?$/i, /^Groups?$/i]),
+          mainCategory: findColumn([/^Cat[eé]gorie principale$/i, /^Main category$/i]),
+          secondaryCategories: findColumn([/^Cat[eé]gories additionnelles$/i, /^Secondary categories$/i]),
+          inStoreServices: findColumn([/^In Store Services$/i]),
+          bookAFitting: findColumn([/^Book a Fitting$/i]),
+          triumphOutlets: findColumn([/^Triumph Outlets$/i]),
         }
       };
 
@@ -615,6 +622,7 @@ export const OptimizeMode: React.FC = () => {
                               <TableHead className="font-normal text-foreground text-xs">City</TableHead>
                               <TableHead className="font-normal text-foreground text-xs w-[200px]">Short Description</TableHead>
                               <TableHead className="font-normal text-foreground text-xs w-[300px]">Long Description</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs w-[250px]">About</TableHead>
                             </>
                           ) : useCase === 'next' ? (
                             <>
@@ -652,6 +660,7 @@ export const OptimizeMode: React.FC = () => {
                             const city = row[mapping.city] || '-';
                             const shortDesc = row[mapping.shortDescription] || '';
                             const longDesc = row[mapping.longDescription] || '';
+                            const aboutDesc = mapping.about ? (row[mapping.about] || '') : '';
 
                             return (
                               <TableRow key={index} className="hover:bg-muted/30">
@@ -666,6 +675,11 @@ export const OptimizeMode: React.FC = () => {
                                 <TableCell className="text-xs text-muted-foreground max-w-[300px]">
                                   <div className="truncate" title={longDesc}>
                                     {longDesc ? longDesc.substring(0, 100) + (longDesc.length > 100 ? '...' : '') : '-'}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-xs text-muted-foreground max-w-[250px]">
+                                  <div className="truncate" title={aboutDesc}>
+                                    {aboutDesc ? aboutDesc.substring(0, 80) + (aboutDesc.length > 80 ? '...' : '') : '-'}
                                   </div>
                                 </TableCell>
                               </TableRow>

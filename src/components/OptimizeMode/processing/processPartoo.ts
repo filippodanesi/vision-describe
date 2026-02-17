@@ -20,10 +20,12 @@
 
 import { Model } from '@/lib/models';
 import { optimizeTextWithAI } from '../utils/optimizationUtils';
-import { PARTOO_SYSTEM_PROMPT } from '../utils/prompts/partooSystemPrompt';
+import { PARTOO_SYSTEM_PROMPT, PARTOO_ABOUT_SYSTEM_PROMPT } from '../utils/prompts/partooSystemPrompt';
 import {
   buildPartooStorePrompt,
   parsePartooResponse,
+  buildPartooAboutPrompt,
+  parsePartooAboutResponse,
   detectLanguage,
   isStoreClosed,
   isGenericDescription,
@@ -42,6 +44,13 @@ export interface PartooMapping {
   shortDescription?: string;
   longDescription?: string;
   businessOpeningDate?: string;
+  about?: string;
+  groups?: string;
+  mainCategory?: string;
+  secondaryCategories?: string;
+  inStoreServices?: string;
+  bookAFitting?: string;
+  triumphOutlets?: string;
 }
 
 /**
@@ -116,6 +125,13 @@ export async function processPartooRows(
     const mappingShortKey = mapping.shortDescription || 'Short description';
     const mappingLongKey = mapping.longDescription || 'Long description';
     const openingDateKey = mapping.businessOpeningDate || 'business_opening_date';
+    const aboutKey = mapping.about || 'About';
+    const groupsKey = mapping.groups || 'Groupes';
+    const mainCategoryKey = mapping.mainCategory || 'Catégorie principale';
+    const secondaryCategoriesKey = mapping.secondaryCategories || 'Catégories additionnelles';
+    const inStoreServicesKey = mapping.inStoreServices || 'In Store Services';
+    const bookAFittingKey = mapping.bookAFitting || 'Book a Fitting';
+    const triumphOutletsKey = mapping.triumphOutlets || 'Triumph Outlets';
 
     const name = String(row[nameKey] ?? '').trim();
     const businessId = String(row[businessIdKey] ?? (name || `row-${i + 1}`));
@@ -184,6 +200,14 @@ export async function processPartooRows(
     const existingShort = String(row[shortDescKey] ?? '').trim() || undefined;
     const existingLong = String(row[longDescKey] ?? '').trim() || undefined;
     const openingDate = String(row[openingDateKey] ?? '').trim() || undefined;
+    const existingAbout = String(row[aboutKey] ?? '').trim() || undefined;
+    const groups = String(row[groupsKey] ?? '').trim() || undefined;
+    const mainCategory = String(row[mainCategoryKey] ?? '').trim() || undefined;
+    const secondaryCategories = String(row[secondaryCategoriesKey] ?? '').trim() || undefined;
+    const inStoreServicesRaw = String(row[inStoreServicesKey] ?? '').trim().toUpperCase();
+    const bookAFittingRaw = String(row[bookAFittingKey] ?? '').trim();
+    const triumphOutletsRaw = String(row[triumphOutletsKey] ?? '').trim().toUpperCase();
+    const hasAboutColumn = aboutKey in row || Object.keys(row).some(k => /^about$/i.test(k));
 
     // Validate required fields
     if (!name || !city || !country) {
@@ -225,8 +249,19 @@ export async function processPartooRows(
       }
     }
 
+    // Check if About needs generation
+    let needsAbout = false;
+    if (hasAboutColumn) {
+      if (!existingAbout) {
+        needsAbout = true;
+      } else if (overwritePolicy === 'fill-improve' && isGenericDescription(existingAbout, city)) {
+        needsAbout = true;
+        addLog?.(`${businessId} | partoo | ABOUT: Existing is generic, will improve`);
+      }
+    }
+
     // If we don't need to generate anything, skip AI call
-    if (!needsShort && !needsLong) {
+    if (!needsShort && !needsLong && !needsAbout) {
       // Keep original values unchanged
       addLog?.(`${businessId} | partoo | SKIP: Existing descriptions are adequate`);
       out.push(processed);
@@ -244,91 +279,146 @@ export async function processPartooRows(
       existingShort,
       existingLong,
       businessOpeningDate: openingDate,
+      existingAbout,
+      groups,
+      mainCategory,
+      secondaryCategories,
+      hasInStoreServices: inStoreServicesRaw === 'TRUE',
+      hasBookAFitting: !!bookAFittingRaw && bookAFittingRaw.toLowerCase() !== 'false',
+      isOutlet: triumphOutletsRaw === 'TRUE',
     };
 
-    // Build prompt
-    const userPrompt = buildPartooStorePrompt(storeData, overwritePolicy);
+    // ── Short + Long description generation ──
+    if (needsShort || needsLong) {
+      const userPrompt = buildPartooStorePrompt(storeData, overwritePolicy);
 
-    // Call AI
-    try {
-      addLog?.(`${businessId} | partoo | Calling AI (${model.name})...`);
-      
-      const rawResponse = await optimizeTextWithAI(
-        userPrompt,
-        [], // no keywords for Partoo
-        {}, // no analysis results
-        model,
-        apiKey,
-        PARTOO_SYSTEM_PROMPT
-      );
+      try {
+        addLog?.(`${businessId} | partoo | Calling AI for short/long (${model.name})...`);
 
-      // Track cost with actual tokens from API response
-      if (costTracker && rawResponse.tokens) {
-        const costRecord = costTracker.trackOperation(
-          model.id,
+        const rawResponse = await optimizeTextWithAI(
           userPrompt,
-          rawResponse.content || '',
-          {
-            inputTokens: rawResponse.tokens.inputTokens,
-            outputTokens: rawResponse.tokens.outputTokens
-          }
+          [], // no keywords for Partoo
+          {}, // no analysis results
+          model,
+          apiKey,
+          PARTOO_SYSTEM_PROMPT
         );
-        
-        // Log cost details with actual token counts for verification
-        if (costRecord) {
-          const cost = costRecord.actualCost || costRecord.estimatedCost;
-          const totalTokens = rawResponse.tokens.inputTokens + rawResponse.tokens.outputTokens;
-          const costType = costRecord.actualCost ? 'ACTUAL' : 'ESTIMATED';
-          addLog?.(`${businessId} | partoo | COST: $${cost.toFixed(2)} (${costType}: ${rawResponse.tokens.inputTokens}→${rawResponse.tokens.outputTokens} = ${totalTokens} tokens)`);
+
+        // Track cost with actual tokens from API response
+        if (costTracker && rawResponse.tokens) {
+          const costRecord = costTracker.trackOperation(
+            model.id,
+            userPrompt,
+            rawResponse.content || '',
+            {
+              inputTokens: rawResponse.tokens.inputTokens,
+              outputTokens: rawResponse.tokens.outputTokens
+            }
+          );
+
+          if (costRecord) {
+            const cost = costRecord.actualCost || costRecord.estimatedCost;
+            const totalTokens = rawResponse.tokens.inputTokens + rawResponse.tokens.outputTokens;
+            const costType = costRecord.actualCost ? 'ACTUAL' : 'ESTIMATED';
+            addLog?.(`${businessId} | partoo | COST(short/long): $${cost.toFixed(2)} (${costType}: ${rawResponse.tokens.inputTokens}→${rawResponse.tokens.outputTokens} = ${totalTokens} tokens)`);
+          }
         }
+
+        const responseText = rawResponse.content || '';
+        const parsed = parsePartooResponse(responseText);
+
+        if (!parsed) {
+          addLog?.(`${businessId} | partoo | ERROR: Could not parse AI response`);
+          processed.gen_error = 'Failed to parse AI response';
+        } else {
+          const shortChars = parsed.short.length;
+          const longChars = parsed.long.length;
+
+          if (shortChars > 80) {
+            addLog?.(`${businessId} | partoo | WARN: Short description ${shortChars} chars (max 80)`);
+          }
+          if (longChars > 750) {
+            addLog?.(`${businessId} | partoo | WARN: Long description ${longChars} chars (max 750)`);
+          }
+
+          const cleanShort = stripMarkdown(parsed.short);
+          const cleanLong = stripMarkdown(parsed.long);
+
+          if (needsShort) {
+            processed[shortDescKey] = cleanShort;
+          }
+          if (needsLong) {
+            processed[longDescKey] = cleanLong;
+          }
+
+          if (!(mapping.shortDescription && mapping.shortDescription === shortDescKey)) {
+            addLog?.(`${businessId} | partoo | MAP(short)->${shortDescKey}`);
+          }
+          if (!(mapping.longDescription && mapping.longDescription === longDescKey)) {
+            addLog?.(`${businessId} | partoo | MAP(long)->${longDescKey}`);
+          }
+
+          addLog?.(`${businessId} | partoo | SUCCESS: Generated short=${shortChars}ch, long=${longChars}ch`);
+        }
+      } catch (error) {
+        addLog?.(`${businessId} | partoo | ERROR(short/long): ${error}`);
+        processed.gen_error = String(error);
       }
+    }
 
-      // Parse response - extract content from OptimizationResult
-      const responseText = rawResponse.content || '';
-      const parsed = parsePartooResponse(responseText);
+    // ── About field generation (separate AI call, Markdown preserved) ──
+    if (needsAbout) {
+      const aboutPrompt = buildPartooAboutPrompt(storeData, overwritePolicy);
 
-      if (!parsed) {
-        addLog?.(`${businessId} | partoo | ERROR: Could not parse AI response`);
-        // Keep original values unchanged
-        processed.gen_error = 'Failed to parse AI response';
-      } else {
-        // Validate character counts
-        const shortChars = parsed.short.length;
-        const longChars = parsed.long.length;
+      try {
+        addLog?.(`${businessId} | partoo | Calling AI for About (${model.name})...`);
 
-        if (shortChars > 80) {
-          addLog?.(`${businessId} | partoo | WARN: Short description ${shortChars} chars (max 80)`);
-        }
-        if (longChars > 750) {
-          addLog?.(`${businessId} | partoo | WARN: Long description ${longChars} chars (max 750)`);
-        }
+        const aboutRawResponse = await optimizeTextWithAI(
+          aboutPrompt,
+          [],
+          {},
+          model,
+          apiKey,
+          PARTOO_ABOUT_SYSTEM_PROMPT
+        );
 
-        // Clean output (remove any accidental HTML/markdown)
-        const cleanShort = stripMarkdown(parsed.short);
-        const cleanLong = stripMarkdown(parsed.long);
+        if (costTracker && aboutRawResponse.tokens) {
+          const costRecord = costTracker.trackOperation(
+            model.id,
+            aboutPrompt,
+            aboutRawResponse.content || '',
+            {
+              inputTokens: aboutRawResponse.tokens.inputTokens,
+              outputTokens: aboutRawResponse.tokens.outputTokens
+            }
+          );
 
-        // Update the ORIGINAL columns directly (only if we need to)
-        if (needsShort) {
-          processed[shortDescKey] = cleanShort;
-        }
-        if (needsLong) {
-          processed[longDescKey] = cleanLong;
-        }
-
-        // Add explicit log when dynamic mapping created/used columns not originally mapped
-        if (!(mapping.shortDescription && mapping.shortDescription === shortDescKey)) {
-          addLog?.(`${businessId} | partoo | MAP(short)->${shortDescKey}`);
-        }
-        if (!(mapping.longDescription && mapping.longDescription === longDescKey)) {
-          addLog?.(`${businessId} | partoo | MAP(long)->${longDescKey}`);
+          if (costRecord) {
+            const cost = costRecord.actualCost || costRecord.estimatedCost;
+            const totalTokens = aboutRawResponse.tokens.inputTokens + aboutRawResponse.tokens.outputTokens;
+            const costType = costRecord.actualCost ? 'ACTUAL' : 'ESTIMATED';
+            addLog?.(`${businessId} | partoo | COST(about): $${cost.toFixed(2)} (${costType}: ${aboutRawResponse.tokens.inputTokens}→${aboutRawResponse.tokens.outputTokens} = ${totalTokens} tokens)`);
+          }
         }
 
-        addLog?.(`${businessId} | partoo | SUCCESS: Generated short=${shortChars}ch, long=${longChars}ch`);
+        const aboutResponseText = aboutRawResponse.content || '';
+        const parsedAbout = parsePartooAboutResponse(aboutResponseText);
+
+        if (!parsedAbout) {
+          addLog?.(`${businessId} | partoo | ERROR: Could not parse About AI response`);
+        } else {
+          const aboutChars = parsedAbout.length;
+          if (aboutChars > 500) {
+            addLog?.(`${businessId} | partoo | WARN: About ${aboutChars} chars (max 500)`);
+          }
+
+          // Write directly to the About column — do NOT strip Markdown
+          processed[aboutKey] = parsedAbout;
+          addLog?.(`${businessId} | partoo | SUCCESS(about): Generated about=${aboutChars}ch`);
+        }
+      } catch (error) {
+        addLog?.(`${businessId} | partoo | ERROR(about): ${error}`);
       }
-    } catch (error) {
-      addLog?.(`${businessId} | partoo | ERROR: ${error}`);
-      // Keep original values unchanged
-      processed.gen_error = String(error);
     }
 
     out.push(processed);

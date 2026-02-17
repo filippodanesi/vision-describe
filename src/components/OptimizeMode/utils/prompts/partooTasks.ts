@@ -16,6 +16,13 @@ export interface PartooStoreData {
   existingShort?: string;
   existingLong?: string;
   businessOpeningDate?: string;
+  existingAbout?: string;
+  groups?: string;
+  mainCategory?: string;
+  secondaryCategories?: string;
+  hasInStoreServices?: boolean;
+  hasBookAFitting?: boolean;
+  isOutlet?: boolean;
 }
 
 export interface PartooLanguageMapping {
@@ -386,4 +393,122 @@ export function getClosedStoreMessage(language: string, city: string): { short: 
     short: messages.short.replace('{city}', city),
     long: messages.long.replace('{city}', city),
   };
+}
+
+/**
+ * Build the user prompt for About field generation (store locator page)
+ */
+export function buildPartooAboutPrompt(storeData: PartooStoreData, overwritePolicy: 'fill-only' | 'fill-improve' = 'fill-improve'): string {
+  const language = detectLanguage(storeData.country, storeData.city);
+
+  // Determine store type from groups
+  const groupsLower = (storeData.groups || '').toLowerCase();
+  const isOwnStore = groupsLower.includes('triumph stores') && !groupsLower.includes('partner');
+  const isPartner = groupsLower.includes('partner');
+
+  let prompt = `Language: ${language}
+
+Use ONLY these details. Do not invent or infer missing information.
+
+INPUTS:
+- Name: ${storeData.name}
+- City: ${storeData.city}
+- Country: ${storeData.country}`;
+
+  if (storeData.address) {
+    prompt += `\n- Address: ${storeData.address}`;
+  }
+  if (storeData.zipcode) {
+    prompt += `\n- Zipcode: ${storeData.zipcode}`;
+  }
+  if (storeData.mainCategory) {
+    prompt += `\n- Category: ${storeData.mainCategory.replace(/_/g, ' ')}`;
+  }
+  if (storeData.secondaryCategories) {
+    prompt += `\n- Additional categories: ${storeData.secondaryCategories.replace(/_/g, ' ')}`;
+  }
+
+  // Store type
+  if (isOwnStore) {
+    prompt += `\n- Store type: Official Triumph store`;
+  } else if (isPartner) {
+    prompt += `\n- Store type: Authorized retailer / partner`;
+  }
+
+  // Services
+  const services: string[] = [];
+  if (storeData.hasInStoreServices) services.push('in-store fitting service');
+  if (storeData.hasBookAFitting) services.push('online fitting appointment booking');
+  if (services.length > 0) {
+    prompt += `\n- Available services: ${services.join(', ')}`;
+  }
+
+  if (storeData.isOutlet) {
+    prompt += `\n- Outlet store: yes`;
+  }
+
+  if (storeData.businessOpeningDate) {
+    prompt += `\n- Opening date: ${storeData.businessOpeningDate}`;
+  }
+
+  // Existing About for reference
+  const aboutIsGeneric = overwritePolicy === 'fill-improve' && isGenericDescription(storeData.existingAbout, storeData.city);
+  if (storeData.existingAbout && !aboutIsGeneric) {
+    prompt += `\n- Existing About (for reference): ${storeData.existingAbout}`;
+  }
+
+  prompt += `
+
+TASK: Write an "About" text for this store's page on the Triumph store locator website.
+This text appears on the individual store page and should help local SEO and AI-powered local search results.
+
+CRITICAL REQUIREMENTS:
+- Write in ${language}. Do not use any other language.
+- Maximum 500 characters.
+- ALWAYS mention ${storeData.city} naturally.
+- Light Markdown is allowed: **bold** for emphasis, bullet lists with - for services.
+- Make the text UNIQUE to this specific location using the details provided.
+- Focus on: why visit this store, what services are available, what makes it special locally.
+- This is NOT a product description — it is a presentation of the physical store location.
+- NO company history, global stats, founding dates, corporate background.
+- NO prices, opening hours, phone, email, directions, promotions, loyalty programs.
+- NO HTML, emojis, links, or headings (#).
+
+Return ONLY the About text (plain Markdown string, NOT JSON). No extra commentary.`;
+
+  return prompt;
+}
+
+/**
+ * Parse the AI response for About field
+ */
+export function parsePartooAboutResponse(response: string): string | null {
+  if (!response || !response.trim()) return null;
+
+  let text = response.trim();
+
+  // Remove markdown code fences if present
+  text = text.replace(/^```(?:markdown|md)?\s*\n?/i, '');
+  text = text.replace(/\n?```\s*$/i, '');
+  text = text.trim();
+
+  // Remove surrounding quotes if present
+  if ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"))) {
+    text = text.slice(1, -1).trim();
+  }
+
+  // Validate length
+  if (text.length === 0) return null;
+  if (text.length > 500) {
+    // Truncate at last complete sentence within 500 chars
+    const truncated = text.substring(0, 500);
+    const lastPeriod = truncated.lastIndexOf('.');
+    if (lastPeriod > 300) {
+      text = truncated.substring(0, lastPeriod + 1);
+    } else {
+      text = truncated;
+    }
+  }
+
+  return text;
 }
