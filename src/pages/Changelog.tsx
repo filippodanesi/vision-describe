@@ -14,6 +14,42 @@ type ChangelogEntry = {
 
 const entries: ChangelogEntry[] = [
   {
+    version: "v2.5.0",
+    date: "February 17, 2026",
+    title: "Partoo Overhaul & Rebranding",
+    description:
+      "Major Partoo improvements with About field generation, store type filtering, faster file processing, and AI-discoverability-optimized prompts. Project officially renamed to VisionDescribe.",
+    items: [
+      "Added About field generation for Partoo store locator pages",
+      "Added store type filter to process only specific store categories",
+      "Replaced ExcelJS with SheetJS for significantly faster XLSX parsing and export",
+      "Optimized Partoo prompts for AI discoverability and fuller, richer descriptions",
+      "Preserved original Partoo file structure on export — no more missing columns",
+      "Added anti-AI-writing-tell instructions for more natural, human-sounding content",
+      "Removed opening date from Partoo prompts to reduce noise",
+      "Improved store type categorization to handle locator group names",
+      "Updated target group descriptions and fixed color translation tables",
+      "Amazon table preview improvements",
+      "Simplified use case labels and hidden Zalando option",
+      "Renamed E-commerce label to E-commerce (triumph.com)",
+      "Renamed all references from AI Copy Assistant to VisionDescribe",
+    ],
+  },
+  {
+    version: "v2.4.0",
+    date: "February 12, 2026",
+    title: "Security & Architecture",
+    description:
+      "Added password protection via HTTP Basic Auth, deduplicated the prompt system into shared modules, and bundled test files for every use case.",
+    items: [
+      "Added HTTP Basic Auth via Vercel Edge Middleware — the app is now password-protected",
+      "Deduplicated prompt architecture with shared modules across all use cases",
+      "Updated NEXT size translations with the complete Zeynep Arman list",
+      "Added test files for all use cases and HTML rendering in image analysis preview",
+      "Refactored internal naming: WatsonAnalyzer renamed to OptimizeMode",
+    ],
+  },
+  {
     version: "v2.3.0",
     date: "February 9, 2026",
     title: "Visual Refinement — Calm Precision Aesthetic",
