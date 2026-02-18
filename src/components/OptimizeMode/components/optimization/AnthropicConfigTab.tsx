@@ -63,7 +63,7 @@ const AnthropicConfigTab: React.FC<AnthropicConfigTabProps> = ({
           className="font-mono"
         />
         <p className="text-xs text-muted-foreground">
-          Your key is loaded from <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">VITE_ANTHROPIC_API_KEY</code>. You can override it here.
+          Your key is loaded from your account Settings. You can override it here.
         </p>
         {anthropicKeyWarning && (
           <p className="text-xs text-amber-600 mt-1">{anthropicKeyWarning}</p>

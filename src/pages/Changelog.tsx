@@ -14,6 +14,26 @@ type ChangelogEntry = {
 
 const entries: ChangelogEntry[] = [
   {
+    version: "v3.0.0",
+    date: "February 18, 2026",
+    title: "Projects & Per-User API Keys",
+    description:
+      "Major platform evolution: API keys are now stored per-user in Supabase (no more shared env vars), and runs can be organized into projects with aggregated stats.",
+    items: [
+      "Added per-user API key management — each user saves their own OpenAI/Anthropic keys in Settings",
+      "Added Projects to organize and group processing runs by campaign or initiative",
+      "New Settings page with password-togglable inputs and save to Supabase",
+      "New Projects page with expandable cards showing run history, status, and total cost",
+      "New Project dialog with name, use case, and optional description",
+      "Project selector in Optimize flow — assign runs to a project before processing",
+      "Warning banner when no API keys are configured, guiding users to Settings",
+      "Removed shared VITE_OPENAI_API_KEY and VITE_ANTHROPIC_API_KEY environment variables",
+      "Added Supabase migration for projects, user_settings tables, and runs.project_id column",
+      "Row Level Security policies for projects and user settings",
+      "Sidebar navigation updated with Projects and Settings tabs",
+    ],
+  },
+  {
     version: "v2.5.0",
     date: "February 17, 2026",
     title: "Partoo Overhaul & Rebranding",

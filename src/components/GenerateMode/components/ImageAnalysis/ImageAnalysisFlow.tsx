@@ -6,7 +6,7 @@ import { ProductSettingsForm } from './ProductSettingsForm';
 import { ImageUploadZone } from './ImageUploadZone';
 import { GenerationResult } from './GenerationResult';
 import ModelSelector from '@/components/OptimizeMode/components/ModelSelector';
-import { ANTHROPIC_API_KEY, OPENAI_API_KEY } from '@/config/env';
+import { useApiKeys } from '@/contexts/ApiKeysContext';
 import { toast } from 'sonner';
 import { StepIndicator, type StepDef } from '@/components/ui/step-indicator';
 
@@ -23,6 +23,8 @@ const STEP_DEFS: StepDef<ImageAnalysisStep>[] = [
 ];
 
 export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) => {
+  const { openaiKey, anthropicKey } = useApiKeys();
+
   const {
     step,
     setStep,
@@ -41,11 +43,11 @@ export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) 
 
   const handleModelSelected = (modelId: string) => {
     const isAnthropic = modelId.startsWith('claude');
-    const apiKey = isAnthropic ? ANTHROPIC_API_KEY : OPENAI_API_KEY;
+    const apiKey = isAnthropic ? anthropicKey : openaiKey;
 
     if (!apiKey) {
       toast('API Key Missing', {
-        description: `Missing ${isAnthropic ? 'VITE_ANTHROPIC_API_KEY' : 'VITE_OPENAI_API_KEY'} in your environment.`,
+        description: 'Configure your API keys in Settings before processing.',
         style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
       });
       return;

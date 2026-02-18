@@ -3,7 +3,6 @@
  */
 import { Model } from '@/lib/models';
 import { franc } from 'franc-min';
-import { OPENAI_API_KEY, ANTHROPIC_API_KEY } from '@/config/env';
 import { optimizeWithOpenAI, OpenAIResponse } from './openAiUtils';
 import { optimizeWithClaude, ClaudeResponse } from './claudeUtils';
 

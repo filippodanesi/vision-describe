@@ -17,9 +17,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, ArrowRight, RefreshCw, Download, CheckCircle2 } from 'lucide-react';
 import { StepIndicator, type StepDef } from '@/components/ui/step-indicator';
 import * as ExcelJS from 'exceljs';
-import { validateEnv, OPENAI_API_KEY, ANTHROPIC_API_KEY } from '@/config/env';
+import { useApiKeys } from '@/contexts/ApiKeysContext';
+import {
+  getProjects,
+  createProject,
+  type ProjectWithStats,
+} from '@/lib/projectPersistence';
 
 import FileUpload from './components/FileUpload';
+import ResumeRunBanner from './components/ResumeRunBanner';
 import TokenCounter from './components/TokenCounter';
 import ColumnSelector from './components/ColumnSelector';
 import ColumnConfirmation from './components/ColumnConfirmation';
@@ -32,6 +38,13 @@ import { TranslatorPanel } from './components/TranslatorPanel';
 import { COLOR_TRANSLATIONS, type ColorMapping } from './utils/translations/colorTranslations';
 import { SIZE_TRANSLATION_TABLE, type SizeMapping } from './utils/translations/sizeTranslations';
 import { getModelById } from '@/lib/models';
+import {
+  findInterruptedRuns,
+  getCompletedRowIndices,
+  getRunResults,
+  dismissRun,
+  type RunRecord,
+} from '@/lib/runPersistence';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -72,6 +85,13 @@ const getStepsForUseCase = (useCase: UseCase | ''): StepDef<ProcessingStep>[] =>
 // ─── OptimizeMode Component ──────────────────────────────────────────────────
 
 export const OptimizeMode: React.FC = () => {
+  // API keys from user settings
+  const { openaiKey, anthropicKey, hasKeys } = useApiKeys();
+
+  // Project selection
+  const [projects, setProjectsList] = useState<ProjectWithStats[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+
   // Current step
   const [currentStep, setCurrentStep] = useState<ProcessingStep>(ProcessingStep.UPLOAD);
 
@@ -122,21 +142,127 @@ export const OptimizeMode: React.FC = () => {
   // Use case selection (no default — user must choose)
   const [useCase, setUseCase] = useState<UseCase | ''>('');
 
-  // Validate environment variables on component mount
+  // Resume state
+  const [interruptedRuns, setInterruptedRuns] = useState<RunRecord[]>([]);
+  const [resumingRun, setResumingRun] = useState<RunRecord | null>(null);
+
+  // Load projects on mount
   useEffect(() => {
-    if (!validateEnv()) {
-      toast('Configuration Error', {
-        description: 'Please check your .env.local file and ensure all required API keys are set.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
-      });
-    }
+    getProjects().then(setProjectsList).catch(() => {});
   }, []);
 
+  // Load interrupted runs on mount
+  useEffect(() => {
+    findInterruptedRuns()
+      .then((runs) => setInterruptedRuns(runs))
+      .catch(() => {});
+  }, []);
+
+  const handleResumeRun = (run: RunRecord) => {
+    setResumingRun(run);
+    setUseCase(run.use_case as UseCase);
+    toast('Upload the same file to resume processing', {
+      description: `Re-upload the file "${run.file_name || 'original file'}" to continue where you left off.`,
+    });
+  };
+
+  const handleDismissRun = async (run: RunRecord) => {
+    await dismissRun(run.id);
+    setInterruptedRuns((prev) => prev.filter((r) => r.id !== run.id));
+  };
+
   // Handle file upload
-  const handleFileUploaded = (data: { rows: any[]; columns: string[]; meta?: any }) => {
+  const handleFileUploaded = async (data: { rows: any[]; columns: string[]; meta?: any }) => {
     setFileData(data);
     setBusinessIdsFilter(null);
     setStoreTypeFilter(null);
+
+    // --- Resume flow: if resuming, validate and fast-track to processing ---
+    if (resumingRun) {
+      if (data.rows.length !== resumingRun.total_rows) {
+        toast('Row count mismatch', {
+          description: `Expected ${resumingRun.total_rows} rows but got ${data.rows.length}. Please upload the same file.`,
+          style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+        });
+        setResumingRun(null);
+        return;
+      }
+
+      try {
+        const [skipIndices, results] = await Promise.all([
+          getCompletedRowIndices(resumingRun.id),
+          getRunResults(resumingRun.id),
+        ]);
+
+        // Pre-populate existing results
+        const existingResults = results.map((r) => r.result_data as Record<string, unknown>);
+
+        toast(`Resuming: ${skipIndices.size} of ${resumingRun.total_rows} rows already done`, {
+          description: 'Processing remaining rows...',
+        });
+
+        // Remove from interrupted list
+        setInterruptedRuns((prev) => prev.filter((r) => r.id !== resumingRun.id));
+
+        // Determine model & API key from the run config
+        const modelConfig = getModelById(resumingRun.model_id);
+        if (!modelConfig) {
+          toast('Model not found', {
+            description: `Model "${resumingRun.model_id}" is no longer available.`,
+            style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+          });
+          setResumingRun(null);
+          return;
+        }
+        const isAnthropic = resumingRun.model_id.startsWith('claude');
+        const apiKey = isAnthropic ? anthropicKey : openaiKey;
+        if (!apiKey) {
+          toast('API Key Missing', {
+            description: 'Configure your API keys in Settings before processing.',
+            style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+          });
+          setResumingRun(null);
+          return;
+        }
+
+        setSelectedModel(resumingRun.model_id);
+        setCurrentStep(ProcessingStep.PROCESSING);
+        setProcessingStartTime(new Date());
+
+        const runUseCase = resumingRun.use_case as UseCase;
+        const processedRowsData = await processFile(
+          data.rows,
+          data.columns,
+          modelConfig,
+          apiKey,
+          {
+            useCase: runUseCase || 'ecommerce',
+            resumeRunId: resumingRun.id,
+            skipIndices,
+            existingResults,
+            fileName: resumingRun.file_name || undefined,
+          },
+          costTracker
+        );
+
+        setProcessedData(processedRowsData);
+        setProcessingEndTime(new Date());
+        setCurrentStep(ProcessingStep.COMPLETE);
+        setResumingRun(null);
+        toast('File processed successfully!', {
+          description: 'Your file has been optimized successfully.',
+        });
+        return;
+      } catch (error) {
+        console.error('Resume error:', error);
+        toast('Error resuming run', {
+          description: error instanceof Error ? error.message : 'Please try again.',
+          style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+        });
+        setResumingRun(null);
+        return;
+      }
+    }
 
     if (useCase === 'partoo') {
       const partooColumns = data.columns.filter(col => {
@@ -214,11 +340,11 @@ export const OptimizeMode: React.FC = () => {
 
   const handleModelSelected = async (model: string, options?: { dryRun?: boolean; targetLanguage?: string }) => {
     const isAnthropic = model.startsWith('claude');
-    const apiKey = isAnthropic ? ANTHROPIC_API_KEY : OPENAI_API_KEY;
+    const apiKey = isAnthropic ? anthropicKey : openaiKey;
 
     if (!apiKey) {
       toast('API Key Missing', {
-        description: `Missing ${isAnthropic ? 'VITE_ANTHROPIC_API_KEY' : 'VITE_OPENAI_API_KEY'} in your environment.`,
+        description: 'Configure your API keys in Settings before processing.',
         style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
       });
       return;
@@ -250,6 +376,8 @@ export const OptimizeMode: React.FC = () => {
           storeTypeFilter: storeTypeFilter,
           colorMappings,
           sizeMappings,
+          fileName: fileData.meta?.fileName,
+          projectId: selectedProjectId || undefined,
         },
         costTracker
       );
@@ -385,6 +513,20 @@ export const OptimizeMode: React.FC = () => {
       case ProcessingStep.UPLOAD:
         return (
           <div className="max-w-3xl mx-auto space-y-4 animate-fade-in">
+            <ResumeRunBanner
+              runs={interruptedRuns}
+              onResume={handleResumeRun}
+              onDismiss={handleDismissRun}
+            />
+            {!hasKeys && (
+              <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+                <CardContent className="py-3">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    Configure your API keys in <strong>Settings</strong> before processing files.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
             <Card>
               <CardHeader>
                 <CardTitle className="tracking-tight">Upload your file</CardTitle>
@@ -412,6 +554,23 @@ export const OptimizeMode: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {useCase && projects.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-1 block">Project (optional)</label>
+                    <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="No project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No project</SelectItem>
+                        {projects.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 {useCase && (
                   <FileUpload onFileUploaded={handleFileUploaded} useCase={useCase} />

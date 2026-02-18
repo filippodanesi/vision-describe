@@ -37,7 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, ArrowRight, RefreshCw, Download, CheckCircle2 } from 'lucide-react';
 import { StepIndicator, type StepDef } from '@/components/ui/step-indicator';
 import * as ExcelJS from 'exceljs';
-import { validateEnv, OPENAI_API_KEY, ANTHROPIC_API_KEY } from '@/config/env';
+import { useApiKeys } from '@/contexts/ApiKeysContext';
 
 // Import components
 import Header from './components/Header';
@@ -97,6 +97,8 @@ const getStepsForUseCase = (useCase: UseCase | ''): StepDef<ProcessingStep>[] =>
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const VisionDescribe: React.FC = () => {
+  const { openaiKey, anthropicKey, hasKeys } = useApiKeys();
+
   // Current step
   const [currentStep, setCurrentStep] = useState<ProcessingStep>(ProcessingStep.UPLOAD);
 
@@ -144,15 +146,15 @@ const VisionDescribe: React.FC = () => {
   // Use case selection (no default — user must choose)
   const [useCase, setUseCase] = useState<UseCase | ''>('');
 
-  // Validate environment variables on component mount
+  // Warn if no API keys configured
   useEffect(() => {
-    if (!validateEnv()) {
-      toast('Configuration Error', {
-        description: 'Please check your .env.local file and ensure all required API keys are set.',
+    if (!hasKeys) {
+      toast('Configuration Required', {
+        description: 'Please configure your API keys in Settings before processing.',
         style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
       });
     }
-  }, []);
+  }, [hasKeys]);
 
   // Handle file upload
   const handleFileUploaded = (data: { rows: any[]; columns: string[]; meta?: any }) => {
@@ -241,11 +243,11 @@ const VisionDescribe: React.FC = () => {
   const handleModelSelected = async (model: string, options?: { dryRun?: boolean; targetLanguage?: string }) => {
     // Determine API key based on model/provider
     const isAnthropic = model.startsWith('claude');
-    const apiKey = isAnthropic ? ANTHROPIC_API_KEY : OPENAI_API_KEY;
+    const apiKey = isAnthropic ? anthropicKey : openaiKey;
 
     if (!apiKey) {
       toast('API Key Missing', {
-        description: `Missing ${isAnthropic ? 'VITE_ANTHROPIC_API_KEY' : 'VITE_OPENAI_API_KEY'} in your environment.`,
+        description: 'Configure your API keys in Settings before processing.',
         style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
       });
       return;

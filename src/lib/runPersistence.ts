@@ -1,0 +1,188 @@
+import { supabase } from './supabase';
+
+export interface RunConfig {
+  useCase: string;
+  modelId: string;
+  fileName?: string;
+  totalRows: number;
+  config?: Record<string, unknown>;
+  projectId?: string;
+}
+
+export interface RunRecord {
+  id: string;
+  user_id: string;
+  use_case: string;
+  model_id: string;
+  file_name: string | null;
+  total_rows: number;
+  config: Record<string, unknown>;
+  status: 'running' | 'completed' | 'interrupted' | 'cancelled';
+  total_cost: number;
+  total_tokens_in: number;
+  total_tokens_out: number;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
+export interface RunResultRecord {
+  id: string;
+  run_id: string;
+  row_index: number;
+  result_data: Record<string, unknown>;
+  cost: number;
+  tokens_in: number;
+  tokens_out: number;
+  created_at: string;
+}
+
+export async function createRun(config: RunConfig): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from('runs')
+    .insert({
+      user_id: user.id,
+      use_case: config.useCase,
+      model_id: config.modelId,
+      file_name: config.fileName || null,
+      total_rows: config.totalRows,
+      config: config.config || {},
+      status: 'running',
+      project_id: config.projectId || null,
+    })
+    .select('id')
+    .single();
+
+  if (error) {
+    console.error('[runPersistence] createRun error:', error);
+    return null;
+  }
+  return data.id;
+}
+
+export async function saveRowResult(
+  runId: string,
+  rowIndex: number,
+  resultData: Record<string, unknown>,
+  cost: number = 0,
+  tokensIn: number = 0,
+  tokensOut: number = 0
+): Promise<void> {
+  try {
+    await supabase
+      .from('run_results')
+      .upsert(
+        {
+          run_id: runId,
+          row_index: rowIndex,
+          result_data: resultData,
+          cost,
+          tokens_in: tokensIn,
+          tokens_out: tokensOut,
+        },
+        { onConflict: 'run_id,row_index' }
+      );
+  } catch (err) {
+    // Silently catch — don't block processing
+    console.error('[runPersistence] saveRowResult error:', err);
+  }
+}
+
+export async function updateRunStatus(
+  runId: string,
+  status: 'running' | 'completed' | 'interrupted' | 'cancelled',
+  costSummary?: { totalCost: number; tokensIn: number; tokensOut: number }
+): Promise<void> {
+  const update: Record<string, unknown> = { status };
+  if (status === 'completed') {
+    update.completed_at = new Date().toISOString();
+  }
+  if (costSummary) {
+    update.total_cost = costSummary.totalCost;
+    update.total_tokens_in = costSummary.tokensIn;
+    update.total_tokens_out = costSummary.tokensOut;
+  }
+
+  const { error } = await supabase
+    .from('runs')
+    .update(update)
+    .eq('id', runId);
+
+  if (error) {
+    console.error('[runPersistence] updateRunStatus error:', error);
+  }
+}
+
+export async function heartbeat(runId: string): Promise<void> {
+  const { error } = await supabase
+    .from('runs')
+    .update({ updated_at: new Date().toISOString() })
+    .eq('id', runId);
+
+  if (error) {
+    console.error('[runPersistence] heartbeat error:', error);
+  }
+}
+
+export async function getCompletedRowIndices(runId: string): Promise<Set<number>> {
+  const { data, error } = await supabase
+    .from('run_results')
+    .select('row_index')
+    .eq('run_id', runId);
+
+  if (error || !data) return new Set();
+  return new Set(data.map((r) => r.row_index));
+}
+
+export async function getRunResults(runId: string): Promise<RunResultRecord[]> {
+  const { data, error } = await supabase
+    .from('run_results')
+    .select('*')
+    .eq('run_id', runId)
+    .order('row_index', { ascending: true });
+
+  if (error || !data) return [];
+  return data as RunResultRecord[];
+}
+
+export async function findInterruptedRuns(): Promise<RunRecord[]> {
+  // First mark stale runs, then find all interrupted
+  await markStaleRunsInterrupted();
+
+  const { data, error } = await supabase
+    .from('runs')
+    .select('*')
+    .eq('status', 'interrupted')
+    .order('created_at', { ascending: false });
+
+  if (error || !data) return [];
+  return data as RunRecord[];
+}
+
+export async function markStaleRunsInterrupted(): Promise<void> {
+  const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+
+  const { error } = await supabase
+    .from('runs')
+    .update({ status: 'interrupted' })
+    .eq('status', 'running')
+    .lt('updated_at', twoMinutesAgo);
+
+  if (error) {
+    console.error('[runPersistence] markStaleRunsInterrupted error:', error);
+  }
+}
+
+export async function dismissRun(runId: string): Promise<void> {
+  const { error } = await supabase
+    .from('runs')
+    .update({ status: 'cancelled' })
+    .eq('id', runId);
+
+  if (error) {
+    console.error('[runPersistence] dismissRun error:', error);
+  }
+}

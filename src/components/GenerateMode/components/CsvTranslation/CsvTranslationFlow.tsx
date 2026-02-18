@@ -11,7 +11,7 @@ import { CsvTranslationStep } from '../../types';
 import { LanguageMultiSelect } from './LanguageMultiSelect';
 import { TranslationResult } from './TranslationResult';
 import ModelSelector from '@/components/OptimizeMode/components/ModelSelector';
-import { ANTHROPIC_API_KEY, OPENAI_API_KEY } from '@/config/env';
+import { useApiKeys } from '@/contexts/ApiKeysContext';
 import { toast } from 'sonner';
 
 interface CsvTranslationFlowProps {
@@ -28,6 +28,8 @@ const STEP_DEFS: StepDef<CsvTranslationStep>[] = [
 ];
 
 export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }) => {
+  const { openaiKey, anthropicKey } = useApiKeys();
+
   const {
     step,
     setStep,
@@ -63,11 +65,11 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
 
   const handleModelSelected = (modelId: string) => {
     const isAnthropic = modelId.startsWith('claude');
-    const apiKey = isAnthropic ? ANTHROPIC_API_KEY : OPENAI_API_KEY;
+    const apiKey = isAnthropic ? anthropicKey : openaiKey;
 
     if (!apiKey) {
       toast('API Key Missing', {
-        description: `Missing ${isAnthropic ? 'VITE_ANTHROPIC_API_KEY' : 'VITE_OPENAI_API_KEY'} in your environment.`,
+        description: 'Configure your API keys in Settings before processing.',
         style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
       });
       return;
