@@ -66,7 +66,7 @@ export const AppShell: React.FC = () => {
 
           <SidebarFooter className="p-4">
             <div className="flex items-center gap-2 overflow-hidden text-xs text-muted-foreground">
-              <span className="font-mono">v3.0</span>
+              <span className="font-mono">v2.5.0</span>
               <Link
                 to="/changelog"
                 className="hover:text-foreground transition-colors whitespace-nowrap group-data-[collapsible=icon]:hidden"
