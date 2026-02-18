@@ -22,6 +22,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from '@/components/ui/sidebar';
+import { Separator } from '@/components/ui/separator';
 
 const NAV_ITEMS = [
   { id: 'generate', label: 'Generate', icon: ImageIcon },
@@ -70,6 +71,7 @@ export const AppShell: React.FC = () => {
             </SidebarGroup>
           </SidebarContent>
 
+          <Separator />
           <SidebarFooter className="p-4 space-y-3">
             {user && (
               <button

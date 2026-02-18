@@ -30,8 +30,8 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-background bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-muted/50 to-background px-4">
+      <Card className="w-full max-w-sm shadow-lg border-border">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <Logo size="md" showName={true} />
