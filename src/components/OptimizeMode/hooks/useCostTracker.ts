@@ -131,16 +131,9 @@ const MODEL_COSTS: Record<string, ModelCostData> = {
     tokensPerCharInput: 0.25,
     tokensPerCharOutput: 0.25
   },
-  // Claude Sonnet 4.5 (September 2025 release)
-  'claude-sonnet-4-5-20250929': {
-    name: 'Claude 4.5 Sonnet',
-    inputCostPer1M: 3.00,
-    outputCostPer1M: 15.00,
-    tokensPerCharInput: 0.25,
-    tokensPerCharOutput: 0.25
-  },
-  'claude-sonnet-4-5': {
-    name: 'Claude 4.5 Sonnet',
+  // Claude Sonnet 4.6
+  'claude-sonnet-4-6': {
+    name: 'Claude 4.6 Sonnet',
     inputCostPer1M: 3.00,
     outputCostPer1M: 15.00,
     tokensPerCharInput: 0.25,

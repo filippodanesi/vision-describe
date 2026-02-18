@@ -13,7 +13,7 @@ export async function analyzeWithClaude(
   prompt: string,
   images: ImageFile[],
   apiKey: string,
-  model: string = 'claude-sonnet-4-5-20250929'
+  model: string = 'claude-sonnet-4-6'
 ): Promise<VisionApiResponse> {
   const client = new Anthropic({
     apiKey,
@@ -131,7 +131,7 @@ export async function analyzeWithOpenAI(
 export async function translateWithClaude(
   prompt: string,
   apiKey: string,
-  model: string = 'claude-sonnet-4-5-20250929'
+  model: string = 'claude-sonnet-4-6'
 ): Promise<VisionApiResponse> {
   const client = new Anthropic({
     apiKey,

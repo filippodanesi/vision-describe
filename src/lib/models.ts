@@ -29,8 +29,8 @@ export const models: Model[] = [
     quality: 'Excellent',
   },
   {
-    id: 'claude-sonnet-4-5-20250929',
-    name: 'Claude Sonnet 4.5',
+    id: 'claude-sonnet-4-6',
+    name: 'Claude Sonnet 4.6',
     description: 'Fast Anthropic model, great balance of quality and speed (200K context)',
     provider: 'anthropic',
     costEffective: true,
