@@ -2,6 +2,11 @@
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
+  "functions": {
+    "api/start-run.ts": { "maxDuration": 30 },
+    "api/process-run.ts": { "maxDuration": 800 },
+    "api/cancel-run.ts": { "maxDuration": 10 }
+  },
   "headers": [
     {
       "source": "/(.*)",
@@ -21,4 +26,4 @@
       ]
     }
   ]
-} 
+}

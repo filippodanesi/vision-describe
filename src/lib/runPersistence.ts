@@ -21,6 +21,11 @@ export interface RunRecord {
   total_cost: number;
   total_tokens_in: number;
   total_tokens_out: number;
+  processed_count: number;
+  file_storage_path: string | null;
+  processing_mode: 'client' | 'server';
+  chain_count: number;
+  error_message: string | null;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -149,13 +154,14 @@ export async function getRunResults(runId: string): Promise<RunResultRecord[]> {
 }
 
 export async function findInterruptedRuns(): Promise<RunRecord[]> {
-  // First mark stale runs, then find all interrupted
+  // First mark stale CLIENT-SIDE runs as interrupted (server runs handle their own lifecycle)
   await markStaleRunsInterrupted();
 
+  // Return interrupted runs AND server-side runs still running (for the banner)
   const { data, error } = await supabase
     .from('runs')
     .select('*')
-    .eq('status', 'interrupted')
+    .or('status.eq.interrupted,and(status.eq.running,processing_mode.eq.server)')
     .order('created_at', { ascending: false });
 
   if (error || !data) return [];
@@ -165,10 +171,12 @@ export async function findInterruptedRuns(): Promise<RunRecord[]> {
 export async function markStaleRunsInterrupted(): Promise<void> {
   const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
 
+  // Only mark client-side runs as stale; server runs manage their own lifecycle
   const { error } = await supabase
     .from('runs')
     .update({ status: 'interrupted' })
     .eq('status', 'running')
+    .eq('processing_mode', 'client')
     .lt('updated_at', twoMinutesAgo);
 
   if (error) {

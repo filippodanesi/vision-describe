@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Cloud, Monitor } from 'lucide-react';
 
 interface ProcessingViewProps {
   progress: number;
@@ -36,6 +37,24 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Server-side processing indicator */}
+      {processingMode === 'server' && (
+        <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/30">
+          <Cloud className="h-4 w-4 text-blue-500 shrink-0" />
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            Processing on server — you can close this tab safely
+          </p>
+        </div>
+      )}
+      {processingMode === 'client' && (
+        <div className="flex items-center gap-2 rounded-lg border border-muted px-4 py-3">
+          <Monitor className="h-4 w-4 text-muted-foreground shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            Processing in your browser — keep this tab open
+          </p>
+        </div>
+      )}
+
       <div>
         <Progress value={progress} />
         <div className="flex justify-between items-center mt-2">

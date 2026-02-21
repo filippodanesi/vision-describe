@@ -6,6 +6,7 @@ import {
   ProcessingChunk,
   ProcessingResult
 } from '@/lib/api/serverProcessing';
+import { startServerRun, cancelServerRun } from '@/lib/api/serverRun';
 import { optimizeTextWithAI } from '../utils/optimizationUtils';
 import { processAmazonRows } from '../processing/processAmazon';
 import {
@@ -13,83 +14,49 @@ import {
   saveRowResult,
   updateRunStatus,
   heartbeat as runHeartbeat,
+  getRunResults,
 } from '@/lib/runPersistence';
+import { supabase } from '@/lib/supabase';
 
 // Utility function to find matching short description column
 const findMatchingShortDescriptionColumn = (columnNames: string[], targetLanguage: string): string => {
   const lang = targetLanguage.toLowerCase();
   const langUpper = lang.toUpperCase();
-  
-  console.log(`🔍 Looking for Short description column matching language: ${langUpper}`);
-  
+
   // First priority: exact language match with strict patterns
   for (const key of columnNames) {
     const lower = key.toLowerCase();
     if (lower.includes('short description')) {
-      console.log(`  📝 Checking column: "${key}"`);
-      
-      // Be more strict about exact matches - check for exact language codes
       const patterns = [
-        ` ${lang}$`,           // "Short description de" (end of string)
-        ` ${langUpper}$`,      // "Short description DE" (end of string)
-        `\[${lang}\]`,       // "Short description [de]" (escaped brackets)
-        `\[${langUpper}\]`,  // "Short description [DE]" (escaped brackets)
-        `_${lang}$`,          // "Short description_de" (end of string)
-        `_${langUpper}$`,     // "Short description_DE" (end of string)
-        ` ${lang} `,          // "Short description de " (with space after)
-        ` ${langUpper} `      // "Short description DE " (with space after)
+        ` ${lang}$`, ` ${langUpper}$`,
+        `\[${lang}\]`, `\[${langUpper}\]`,
+        `_${lang}$`, `_${langUpper}$`,
+        ` ${lang} `, ` ${langUpper} `
       ];
-      
       for (const pattern of patterns) {
         const regex = new RegExp(pattern);
-        if (regex.test(lower) || regex.test(key)) {
-          console.log(`  ✅ Found exact match with pattern "${pattern}": "${key}"`);
-          return key;
-        }
+        if (regex.test(lower) || regex.test(key)) return key;
       }
-      
-      console.log(`  ❌ No exact match for "${key}"`);
     }
   }
-  
-  // Second priority: Look for "Short descriptions" plural form with same strict patterns
+
+  // Second priority: plural form
   for (const key of columnNames) {
     const lower = key.toLowerCase();
     if (lower.includes('short descriptions')) {
-      console.log(`  📝 Checking plural column: "${key}"`);
-      
       const patterns = [
-        ` ${lang}$`,           // "Short descriptions de" (end of string)
-        ` ${langUpper}$`,      // "Short descriptions DE" (end of string)
-        `\[${lang}\]`,       // "Short descriptions [de]" (escaped brackets)
-        `\[${langUpper}\]`,  // "Short descriptions [DE]" (escaped brackets)
-        `_${lang}$`,          // "Short descriptions_de" (end of string)
-        `_${langUpper}$`,     // "Short descriptions_DE" (end of string)
-        ` ${lang} `,          // "Short descriptions de " (with space after)
-        ` ${langUpper} `      // "Short descriptions DE " (with space after)
+        ` ${lang}$`, ` ${langUpper}$`,
+        `\[${lang}\]`, `\[${langUpper}\]`,
+        `_${lang}$`, `_${langUpper}$`,
+        ` ${lang} `, ` ${langUpper} `
       ];
-      
       for (const pattern of patterns) {
         const regex = new RegExp(pattern);
-        if (regex.test(lower) || regex.test(key)) {
-          console.log(`  ✅ Found exact match (plural) with pattern "${pattern}": "${key}"`);
-          return key;
-        }
+        if (regex.test(lower) || regex.test(key)) return key;
       }
-      
-      console.log(`  ❌ No exact match for plural "${key}"`);
     }
   }
-  
-  // Debug: log what we found to help troubleshoot
-  console.log(`❌ No exact match found for language ${langUpper}`);
-  const shortDescColumns = columnNames.filter(name => 
-    name.toLowerCase().includes('short') && name.toLowerCase().includes('description')
-  );
-  if (shortDescColumns.length > 0) {
-    console.log(`📋 Available short description columns:`, shortDescColumns);
-  }
-  
+
   return '';
 };
 
@@ -142,13 +109,24 @@ export const useHybridProcessing = (): HybridProcessingHook => {
   const cancelRequested = useRef(false);
   const startTimeRef = useRef<number>(0);
   const runIdRef = useRef<string | null>(null);
+  const realtimeChannelRef = useRef<any>(null);
 
-  // beforeunload handler — mark run as interrupted on tab close
+  // Cleanup Realtime subscription on unmount
+  useEffect(() => {
+    return () => {
+      if (realtimeChannelRef.current) {
+        supabase.removeChannel(realtimeChannelRef.current);
+      }
+    };
+  }, []);
+
+  // beforeunload handler — only mark as interrupted for client-side runs
   useEffect(() => {
     const handleBeforeUnload = () => {
       const rid = runIdRef.current;
       if (!rid) return;
-      // Best-effort: use fetch with keepalive (navigator.sendBeacon alternative)
+      // For server-side runs, don't mark as interrupted — the server continues
+      if (processingMode === 'server') return;
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       if (!supabaseUrl || !supabaseKey) return;
@@ -167,19 +145,101 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, []);
+  }, [processingMode]);
 
   const addLog = useCallback((message: string) => {
     const timestamp = new Date().toLocaleTimeString();
     setLogs(prev => [...prev, `[${timestamp}] ${message}`]);
   }, []);
 
-  const cancelProcessing = () => {
+  const cancelProcessing = useCallback(async () => {
     cancelRequested.current = true;
-    addLog('⚠ Cancellation requested by user');
+    addLog('Cancellation requested by user');
+
+    // For server-side runs, also call the cancel API
+    const rid = runIdRef.current;
+    if (rid && processingMode === 'server') {
+      try {
+        await cancelServerRun(rid);
+        addLog('Server-side cancellation sent');
+      } catch (err) {
+        console.error('Failed to cancel server run:', err);
+      }
+    }
+  }, [processingMode, addLog]);
+
+  // Subscribe to Supabase Realtime for a server-side run
+  const subscribeToRunUpdates = useCallback((runId: string, totalRowCount: number) => {
+    // Clean up previous subscription
+    if (realtimeChannelRef.current) {
+      supabase.removeChannel(realtimeChannelRef.current);
+    }
+
+    const channel = supabase
+      .channel(`run-${runId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'runs',
+          filter: `id=eq.${runId}`,
+        },
+        (payload: any) => {
+          const updated = payload.new;
+          if (!updated) return;
+
+          const count = updated.processed_count || 0;
+          setProcessedRows(count);
+          if (totalRowCount > 0) {
+            setProgress(Math.round((count / totalRowCount) * 100));
+          }
+
+          if (updated.status === 'completed') {
+            addLog(`Server processing completed (${count} rows)`);
+            setProgress(100);
+          } else if (updated.status === 'cancelled') {
+            addLog('Run cancelled');
+          } else if (updated.status === 'interrupted') {
+            addLog(`Run interrupted: ${updated.error_message || 'unknown error'}`);
+          }
+        }
+      )
+      .subscribe();
+
+    realtimeChannelRef.current = channel;
+  }, [addLog]);
+
+  // --- Server-side processing path ---
+  const processWithServer = async (
+    rows: any[],
+    selectedColumns: string[],
+    model: Model,
+    context?: any
+  ): Promise<{ runId: string }> => {
+    const config = {
+      useCase: context?.useCase || 'ecommerce',
+      modelId: model.id,
+      selectedColumns,
+      mappings: context?.mappings,
+      lang: context?.lang,
+      dryRun: context?.dryRun,
+      businessIdsFilter: context?.businessIdsFilter
+        ? Array.from(context.businessIdsFilter)
+        : undefined,
+      storeTypeFilter: context?.storeTypeFilter
+        ? Array.from(context.storeTypeFilter)
+        : undefined,
+      colorMappings: context?.colorMappings,
+      sizeMappings: context?.sizeMappings,
+      projectId: context?.projectId,
+    };
+
+    const { runId } = await startServerRun(rows, context?.fileName || 'file.xlsx', config);
+    return { runId };
   };
 
-  // Client-side processing fallback (simplified version)
+  // --- Client-side processing fallback ---
   const processChunkClientSide = async (
     chunk: ProcessingChunk,
     globalRowOffset: number = 0,
@@ -191,85 +251,57 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     let totalCost = 0;
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
-    
 
     for (const row of rows) {
       if (cancelRequested.current) break;
 
       const processedRow = { ...row };
-      
-      // Extract product ID for logging
       const productId = row['MaterialSAPMaterialNo'] || row['ColorSAPMaterialNo'] || row['ProductID'] || row['ID'] || `Row ${processedRows.length + 1}`;
 
       for (const column of selectedColumns) {
         const original = row[column];
         if (!original || typeof original !== 'string') continue;
 
-        // Extract language from column for logging
         const langMatch = column.match(/_([a-z]{2})$/i);
         const language = langMatch ? langMatch[1].toUpperCase() : 'UNK';
 
         try {
-          // Extract target keywords (simplified)
           let targetKeywords: string[] = [];
-          
           if (langMatch) {
             const lang = langMatch[1].toLowerCase();
             const columnNames = Object.keys(row);
-            
-            // Use the improved language matching function
             const matchingShortDescKey = findMatchingShortDescriptionColumn(columnNames, lang);
-            
             if (matchingShortDescKey) {
               const cellValue = row[matchingShortDescKey];
               let value = '';
-              
               if (typeof cellValue === 'object' && cellValue !== null) {
                 value = String(cellValue.result || cellValue.v || cellValue.value || cellValue).trim();
               } else {
                 value = String(cellValue).trim();
               }
-              
               if (value && value !== '[object Object]') {
                 targetKeywords = [value];
-                console.log(`Found Short description column: "${matchingShortDescKey}" with value: "${value}"`);
               }
             }
           }
 
-          // Log simple format: ID | language | keyword
           const keywordText = targetKeywords.length > 0 ? targetKeywords[0] : 'no category';
           addLog(`${productId} | ${language.toLowerCase()} | ${keywordText}`);
 
-          const result = await optimizeTextWithAI(
-            original,
-            targetKeywords,
-            {},
-            model,
-            apiKey
-          );
-
+          const result = await optimizeTextWithAI(original, targetKeywords, {}, model, apiKey);
           processedRow[column] = result.content;
-          
-          // Track cost
+
           let costRecord = null;
           if (costTracker) {
-            costRecord = costTracker.trackOperation(
-              model.id,
-              original,
-              result.content,
-              {
-                inputTokens: result.tokens.inputTokens,
-                outputTokens: result.tokens.outputTokens
-              }
-            );
+            costRecord = costTracker.trackOperation(model.id, original, result.content, {
+              inputTokens: result.tokens.inputTokens,
+              outputTokens: result.tokens.outputTokens
+            });
           }
-          
           const cost = costRecord?.actualCost || costRecord?.estimatedCost || 0;
           totalCost += cost;
           totalInputTokens += result.tokens.inputTokens;
           totalOutputTokens += result.tokens.outputTokens;
-
         } catch (error) {
           console.error(`Error processing column ${column}:`, error);
           processedRow[column] = original;
@@ -277,8 +309,6 @@ export const useHybridProcessing = (): HybridProcessingHook => {
       }
 
       processedRows.push(processedRow);
-      
-      // Update progress smoothly for each row
       const globalProcessedRows = globalRowOffset + processedRows.length;
       if (totalGlobalRows > 0) {
         setProgress(Math.round((globalProcessedRows / totalGlobalRows) * 100));
@@ -288,13 +318,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     return {
       success: true,
       processedRows,
-      cost: {
-        totalCost,
-        tokenUsage: {
-          input: totalInputTokens,
-          output: totalOutputTokens
-        }
-      },
+      cost: { totalCost, tokenUsage: { input: totalInputTokens, output: totalOutputTokens } },
       chunkIndex: chunk.chunkIndex
     };
   };
@@ -331,7 +355,41 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     cancelRequested.current = false;
     startTimeRef.current = Date.now();
 
-    // --- Run persistence: create or resume ---
+    // --- Try server-side processing first ---
+    // Skip server-side for resume runs (they already have a run record)
+    if (!context?.resumeRunId) {
+      try {
+        setProcessingMode('checking');
+        addLog('Starting server-side processing...');
+
+        const { runId } = await processWithServer(effectiveRows, selectedColumns, model, context);
+
+        setProcessingMode('server');
+        runIdRef.current = runId;
+        setCurrentRunId(runId);
+        addLog(`Server run ${runId.substring(0, 8)}... started — you can safely close this tab`);
+
+        // Subscribe to Realtime updates
+        subscribeToRunUpdates(runId, effectiveRows.length);
+
+        // Poll until run is finished (Realtime updates the UI, but we need to wait for completion)
+        const results = await waitForServerCompletion(runId, effectiveRows.length);
+
+        runIdRef.current = null;
+        setIsProcessing(false);
+        return results;
+      } catch (serverError) {
+        console.warn('Server-side processing failed, falling back to client:', serverError);
+        addLog('Server unavailable — falling back to client-side processing');
+        // Clean up Realtime subscription
+        if (realtimeChannelRef.current) {
+          supabase.removeChannel(realtimeChannelRef.current);
+          realtimeChannelRef.current = null;
+        }
+      }
+    }
+
+    // --- Fallback: client-side processing ---
     let activeRunId = context?.resumeRunId || null;
     if (!activeRunId) {
       activeRunId = await createRun({
@@ -339,32 +397,27 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         modelId: model.id,
         fileName: context?.fileName,
         totalRows: effectiveRows.length,
-        config: {
-          useCase: context?.useCase,
-          dryRun: context?.dryRun,
-        },
+        config: { useCase: context?.useCase, dryRun: context?.dryRun },
         projectId: context?.projectId,
       });
     }
     runIdRef.current = activeRunId;
     setCurrentRunId(activeRunId);
+    setProcessingMode('client');
 
     if (activeRunId) {
-      addLog(`Run ${activeRunId.substring(0, 8)}... created`);
+      addLog(`Run ${activeRunId.substring(0, 8)}... created (client-side)`);
     }
 
-    // Heartbeat interval
     const heartbeatInterval = activeRunId
       ? setInterval(() => { if (activeRunId) runHeartbeat(activeRunId); }, 30000)
       : null;
 
     try {
-      setProcessingMode('client');
       const results = await processWithClient(
         effectiveRows, selectedColumns, model, apiKey, context, activeRunId
       );
 
-      // Mark run completed
       if (activeRunId) {
         const stats = costTracker?.getSessionStats?.();
         await updateRunStatus(activeRunId, 'completed', stats ? {
@@ -374,10 +427,8 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         } : undefined);
       }
       runIdRef.current = null;
-
       return results;
     } catch (error) {
-      // Mark run as interrupted on fatal error
       if (activeRunId) {
         await updateRunStatus(activeRunId, 'interrupted');
       }
@@ -388,6 +439,64 @@ export const useHybridProcessing = (): HybridProcessingHook => {
       if (heartbeatInterval) clearInterval(heartbeatInterval);
       setIsProcessing(false);
     }
+  };
+
+  /** Wait for a server-side run to complete by polling */
+  const waitForServerCompletion = async (runId: string, totalRowCount: number): Promise<any[]> => {
+    const POLL_INTERVAL = 3000; // 3 seconds
+
+    return new Promise((resolve, reject) => {
+      const poll = async () => {
+        try {
+          const { data: run, error } = await supabase
+            .from('runs')
+            .select('status, processed_count, error_message')
+            .eq('id', runId)
+            .single();
+
+          if (error) {
+            reject(new Error('Failed to check run status'));
+            return;
+          }
+
+          // Update progress from DB in case Realtime missed an update
+          if (run.processed_count != null) {
+            setProcessedRows(run.processed_count);
+            if (totalRowCount > 0) {
+              setProgress(Math.round((run.processed_count / totalRowCount) * 100));
+            }
+          }
+
+          if (run.status === 'completed') {
+            // Fetch all results
+            const results = await getRunResults(runId);
+            const processedRows = results.map(r => r.result_data);
+            resolve(processedRows as any[]);
+            return;
+          }
+
+          if (run.status === 'cancelled') {
+            // Return partial results
+            const results = await getRunResults(runId);
+            const processedRows = results.map(r => r.result_data);
+            resolve(processedRows as any[]);
+            return;
+          }
+
+          if (run.status === 'interrupted') {
+            reject(new Error(run.error_message || 'Server processing was interrupted'));
+            return;
+          }
+
+          // Still running — keep polling
+          setTimeout(poll, POLL_INTERVAL);
+        } catch (err) {
+          reject(err);
+        }
+      };
+
+      poll();
+    });
   };
 
   const processWithClient = async (
@@ -412,17 +521,13 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     activeRunId?: string | null
   ): Promise<any[]> => {
     const skipIndices = context?.skipIndices || new Set<number>();
-    // Use client-side keep-alive mechanism
-    // Smaller chunks to surface per-row progress smoothly in UI
     const chunks = createProcessingChunks(rows, selectedColumns, model, apiKey, 1);
-    // Pre-populate with existing results when resuming
     let allProcessedRows: any[] = context?.existingResults ? [...context.existingResults] : [];
 
     if (skipIndices.size > 0) {
       addLog(`Resuming: skipping ${skipIndices.size} already-completed rows`);
     }
 
-    // Simple keep-alive interval
     const keepAliveInterval = setInterval(() => {
       if (isProcessing) {
         fetch('/favicon.ico', { method: 'HEAD' }).catch(() => {});
@@ -432,7 +537,6 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     try {
       for (let i = 0; i < chunks.length; i++) {
         if (cancelRequested.current) {
-          // Mark run as cancelled
           if (activeRunId) {
             const stats = costTracker?.getSessionStats?.();
             await updateRunStatus(activeRunId, 'cancelled', stats ? {
@@ -445,10 +549,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           break;
         }
 
-        // Skip rows already completed in a previous run
-        if (skipIndices.has(i)) {
-          continue;
-        }
+        if (skipIndices.has(i)) continue;
 
         const chunk = chunks[i];
         const globalRowOffset = allProcessedRows.length;
@@ -458,7 +559,6 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           const targetLanguage = context.lang || 'en';
           const processed = await processAmazonRows(chunk.rows, model, apiKey, mapped, targetLanguage, (m) => addLog(m));
           allProcessedRows.push(...processed);
-          // Save to DB
           if (activeRunId && processed.length > 0) {
             saveRowResult(activeRunId, i, processed[0] as Record<string, unknown>);
           }
@@ -469,7 +569,6 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         } else if (context?.useCase === 'partoo') {
           const { processPartooRows } = await import('../processing/processPartoo');
           const mapped = context.mappings?.mapping || {};
-
           const businessIdsFilter = context.businessIdsFilter || null;
           const storeTypeFilter = context.storeTypeFilter || null;
 
@@ -485,15 +584,8 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           }
 
           const processed = await processPartooRows(
-            chunk.rows,
-            model,
-            apiKey,
-            mapped,
-            'fill-improve',
-            (m) => addLog(m),
-            costTracker,
-            businessIdsFilter,
-            storeTypeFilter
+            chunk.rows, model, apiKey, mapped, 'fill-improve',
+            (m) => addLog(m), costTracker, businessIdsFilter, storeTypeFilter
           );
           allProcessedRows.push(...processed);
           if (activeRunId && processed.length > 0) {
@@ -541,7 +633,6 @@ export const useHybridProcessing = (): HybridProcessingHook => {
 
         const result = await processChunkClientSide(chunk, globalRowOffset, rows.length, costTracker);
         allProcessedRows.push(...result.processedRows);
-        // Save to DB
         if (activeRunId && result.processedRows.length > 0) {
           saveRowResult(activeRunId, i, result.processedRows[0] as Record<string, unknown>, result.cost?.totalCost, result.cost?.tokenUsage?.input, result.cost?.tokenUsage?.output);
         }
