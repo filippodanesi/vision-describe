@@ -6,9 +6,15 @@
  *
  * Authenticated via x-chaining-secret (not callable from browser).
  *
+ * IMPORTANT: This function does NOT send an early response. It processes
+ * all rows and responds only when done (or on error/self-chain). Vercel
+ * keeps the function alive as long as the handler hasn't returned.
+ * The caller (start-run) uses waitUntil so it doesn't block on this.
+ *
  * maxDuration: 800s (Vercel Pro)
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { waitUntil } from '@vercel/functions';
 import { supabaseAdmin, getUserApiKeys } from './_lib/supabaseAdmin';
 import { processRow } from './_lib/processors';
 import type { ProcessRunPayload, RunDbRecord, RunConfig } from './_lib/types';
@@ -36,9 +42,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Missing runId' });
   }
 
-  // Respond immediately to the caller (fire-and-forget pattern)
-  res.status(202).json({ accepted: true, runId });
-
   const startTime = Date.now();
 
   try {
@@ -51,13 +54,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (runError || !run) {
       console.error('Run not found:', runId, runError);
-      return;
+      return res.status(404).json({ error: 'Run not found' });
     }
 
     const runRecord = run as RunDbRecord;
     if (runRecord.status !== 'running') {
       console.log(`Run ${runId} is not running (status=${runRecord.status}), skipping`);
-      return;
+      return res.status(200).json({ skipped: true, reason: 'not running' });
     }
 
     // 3. Load user API keys
@@ -70,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!apiKey) {
       await markError(runId, `No ${provider} API key configured for user`);
-      return;
+      return res.status(400).json({ error: 'No API key' });
     }
 
     // 4. Download rows from Storage
@@ -80,7 +83,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (downloadError || !fileData) {
       await markError(runId, 'Failed to download file data from storage');
-      return;
+      return res.status(500).json({ error: 'Failed to download rows' });
     }
 
     const rowsText = await fileData.text();
@@ -101,6 +104,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let totalTokensOut = runRecord.total_tokens_out || 0;
     let currentProcessedCount = runRecord.processed_count || completedIndices.size;
 
+    console.log(`Run ${runId}: starting processing (${allRows.length} total rows, ${completedIndices.size} already done)`);
+
     for (let i = 0; i < allRows.length; i++) {
       // Skip already-completed rows
       if (completedIndices.has(i)) continue;
@@ -115,7 +120,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         if (freshRun?.status === 'cancelled') {
           console.log(`Run ${runId} was cancelled`);
-          return;
+          return res.status(200).json({ cancelled: true });
         }
       }
 
@@ -123,9 +128,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const elapsed = Date.now() - startTime;
       if (elapsed > CHAIN_THRESHOLD_MS) {
         console.log(`Run ${runId}: time limit reached (${Math.round(elapsed / 1000)}s), self-chaining...`);
-        await selfChain(runId, runRecord.chain_count, req);
 
-        // Update cost summary before exiting
+        // Update cost summary before chaining
         await supabaseAdmin.from('runs').update({
           total_cost: totalCost,
           total_tokens_in: totalTokensIn,
@@ -133,6 +137,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           updated_at: new Date().toISOString(),
         }).eq('id', runId);
 
+        // Send response first, then self-chain in background
+        res.status(200).json({ chained: true, processedInThisChain });
+
+        waitUntil(selfChain(runId, runRecord.chain_count, req));
         return;
       }
 
@@ -206,10 +214,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }).eq('id', runId);
 
     console.log(`Run ${runId}: completed (${currentProcessedCount} rows, chain=${runRecord.chain_count})`);
+    return res.status(200).json({ completed: true, processedRows: currentProcessedCount });
 
   } catch (err: any) {
     console.error(`Run ${runId}: fatal error:`, err);
     await markError(runId, err.message || 'Unknown processing error');
+    return res.status(500).json({ error: err.message });
   }
 }
 
@@ -225,8 +235,6 @@ async function markError(runId: string, message: string) {
 /** Self-chain: invoke another instance of this function */
 async function selfChain(runId: string, currentChainCount: number, req: VercelRequest) {
   const chainingSecret = process.env.CHAINING_SECRET;
-  // Use the incoming request host (production domain) instead of VERCEL_URL
-  // which points to the deployment-specific domain behind Deployment Protection.
   const vercelUrl = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
 
   // Increment chain_count
@@ -236,7 +244,7 @@ async function selfChain(runId: string, currentChainCount: number, req: VercelRe
   }).eq('id', runId);
 
   try {
-    await fetch(`${vercelUrl}/api/process-run`, {
+    const r = await fetch(`${vercelUrl}/api/process-run`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -244,10 +252,8 @@ async function selfChain(runId: string, currentChainCount: number, req: VercelRe
       },
       body: JSON.stringify({ runId }),
     });
-    console.log(`Run ${runId}: self-chain invoked (chain #${currentChainCount + 1})`);
+    console.log(`Run ${runId}: self-chain invoked (chain #${currentChainCount + 1}, status=${r.status})`);
   } catch (err) {
     console.error(`Run ${runId}: self-chain failed:`, err);
-    // If self-chain fails, the run will become stale and get marked interrupted
-    // by the client-side markStaleRunsInterrupted logic
   }
 }
