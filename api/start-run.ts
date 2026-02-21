@@ -110,9 +110,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 4. Fire-and-forget: invoke /api/process-run
     const chainingSecret = process.env.CHAINING_SECRET;
-    const vercelUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
+    // Use the incoming request host (production domain) instead of VERCEL_URL
+    // which points to the deployment-specific domain behind Deployment Protection.
+    const vercelUrl = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
 
     fetch(`${vercelUrl}/api/process-run`, {
       method: 'POST',

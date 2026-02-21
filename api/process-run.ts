@@ -225,9 +225,9 @@ async function markError(runId: string, message: string) {
 /** Self-chain: invoke another instance of this function */
 async function selfChain(runId: string, currentChainCount: number, req: VercelRequest) {
   const chainingSecret = process.env.CHAINING_SECRET;
-  const vercelUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
+  // Use the incoming request host (production domain) instead of VERCEL_URL
+  // which points to the deployment-specific domain behind Deployment Protection.
+  const vercelUrl = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
 
   // Increment chain_count
   await supabaseAdmin.from('runs').update({
