@@ -5,17 +5,34 @@
  */
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+let _client: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables');
+function getClient(): SupabaseClient {
+  if (_client) return _client;
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error(
+      `Missing env vars: SUPABASE_URL=${supabaseUrl ? 'set' : 'MISSING'}, SUPABASE_SERVICE_ROLE_KEY=${supabaseServiceRoleKey ? 'set' : 'MISSING'}`
+    );
+  }
+
+  _client = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  return _client;
 }
 
-export const supabaseAdmin: SupabaseClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
+/** Lazy-initialized Supabase admin client */
+export const supabaseAdmin: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    return (getClient() as any)[prop];
   },
 });
 
@@ -23,7 +40,7 @@ export const supabaseAdmin: SupabaseClient = createClient(supabaseUrl, supabaseS
  * Verify a user's JWT and return the user object.
  */
 export async function verifyUserJwt(jwt: string) {
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(jwt);
+  const { data: { user }, error } = await getClient().auth.getUser(jwt);
   if (error || !user) {
     throw new Error('Invalid or expired JWT');
   }
@@ -34,7 +51,7 @@ export async function verifyUserJwt(jwt: string) {
  * Fetch user's API keys from user_settings.
  */
 export async function getUserApiKeys(userId: string) {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getClient()
     .from('user_settings')
     .select('openai_key, anthropic_key')
     .eq('user_id', userId)
