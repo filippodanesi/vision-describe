@@ -50,6 +50,12 @@ export async function processRow(
       return processPartooRow(row, rowIndex, model, apiKey, config);
     case 'amazon':
       return processAmazonRow(row, rowIndex, model, apiKey, config);
+    case 'next':
+      return processNextRow(row, rowIndex, model, apiKey, config);
+    case 'aboutyou':
+      return processAboutYouRow(row, rowIndex, model, apiKey, config);
+    case 'ecommerce':
+      return processEcommerceRow(row, rowIndex, model, apiKey, config);
     default:
       return processGenericRow(row, rowIndex, model, apiKey, config);
   }
@@ -527,9 +533,278 @@ async function processPartooRow(
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }
 
-// ---------------------------------------------------------------------------
-// Amazon processor (simplified server-side version)
-// ---------------------------------------------------------------------------
+// ===========================================================================
+// Shared helpers — inlined from src/lib/prompts/rules/
+// ===========================================================================
+
+function wiringAndPaddingCompact(): string {
+  return `WIRING & PADDING (FOR BRA PRODUCTS):
+- When wiring/padding info is provided, include as FIRST bullet point
+- Format: "[Wiring], [padding] bra for [benefit]"
+- Examples: "Non-wired, padded bra for everyday comfort" / "Wired, non-padded bra for natural shaping"
+- SWIMWEAR: Skip wiring for one-pieces, mention padding only if relevant
+- BEACHWEAR: Do NOT include wiring/padding info`;
+}
+
+function seriesNameRules(): string {
+  return `SERIES NAME FORMATTING:
+- ALWAYS remove the "O-" or "O -" prefix from series names
+- For series ending in "T" (e.g., "Ladyform Soft T"), use the name without "T"
+- ALWAYS refer to series as "the [Series Name] series" for clarity`;
+}
+
+function truthfulnessRules(): string {
+  return `TRUTHFULNESS & ANTI-INFERENCE (CRITICAL):
+- NEVER add technical specifications not explicitly stated in the input
+- NEVER infer product features from generic terms
+- Stay STRICTLY within the information provided in the source material
+- When translating technical terms, use NEUTRAL language unless specifics are provided`;
+}
+
+function preFlight(): string {
+  return `PRE-FLIGHT VERIFICATION (internal only — do NOT include in output):
+Silently verify before returning:
+1. Every technical claim exists in the input data — remove any that do not
+2. Replace inferred details with neutral language
+3. No assumptions or invented specs in the output`;
+}
+
+// Product abbreviations (shared by NEXT & AboutYou)
+const PRODUCT_ABBREVIATIONS: [string, string][] = [
+  ['B', 'Balconette Bra'], ['BS', 'Soft Body (Non-Wired Body)'], ['BSW', 'Wired Body'],
+  ['BSWP', 'Wired Padded Body'], ['BV', 'Bra Camisole'], ['EX', 'Global Line Produced for Europe'],
+  ['F', 'Front Closure Bra'], ['HW Short', 'High-Waist Short'], ['L02', 'Longline Bra'],
+  ['LSL', 'Long Sleeve'], ['Minimizer WP', 'Minimizer Wired Padded Bra'], ['N', 'Non-Wired Bra'],
+  ['N01', 'Non-Wired Bra'], ['NDK', 'Nightdress (Knit)'], ['NDW', 'Nightdress (Woven)'],
+  ['NSL', 'Sleeveless'], ['P', 'Padded Bra'], ['P01', 'Padded Bra'], ['Panty L', 'Long Leg Panty'],
+  ['PK', 'Pyjama (Knit)'], ['PSW', 'Pyjama (Short, Woven)'], ['SSL', 'Short Sleeve'],
+  ['Super HW Mid-Thigh', 'Super High-Waist Mid-Thigh Panty'],
+  ['Super HW Panty', 'Super High-Waist Shaping Panty'], ['W', 'Wired Bra'],
+  ['W01', 'Minimizer Wired Bra'], ['WDP', 'Wired Padded Bra with Detachable Straps'],
+  ['WH', 'Wired Half Cup Bra'], ['WHP', 'Wired Half Padded Bra'], ['WHP01', 'Wired Half Padded Bra'],
+  ['WHPM', 'Wired Half Padded Multiway Bra'], ['WHU', 'Wired Half Cup Push-Up Bra'],
+  ['WHUF', 'Wired Half Cup Push-Up Front Closure Bra'], ['WHUM', 'Wired Half Cup Push-Up Multiway Bra'],
+  ['WP', 'Wired Padded Bra'],
+];
+
+function formatAbbreviationsForPrompt(): string {
+  return PRODUCT_ABBREVIATIONS.map(([code, name]) => `- ${code} = ${name}`).join('\n');
+}
+
+// Language instructions (used by Amazon)
+const LANGUAGE_INSTRUCTIONS: Record<string, { name: string; instructions: string; brandTone: string }> = {
+  'en': { name: 'English', instructions: 'Write in natural, fluent English.', brandTone: 'Sophisticated, empowering, quality-focused' },
+  'pt-PT': { name: 'European Portuguese (Portugal)', instructions: 'CRITICAL: Write in EUROPEAN PORTUGUESE (Portugal), NOT Brazilian Portuguese. Use Portuguese vocabulary: "telemóvel" (not "celular"), "autocarro" (not "ônibus"). Use "tu" form, not "você". Natural Portuguese sentence structure.', brandTone: 'Sofisticado, elegante, de qualidade premium' },
+  'pt-BR': { name: 'Brazilian Portuguese (Brazil)', instructions: 'Write in BRAZILIAN PORTUGUESE (Brazil). Use Brazilian vocabulary. Natural Brazilian sentence structure.', brandTone: 'Acessível, confortável, confiável' },
+  'es': { name: 'Spanish (Español)', instructions: 'Write in natural, fluent SPANISH. DO NOT translate word-for-word from English. Use Spanish idiomatic expressions.', brandTone: 'Sofisticado, elegante, empoderador' },
+  'de': { name: 'German (Deutsch)', instructions: 'Write in natural, fluent GERMAN. Use German sentence structure and compound words. Use "Sie" form.', brandTone: 'Präzise, qualitätsbewusst, elegant' },
+  'fr': { name: 'French (Français)', instructions: 'Write in natural, fluent FRENCH. French elegance in expression. Use "vous" form.', brandTone: 'Élégant, sophistiqué, raffiné' },
+  'it': { name: 'Italian (Italiano)', instructions: 'Write in natural, fluent ITALIAN. Italian natural flow, not English structure.', brandTone: 'Elegante, sofisticato, di qualità' },
+};
+
+function getLanguageInstructions(langCode: string): string {
+  const lang = LANGUAGE_INSTRUCTIONS[langCode];
+  if (!lang) return `Write in ${langCode.toUpperCase()} with natural, fluent expression.`;
+  return `TARGET LANGUAGE: ${lang.name}\n\nLOCALIZATION INSTRUCTIONS:\n${lang.instructions}\n\nBRAND TONE for ${lang.name}:\n${lang.brandTone}\n\nCRITICAL RULES:\n- DO NOT translate literally word-for-word from English\n- ADAPT the message to sound natural and native in ${lang.name}\n- Use idiomatic expressions native to ${lang.name}\n\nSERIES NAME FORMATTING (ALL LANGUAGES):\n- ALWAYS remove "O-" or "O -" prefix from series names\n- For series ending in "T", use the name without "T"\n- ALWAYS refer to series as "the [Series Name] series"`;
+}
+
+function getShortLanguageInstruction(langCode: string): string {
+  const lang = LANGUAGE_INSTRUCTIONS[langCode];
+  if (!lang) return langCode.toUpperCase();
+  return `${lang.name} (natural, not literal translation)`;
+}
+
+// Color translations (used by NEXT & AboutYou)
+interface ColorMapping { code: string; triumphName: string; standardColor: string; }
+const COLOR_TRANSLATIONS: ColorMapping[] = [
+  { code: 'M010', triumphName: 'GREEN - DARK COMBINATION', standardColor: 'Green' },
+  { code: '3595', triumphName: 'LILAC', standardColor: 'Purple' },
+  { code: '7855', triumphName: 'OLIVE GOLD', standardColor: 'Green' },
+  { code: '0040', triumphName: 'PORCELAIN', standardColor: 'Nude' },
+  { code: '3880', triumphName: 'WILD ROSE', standardColor: 'Pink' },
+  { code: '1141', triumphName: 'CACAO', standardColor: 'Brown' },
+  { code: '3602', triumphName: 'CHROME', standardColor: 'Grey' },
+  { code: '1588', triumphName: 'FLORAL PINK', standardColor: 'Pink' },
+  { code: '00KY', triumphName: 'LIGHT BLUE', standardColor: 'Blue' },
+  { code: '00CM', triumphName: 'NOSTALGIC BROWN', standardColor: 'Brown' },
+  { code: '00DM', triumphName: 'PUFF PINK', standardColor: 'Pink' },
+  { code: '00GZ', triumphName: 'SILK WHITE', standardColor: 'White' },
+  { code: '0003', triumphName: 'WHITE', standardColor: 'White' },
+  { code: '0004', triumphName: 'BLACK', standardColor: 'Black' },
+  { code: '00SA', triumphName: 'ICE', standardColor: 'Blue' },
+  { code: 'M007', triumphName: 'BLUE - LIGHT COMBINATION', standardColor: 'Blue' },
+  { code: 'V013', triumphName: 'MULTIPLE COLOURS 13', standardColor: 'Purple' },
+  { code: 'V014', triumphName: 'MULTIPLE COLOURS 14', standardColor: 'Purple' },
+  { code: 'V019', triumphName: 'MULTIPLE COLOURS 19', standardColor: 'Blue' },
+  { code: 'V002', triumphName: 'MULTIPLE COLOURS 2', standardColor: 'Purple' },
+  { code: 'V020', triumphName: 'MULTIPLE COLOURS 20', standardColor: 'Blue' },
+  { code: '00LZ', triumphName: 'NEW BEIGE', standardColor: 'Nude' },
+  { code: '00HJ', triumphName: 'PURPLE', standardColor: 'Purple' },
+  { code: 'M008', triumphName: 'BLUE - DARK COMBINATION', standardColor: 'Blue' },
+  { code: '00TS', triumphName: 'PRUSSIAN BLUE', standardColor: 'Blue' },
+  { code: '00ZE', triumphName: 'CHOCOLATE MOUSSE', standardColor: 'Brown' },
+  { code: '0049', triumphName: 'FLOWER PURPLE', standardColor: 'Purple' },
+  { code: 'V004', triumphName: 'MULTIPLE COLOURS 4', standardColor: 'Blue' },
+  { code: '00NZ', triumphName: 'NUDE BEIGE', standardColor: 'Nude' },
+  { code: 'M019', triumphName: 'PINK - LIGHT COMBINATION', standardColor: 'Red' },
+  { code: '00EH', triumphName: 'ROYAL PURPLE', standardColor: 'Purple' },
+  { code: '1991', triumphName: 'SILENCE', standardColor: 'Blue' },
+  { code: '6926', triumphName: 'SWEET MARSALA', standardColor: 'Red' },
+  { code: '00JO', triumphName: 'INK GRAY', standardColor: 'Grey' },
+  { code: 'M034', triumphName: 'DARK GREY MELANGE', standardColor: 'Grey' },
+  { code: '6653', triumphName: 'FLASHY PINK', standardColor: 'Pink' },
+  { code: 'M013', triumphName: 'GREY COMBINATION', standardColor: 'Blue' },
+  { code: '3557', triumphName: 'GREY SHADOW', standardColor: 'Grey' },
+  { code: 'M032', triumphName: 'LIGHT GREY MELANGE', standardColor: 'Cream' },
+  { code: '00EP', triumphName: 'NEUTRAL BEIGE', standardColor: 'Nude' },
+  { code: '6901', triumphName: 'TOASTED ALMOND', standardColor: 'Natural' },
+  { code: '00QF', triumphName: 'VINTAGE DENIM', standardColor: 'Blue' },
+  { code: '0035', triumphName: 'RED COMBINATION', standardColor: 'Red' },
+  { code: '00FZ', triumphName: 'SHANGHAI RED', standardColor: 'Red' },
+  { code: '00YQ', triumphName: 'BRANDY', standardColor: 'Purple' },
+  { code: 'M006', triumphName: 'RED - DARK COMBINATION', standardColor: 'Red' },
+];
+
+function translateColor(triumphColorOrCode: string, mappings: ColorMapping[] = COLOR_TRANSLATIONS): string {
+  if (!triumphColorOrCode) return '';
+  const needle = triumphColorOrCode.trim().toUpperCase();
+  const byName = mappings.find(m => m.triumphName.toUpperCase() === needle);
+  if (byName) return byName.standardColor;
+  const byCode = mappings.find(m => m.code.toUpperCase() === needle);
+  if (byCode) return byCode.standardColor;
+  return triumphColorOrCode;
+}
+
+// Size translations (used by NEXT)
+const BAND_MAP: Record<string, string> = { '70':'32','75':'34','80':'36','85':'38','90':'40','95':'42','100':'44' };
+const DRESS_BRA_BAND_MAP: Record<string, string> = { '38':'34','40':'36','42':'38','44':'40','46':'42' };
+const CUP_MAP: Record<string, string> = { A:'A',B:'B',C:'C',D:'D',E:'DD',F:'E',G:'F',H:'G' };
+const DRESS_SIZE_MAP: Record<string, string> = { '36':'8','38':'10','40':'12','42':'14','44':'16','46':'18','48':'20' };
+
+function translateSize(euSize: string): string {
+  if (!euSize) return '';
+  const s = euSize.trim().toUpperCase();
+  // Direct bra size: CupBand (e.g. "D80", "D080")
+  const cupBand = s.match(/^([A-H]{1,2})(\d{2,3})$/);
+  if (cupBand) {
+    const [, cup, rawBand] = cupBand;
+    const band = rawBand.length === 3 && rawBand.startsWith('0') ? rawBand.slice(1) : rawBand;
+    const gbCup = CUP_MAP[cup];
+    const gbBand = BAND_MAP[band] ?? DRESS_BRA_BAND_MAP[band];
+    if (gbBand && gbCup) return `${gbBand} ${gbCup}`;
+  }
+  // BandCup (e.g. "80D")
+  const bandCup = s.match(/^(\d{2,3})([A-H]{1,2})$/);
+  if (bandCup) {
+    const [, rawBand, cup] = bandCup;
+    const band = rawBand.length === 3 && rawBand.startsWith('0') ? rawBand.slice(1) : rawBand;
+    const gbCup = CUP_MAP[cup];
+    const gbBand = BAND_MAP[band] ?? DRESS_BRA_BAND_MAP[band];
+    if (gbBand && gbCup) return `${gbBand} ${gbCup}`;
+  }
+  // Dress size
+  if (DRESS_SIZE_MAP[s]) return DRESS_SIZE_MAP[s];
+  return euSize;
+}
+
+// Sanitizers
+function sanitizeBulletsOutputToArray(raw: string): string[] {
+  if (!raw) return [];
+  let txt = String(raw).replace(/\r\n|\r/g, '\n').trim();
+  txt = txt.replace(/^\s*(bullets?:|bullet points?:)\s*/i, '');
+  let lines = txt.split('\n').map(s => s.trim()).filter(Boolean);
+  if (lines.length === 1) {
+    const one = lines[0];
+    for (const rx of [/\s•\s+/, /\s-\s+/, /\s–\s+/, /\s—\s+/, /\s\|\s+/, /;\s+/]) {
+      const parts = one.split(rx).map(p => p.trim()).filter(Boolean);
+      if (parts.length >= 2) { lines = parts; break; }
+    }
+  }
+  lines = lines.map(l => l.replace(/^\s*(?:[-–—•]|(\d+)[\.\)]\s*)\s*/, '').trim());
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const l of lines) {
+    if (!l) continue;
+    const key = l.toLowerCase();
+    if (seen.has(key)) continue;
+    out.push(l); seen.add(key);
+    if (out.length === 5) break;
+  }
+  while (out.length < 5) out.push('—');
+  return out;
+}
+
+function sanitizeAplusShort(raw: string): string {
+  if (!raw) return '';
+  let s = String(raw).replace(/^\s*(bullets?:|a\+?\s*short:)\s*/i, '').replace(/\s+/g, ' ').replace(/[\r\n]+/g, ' ').trim();
+  if (s.length > 300) s = s.slice(0, 300).trim();
+  return s;
+}
+
+function sanitizeDescription(raw: string): string {
+  if (!raw) return '';
+  return String(raw).replace(/^\s*(description:)\s*/i, '').replace(/[*_`#>-]/g, m => m === '-' ? '' : '').replace(/\s+/g, ' ').trim();
+}
+
+const POLICY_RX = /\b(best|heals?|cures?|100%\s*(?:eco|sustainable))\b/i;
+function hasPolicyIssues(...texts: (string|undefined)[]): boolean {
+  return texts.some(t => t ? POLICY_RX.test(t) : false);
+}
+
+function sanitizeStripMarkdown(text: string): string {
+  return text.replace(/<[^>]+>/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[*_~`#]+/g, '').replace(/\n+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+}
+
+// ===========================================================================
+// Amazon processor — full port of client-side logic
+// ===========================================================================
+
+const AMAZON_SYSTEM_PROMPT = `
+You are an expert Amazon listings writer.
+
+OUTPUT CONTRACT (STRICT):
+- BULLETS: return EXACTLY 5 lines, each a single concise benefit/features sentence.
+  - No numbering, no emojis, no markdown, no labels like "Bullets:".
+  - No leading symbols (no "-", "•", "—", "1)").
+  - Plain text only, one bullet per line.
+- DESCRIPTION: return ONE clean paragraph (3–6 sentences). No headings, no lists, no HTML/markdown.
+- APLUS_SHORT: return ONE sentence <= 300 characters. No labels like "A+ Short:".
+
+STYLE & POLICY:
+- Brand-safe, neutral, benefit-first. Do not invent specs/materials.
+- No medical/therapeutic claims, no guarantees, no superlatives like "best".
+- No price, shipping, availability, promotions, or competitors.
+
+LOCALIZATION & TONE OF VOICE (CRITICAL):
+- DO NOT translate literally word-for-word from English
+- LOCALIZE (adapt) the message to sound natural and fluent in the target language
+- Use idiomatic expressions native to the target language, not English structure
+
+LANGUAGE-SPECIFIC CRITICAL RULES:
+- PT-PT (European Portuguese): Use "telemóvel" NOT "celular", "acolchoamento" NOT "enchimento"
+- PT-BR (Brazilian Portuguese): Use Brazilian vocabulary ("celular", "ônibus")
+- ES (Spanish): Adapt for natural Spanish flow
+- DE (German): Use German compound words and sentence structure
+- FR (French): Maintain French elegance and natural flow
+- IT (Italian): Use Italian expressiveness and style
+
+${wiringAndPaddingCompact()}
+
+${seriesNameRules()}
+
+${truthfulnessRules()}
+
+SEO (if provided):
+- Use the primary keyword ONCE in the first bullet and in the first sentence of the description.
+- Use secondary keywords at most once across the remaining bullets/description.
+
+RETURN RULE:
+- Return ONLY the requested text for the current task (bullets OR description OR APLUS_SHORT).
+- Do NOT prepend any labels.
+
+${preFlight()}
+`;
+
 async function processAmazonRow(
   row: Record<string, unknown>,
   rowIndex: number,
@@ -542,63 +817,503 @@ async function processAmazonRow(
   let totalIn = 0;
   let totalOut = 0;
 
+  const idKey = mapping.productId || 'vendor_sku#1.value';
   const titleKey = mapping.title || 'item_name#1.value';
   const descKey = mapping.descriptionIn || 'rtip_product_description#1.value';
+  const bulletKeys = (mapping.bullets || []).filter(Boolean) as string[];
+
   const title = String(row[titleKey] ?? '');
   const descriptionIn = String(row[descKey] ?? '');
+  const bulletsIn = bulletKeys.map(k => String(row[k] ?? '').trim()).filter(b => b.length > 0);
   const language = config.lang || 'en';
+  const primaryKeyword = String(row['generic_keyword#1.value'] ?? title ?? '').trim() || undefined;
 
-  const systemPrompt = 'You are an Amazon product listing specialist. Write compelling, compliant product content.';
+  const safe = (v?: string) => (v ?? '').trim();
 
   // 1) Bullets
-  const bulletsPrompt = `Generate exactly 5 bullet points for this Amazon product listing.
-Title: ${title}
-Description: ${descriptionIn}
-Language: ${language}
+  const bulletsPrompt = `
+TASK: Write EXACTLY 5 bullets for an Amazon PDP.
 
-Return ONLY the 5 bullet points, one per line, without numbering or bullet markers.`;
+LOCALIZATION: If the input content is in a different language, LOCALIZE (not just translate) to ${getShortLanguageInstruction(language)}.
+${getLanguageInstructions(language)}
 
-  const bulletsRes = await serverOptimize(bulletsPrompt, model, apiKey, systemPrompt);
+CONTEXT:
+- Title: ${safe(title)}
+- Existing description (may be empty): ${safe(descriptionIn)}
+- Existing bullets (may be empty): ${bulletsIn.join(' | ')}
+
+SEO:
+- Primary keyword: ${primaryKeyword || '(none)'}
+- Use the primary keyword ONCE in the FIRST bullet (if provided).
+
+FORMAT:
+- Output ONLY 5 lines. No numbering, no symbols, no labels.
+- Sound natural and native in the target language.
+`;
+
+  const bulletsRes = await serverOptimize(bulletsPrompt, model, apiKey, AMAZON_SYSTEM_PROMPT);
   totalIn += bulletsRes.tokens.inputTokens;
   totalOut += bulletsRes.tokens.outputTokens;
-  const bullets = bulletsRes.content.split('\n').map(b => b.trim()).filter(Boolean).slice(0, 5);
-  processed.gen_bullet_1 = bullets[0] || '—';
-  processed.gen_bullet_2 = bullets[1] || '—';
-  processed.gen_bullet_3 = bullets[2] || '—';
-  processed.gen_bullet_4 = bullets[3] || '—';
-  processed.gen_bullet_5 = bullets[4] || '—';
+  const bullets = sanitizeBulletsOutputToArray(bulletsRes.content || '');
+  processed['gen_bullet_1'] = bullets[0] || '—';
+  processed['gen_bullet_2'] = bullets[1] || '—';
+  processed['gen_bullet_3'] = bullets[2] || '—';
+  processed['gen_bullet_4'] = bullets[3] || '—';
+  processed['gen_bullet_5'] = bullets[4] || '—';
 
-  // 2) Description
-  const descPrompt = `Write a product description paragraph for this Amazon listing.
-Title: ${title}
-Bullet points: ${bullets.join('; ')}
-Language: ${language}
+  // 2) Long description
+  const descPrompt = `
+TASK: Write ONE paragraph (3–6 sentences) Amazon PDP long description.
 
-Return ONLY the description paragraph, no formatting.`;
+LOCALIZATION: If the input content is in a different language, LOCALIZE (not just translate) to ${getShortLanguageInstruction(language)}.
+${getLanguageInstructions(language)}
 
-  const descRes = await serverOptimize(descPrompt, model, apiKey, systemPrompt);
+CONTEXT:
+- Title: ${safe(title)}
+- Existing description (may be empty): ${safe(descriptionIn)}
+- Bullets (may be empty): ${bullets.join(' | ')}
+
+SEO:
+- Primary keyword: ${primaryKeyword || '(none)'} → Use it ONCE in the FIRST sentence.
+
+FORMAT:
+- Output ONLY the paragraph. No labels, no headings, no bullets, no HTML/markdown.
+`;
+
+  const descRes = await serverOptimize(descPrompt, model, apiKey, AMAZON_SYSTEM_PROMPT);
   totalIn += descRes.tokens.inputTokens;
   totalOut += descRes.tokens.outputTokens;
-  processed.gen_description = descRes.content;
+  const genDescription = sanitizeDescription(descRes.content || '');
+  processed['gen_description'] = genDescription;
 
-  // 3) A+ short (max 300 chars)
-  const aplusPrompt = `Write A+ short content (max 300 characters) for this Amazon product.
-Title: ${title}
-Description: ${processed.gen_description}
-Language: ${language}
+  // 3) A+ short
+  const aplusPrompt = `
+TASK: Write ONE sentence (<= 300 chars) for Amazon A+ content (between two images).
 
-Return ONLY the short text, max 300 characters.`;
+LOCALIZATION: If the source content is in a different language, LOCALIZE (not just translate) to ${getShortLanguageInstruction(language)}.
+${getLanguageInstructions(language)}
 
-  const aplusRes = await serverOptimize(aplusPrompt, model, apiKey, systemPrompt);
+SOURCE:
+- Use this description as source: ${safe(genDescription) || safe(descriptionIn)}
+
+SEO:
+- Include the primary keyword ONCE if provided: ${primaryKeyword || '(none)'}.
+
+FORMAT:
+- Output ONLY the sentence. No labels, no headings, no line breaks.
+- Strictly <= 300 characters.
+`;
+
+  const aplusRes = await serverOptimize(aplusPrompt, model, apiKey, AMAZON_SYSTEM_PROMPT);
   totalIn += aplusRes.tokens.inputTokens;
   totalOut += aplusRes.tokens.outputTokens;
-  processed.gen_aplus_short = aplusRes.content.slice(0, 300);
+  processed['gen_aplus_short'] = sanitizeAplusShort(aplusRes.content || '');
+
+  // Policy guard
+  if (hasPolicyIssues(processed['gen_bullet_1'], processed['gen_bullet_2'], processed['gen_bullet_3'],
+    processed['gen_bullet_4'], processed['gen_bullet_5'], processed['gen_description'], processed['gen_aplus_short'])) {
+    processed['gen_warnings'] = (processed['gen_warnings'] ? processed['gen_warnings'] + '; ' : '') + 'PolicyTermsDetected';
+  }
+
+  return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
+}
+
+// ===========================================================================
+// NEXT processor — full port of client-side logic
+// ===========================================================================
+
+const NEXT_SYSTEM_PROMPT = `You are a professional fashion copywriter creating product content for NEXT, a major British fashion retailer.
+
+## TARGET AUDIENCE
+- Female, 30-55 years old
+- Family-oriented, practical — values quality, reliability, good value
+- Prefers clear, informative descriptions
+
+## TONE OF VOICE (Triumph × NEXT)
+- Warm, reassuring, informative — like a knowledgeable sales assistant
+- Professional but approachable; confident but not boastful
+- Focus on practical benefits: comfort, durability, fit, versatility
+
+## LANGUAGE
+- BRITISH ENGLISH only: colour (not color), favourite (not favorite), centre (not center), fibre (not fiber), moulded (not molded)
+
+## PRODUCT ABBREVIATIONS
+${formatAbbreviationsForPrompt()}
+
+## CONTENT RULES
+- Product Title: max 100 characters. Clear, descriptive title.
+- Copy Design Features: max 1000 characters. Detailed, benefit-led copy.
+- Include lingerie-specific attributes naturally when provided: Fit, Padding, Rise, Support, Type, Wiring
+- Plain text ONLY — NO HTML, markdown, emojis, bullet points
+- NO superlatives ("best", "perfect", "ultimate", "100%")
+- NEVER invent features not present in the source data
+
+${preFlight()}
+4. British English spelling throughout
+5. product_title ≤100 characters, copy_design_features ≤1000 characters
+
+## OUTPUT FORMAT
+Your entire response must be ONLY the JSON object below — no verification text, no markdown fences, no explanation:
+{"product_title":"<max 100 characters>","copy_design_features":"<max 1000 characters>"}`;
+
+function buildNextPrompt(data: {
+  supplierCode: string; styleNo: string; existingTitle: string;
+  colorName: string; standardColor: string; size: string;
+  existingCopy: string; composition: string;
+  fit?: string; padding?: string; rise?: string; support?: string;
+  lingerieType?: string; wiring?: string;
+}): string {
+  const attrs = [
+    data.fit && `Fit: ${data.fit}`, data.padding && `Padding: ${data.padding}`,
+    data.rise && `Rise: ${data.rise}`, data.support && `Support: ${data.support}`,
+    data.lingerieType && `Type: ${data.lingerieType}`, data.wiring && `Wiring: ${data.wiring}`,
+  ].filter(Boolean);
+  const lines = [
+    'TASK: Rewrite the product title and copy design features for NEXT (UK retailer).', '',
+    'PRODUCT DATA:',
+    `- Supplier Code: ${data.supplierCode || '(not specified)'}`,
+    `- Style No: ${data.styleNo}`,
+    `- Existing Title: ${data.existingTitle || '(empty)'}`,
+    `- Colour: ${data.colorName}${data.standardColor ? ` (Standard: ${data.standardColor})` : ''}`,
+    `- Size: ${data.size || '(not specified)'}`,
+    `- Composition: ${data.composition || '(not specified)'}`,
+    `- Existing Copy: ${data.existingCopy || '(empty)'}`,
+  ];
+  if (attrs.length > 0) { lines.push(`- Lingerie Attributes:`); attrs.forEach(a => lines.push(`  - ${a}`)); }
+  lines.push('', 'INSTRUCTIONS:',
+    '- Product Title: max 100 chars, clear, descriptive for NEXT customer.',
+    '- Copy Design Features: max 1000 chars, detailed, benefit-led, British English.',
+    '- Include lingerie attributes naturally if provided.',
+    '- Use ONLY information from the Product Data above.', '',
+    'Return ONLY valid JSON:',
+    '{"product_title":"<max 100 chars>","copy_design_features":"<max 1000 chars>"}');
+  return lines.join('\n');
+}
+
+function parseNextResponse(response: string): { productTitle: string; copyDesignFeatures: string } | null {
+  try {
+    let c = response.trim().replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+    const parsed = JSON.parse(c);
+    if (parsed.product_title && parsed.copy_design_features) {
+      return { productTitle: String(parsed.product_title).trim().slice(0, 100), copyDesignFeatures: String(parsed.copy_design_features).trim().slice(0, 1000) };
+    }
+    return null;
+  } catch { return null; }
+}
+
+async function processNextRow(
+  row: Record<string, unknown>,
+  rowIndex: number,
+  model: ModelLike,
+  apiKey: string,
+  config: RunConfig
+): Promise<{ result: Record<string, unknown>; cost: number; tokensIn: number; tokensOut: number }> {
+  const processed = { ...row } as any;
+  let totalIn = 0;
+  let totalOut = 0;
+  const mapping = config.mappings?.mapping as Record<string, string> || config.mappings as Record<string, string> || {};
+  const colorMappings = (config as any).colorMappings || COLOR_TRANSLATIONS;
+
+  const supplierCodeKey = mapping.supplierCode || 'Next Supplier Code';
+  const styleNoKey = mapping.styleNo || 'Manufacturers Style No';
+  const productTitleKey = mapping.productTitle || 'Product Description (Item Title)';
+  const colorNameKey = mapping.colorName || 'Manufacturers Colour Name';
+  const standardColorKey = mapping.standardColor || 'Standard Colour';
+  const sizeKey = mapping.size || 'Size';
+  const copyFeaturesKey = mapping.copyDesignFeatures || 'Copy Design Features (Tone of Voice)';
+  const compositionKey = mapping.composition || 'Garment Composition';
+  const fitKey = mapping.fit || 'Fit';
+  const paddingKey = mapping.padding || 'Padding';
+  const riseKey = mapping.rise || 'Rise';
+  const supportKey = mapping.support || 'Support';
+  const lingerieTypeKey = mapping.lingerieType || 'Type';
+  const wiringKey = mapping.wiring || 'Wiring';
+
+  const supplierCode = String(row[supplierCodeKey] ?? '').trim();
+  const styleNo = String(row[styleNoKey] ?? '').trim();
+
+  // Skip if missing required fields
+  if (!supplierCode && !styleNo) {
+    return { result: processed, cost: 0, tokensIn: 0, tokensOut: 0 };
+  }
+
+  const existingTitle = String(row[productTitleKey] ?? '').trim();
+  const colorName = String(row[colorNameKey] ?? '').trim();
+  const existingStdColor = String(row[standardColorKey] ?? '').trim();
+  const existingSize = String(row[sizeKey] ?? '').trim();
+  const existingCopy = String(row[copyFeaturesKey] ?? '').trim();
+  const composition = String(row[compositionKey] ?? '').trim();
+
+  // Deterministic: size translation EU->GB
+  let sizeValue = existingSize;
+  if (existingSize) {
+    const gbSize = translateSize(existingSize);
+    if (gbSize !== existingSize) { sizeValue = gbSize; processed[sizeKey] = gbSize; }
+  }
+
+  // Deterministic: color translation
+  let standardColor = existingStdColor;
+  if (!standardColor && colorName) {
+    standardColor = translateColor(colorName, colorMappings);
+    if (standardColor !== colorName) processed[standardColorKey] = standardColor;
+  }
+  if (colorName && standardColor && standardColor !== colorName) {
+    processed[colorNameKey] = standardColor;
+  }
+
+  // AI call
+  const userPrompt = buildNextPrompt({
+    supplierCode, styleNo, existingTitle, colorName, standardColor,
+    size: sizeValue, existingCopy, composition,
+    fit: String(row[fitKey] ?? '').trim() || undefined,
+    padding: String(row[paddingKey] ?? '').trim() || undefined,
+    rise: String(row[riseKey] ?? '').trim() || undefined,
+    support: String(row[supportKey] ?? '').trim() || undefined,
+    lingerieType: String(row[lingerieTypeKey] ?? '').trim() || undefined,
+    wiring: String(row[wiringKey] ?? '').trim() || undefined,
+  });
+
+  const res = await serverOptimize(userPrompt, model, apiKey, NEXT_SYSTEM_PROMPT);
+  totalIn += res.tokens.inputTokens;
+  totalOut += res.tokens.outputTokens;
+
+  const parsed = parseNextResponse(res.content);
+  if (parsed) {
+    processed[productTitleKey] = sanitizeStripMarkdown(parsed.productTitle).slice(0, 100);
+    processed[copyFeaturesKey] = sanitizeStripMarkdown(parsed.copyDesignFeatures).slice(0, 1000);
+  } else {
+    processed.gen_error = 'Failed to parse AI response';
+  }
+
+  return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
+}
+
+// ===========================================================================
+// AboutYou processor — full port of client-side logic
+// ===========================================================================
+
+const ABOUTYOU_SYSTEM_PROMPT = `You are a professional fashion copywriter creating product content for About You, a leading European fashion and lifestyle e-commerce platform.
+
+## TARGET AUDIENCE
+- Younger, trend-conscious, style-led demographic, aged 18-35
+- Values personal expression, individuality, and trend-forward fashion
+- Buys lingerie that combines style with everyday comfort
+
+## TONE OF VOICE (Triumph × About You)
+- Fresh, confident, and contemporary — NOT corporate or stiff
+- Speak like a stylish friend recommending a great find
+- Authentic and personality-driven
+- Short, punchy sentences for impact
+
+## PRODUCT ABBREVIATIONS
+${formatAbbreviationsForPrompt()}
+
+## CONTENT RULES
+- Style Name: max 80 characters. Short, catchy, trend-aware product name.
+- Long Description: max 500 characters. Engaging, benefit-driven.
+- Write in ENGLISH unless the input data is clearly in another language (match the input language)
+- Plain text ONLY — NO HTML, markdown, emojis
+- NO superlatives ("best", "perfect", "ultimate", "100%")
+- NEVER invent features not present in the source data
+- Focus on FIT, FEEL, and STYLE
+
+${preFlight()}
+4. style_name ≤80 characters, long_description ≤500 characters
+
+## OUTPUT FORMAT
+Your entire response must be ONLY the JSON object below:
+{"style_name":"<max 80 characters>","long_description":"<max 500 characters>"}`;
+
+function buildAboutYouPrompt(data: {
+  styleNo: string; styleName: string; colorNameSupplier: string;
+  colorTranslation: string; size: string; productGroup: string;
+  existingStyleWording?: string; existingLongDescription?: string;
+}): string {
+  const lines = [
+    'TASK: Write a style name and long description for About You.', '',
+    'PRODUCT DATA:',
+    `- Style No: ${data.styleNo}`, `- Style Name: ${data.styleName}`,
+    `- Product Group: ${data.productGroup || '(not specified)'}`,
+    `- Colour: ${data.colorNameSupplier}${data.colorTranslation ? ` (About You standard: ${data.colorTranslation})` : ''}`,
+    `- Size: ${data.size || '(not specified)'}`,
+  ];
+  if (data.existingStyleWording) lines.push(`- Existing Style Wording: ${data.existingStyleWording}`);
+  if (data.existingLongDescription) lines.push(`- Existing Long Description: ${data.existingLongDescription}`);
+  lines.push('', 'INSTRUCTIONS:',
+    '- Style Name: Create a short, catchy product name (max 80 chars) for 18-35 audience.',
+    '- Long Description: Write engaging description (max 500 chars) highlighting fit, feel, style.',
+    '- Use ONLY information from the Product Data above.', '',
+    'Return ONLY valid JSON:',
+    '{"style_name":"<max 80 chars>","long_description":"<max 500 chars>"}');
+  return lines.join('\n');
+}
+
+function parseAboutYouResponse(response: string): { styleName: string; longDescription: string } | null {
+  try {
+    let c = response.trim().replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+    const parsed = JSON.parse(c);
+    if (parsed.style_name && parsed.long_description) {
+      return { styleName: String(parsed.style_name).trim().slice(0, 80), longDescription: String(parsed.long_description).trim().slice(0, 500) };
+    }
+    return null;
+  } catch { return null; }
+}
+
+async function processAboutYouRow(
+  row: Record<string, unknown>,
+  rowIndex: number,
+  model: ModelLike,
+  apiKey: string,
+  config: RunConfig
+): Promise<{ result: Record<string, unknown>; cost: number; tokensIn: number; tokensOut: number }> {
+  const processed = { ...row } as any;
+  let totalIn = 0;
+  let totalOut = 0;
+  const mapping = config.mappings?.mapping as Record<string, string> || config.mappings as Record<string, string> || {};
+  const colorMappings = (config as any).colorMappings || COLOR_TRANSLATIONS;
+
+  const styleNoKey = mapping.styleNo || 'Style No supplier';
+  const styleNameKey = mapping.styleName || 'Style name supplier';
+  const colorNameKey = mapping.colorNameSupplier || 'Color name supplier';
+  const colorTransKey = mapping.colorTranslation || 'Colortranslation for About You';
+  const sizeKey = mapping.size || 'Size';
+  const productGroupKey = mapping.productGroup || 'Product group';
+  const styleWordingKey = mapping.styleWording || 'Supplier Style Name (Style wording for Shop)';
+  const longDescKey = mapping.longDescription || 'Style Long Description for Shop';
+
+  const styleNo = String(row[styleNoKey] ?? '').trim();
+  const styleName = String(row[styleNameKey] ?? '').trim();
+
+  // Skip if missing required fields
+  if (!styleNo && !styleName) {
+    return { result: processed, cost: 0, tokensIn: 0, tokensOut: 0 };
+  }
+
+  const colorNameSupplier = String(row[colorNameKey] ?? '').trim();
+  const existingColorTrans = String(row[colorTransKey] ?? '').trim();
+
+  // Deterministic: color translation
+  let colorTranslation = existingColorTrans;
+  if (!colorTranslation && colorNameSupplier) {
+    colorTranslation = translateColor(colorNameSupplier, colorMappings);
+    if (colorTranslation !== colorNameSupplier) processed[colorTransKey] = colorTranslation;
+  }
+  if (colorNameSupplier && colorTranslation && colorTranslation !== colorNameSupplier) {
+    processed[colorNameKey] = colorTranslation;
+  }
+
+  // AI call
+  const userPrompt = buildAboutYouPrompt({
+    styleNo, styleName, colorNameSupplier, colorTranslation,
+    size: String(row[sizeKey] ?? '').trim(),
+    productGroup: String(row[productGroupKey] ?? '').trim(),
+    existingStyleWording: String(row[styleWordingKey] ?? '').trim() || undefined,
+    existingLongDescription: String(row[longDescKey] ?? '').trim() || undefined,
+  });
+
+  const res = await serverOptimize(userPrompt, model, apiKey, ABOUTYOU_SYSTEM_PROMPT);
+  totalIn += res.tokens.inputTokens;
+  totalOut += res.tokens.outputTokens;
+
+  const parsed = parseAboutYouResponse(res.content);
+  if (parsed) {
+    processed[styleWordingKey] = sanitizeStripMarkdown(parsed.styleName).slice(0, 80);
+    processed[longDescKey] = sanitizeStripMarkdown(parsed.longDescription).slice(0, 500);
+  } else {
+    processed.gen_error = 'Failed to parse AI response';
+  }
+
+  return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
+}
+
+// ===========================================================================
+// Ecommerce processor — full port of client-side logic
+// ===========================================================================
+
+const ECOMMERCE_SYSTEM_PROMPT = `
+You optimize e-commerce long descriptions. Return ONLY plain text.
+- Keep facts, improve readability and flow.
+- 1–3 paragraphs, no pricing/shipping/competitor references.
+- Maintain brand-safe tone.
+
+${wiringAndPaddingCompact()}
+
+${seriesNameRules()}
+
+${truthfulnessRules()}
+
+PRE-FLIGHT VERIFICATION (internal only — do NOT include in output):
+Silently verify before returning:
+1. Every technical claim exists explicitly in the input source — remove any that do not
+2. Replace inferred details with neutral language
+3. No assumptions or invented specs in the output
+`;
+
+async function processEcommerceRow(
+  row: Record<string, unknown>,
+  rowIndex: number,
+  model: ModelLike,
+  apiKey: string,
+  config: RunConfig
+): Promise<{ result: Record<string, unknown>; cost: number; tokensIn: number; tokensOut: number }> {
+  const processed = { ...row } as any;
+  let totalIn = 0;
+  let totalOut = 0;
+  const language = config.lang || 'en';
+
+  const descKey = `MaterialLongDescriptionEcom_${language}`;
+  const description = String(row[descKey] ?? '');
+
+  // Skip if no description to optimize
+  if (!description.trim()) {
+    return { result: processed, cost: 0, tokensIn: 0, tokensOut: 0 };
+  }
+
+  // Optional short hint (dynamic column lookup)
+  const shortHintKey = Object.keys(row).find(k => {
+    const hasLang = new RegExp(`(^|[ _-])${language}($|[ _-])`, 'i').test(k);
+    const isShortDesc = /short description/i.test(k) && hasLang;
+    const isSC = /^sc(\b|[_\s-][a-z]{2}$|$)/i.test(k) && new RegExp(`${language}$`, 'i').test(k);
+    const isAltStyle = new RegExp(`^materialalternativestyle_${language}$`, 'i').test(k);
+    return isShortDesc || isSC || isAltStyle;
+  });
+  const shortHint = shortHintKey ? String(row[shortHintKey] ?? '') : '';
+  const altTitleKey = `MaterialAlternativeStyle_${language}`;
+  const title = String(row[altTitleKey] ?? row['MaterialSeriesName'] ?? '');
+  const wiringInfo = String(row['Wiring Info'] ?? row['WiringInfo'] ?? row['MaterialProductWiringTypeAI_en'] ?? row['Wiring'] ?? '').trim();
+  const paddingInfo = String(row['Padding info'] ?? row['PaddingInfo'] ?? row['MaterialProductLiningLevelTypeAI_en'] ?? row['Padding'] ?? '').trim();
+  const productGroup = String(row['Product Group'] ?? row['MaterialProductGroup'] ?? '').trim();
+  const usps = String(row['MaterialB2CUSPs_en'] ?? '').trim();
+  const seriesDescription = String(row['MaterialB2CSeriesDescription_en'] ?? '').trim();
+  const styleDescription = String(row['MaterialB2CStyleDescription_en'] ?? '').trim();
+
+  // Build prompt
+  let prompt = 'TASK: Optimize the long description for e-commerce (1–3 paragraphs), plain text.\nCONTEXT:\n';
+  if (title) prompt += `- Title/Series: ${title}\n`;
+  if (seriesDescription) prompt += `- Series Description: ${seriesDescription}\n`;
+  if (styleDescription) prompt += `- Style Description: ${styleDescription}\n`;
+  if (usps) prompt += `- USPs: ${usps}\n`;
+  if (shortHint) prompt += `- Short hint: ${shortHint}\n`;
+  if (description) prompt += `- Long description: ${description}\n`;
+  if (wiringInfo) prompt += `- Wiring Type: ${wiringInfo}\n`;
+  if (paddingInfo) prompt += `- Padding Type: ${paddingInfo}\n`;
+  if (productGroup) prompt += `- Product Group: ${productGroup}\n`;
+  prompt += `LANGUAGE: ${language}\n\nIMPORTANT: If Wiring Type and/or Padding Type are provided, include them as the FIRST bullet point in the format: "[Wiring], [padding] bra for [benefit]"\nReturn ONLY the optimized description.`;
+
+  const res = await serverOptimize(prompt, model, apiKey, ECOMMERCE_SYSTEM_PROMPT);
+  totalIn += res.tokens.inputTokens;
+  totalOut += res.tokens.outputTokens;
+
+  let gen = (res.content || '').trim();
+  gen = gen.replace(/https?:\/\/\S+/gi, '').replace(/[\w.+-]+@[\w-]+\.[\w.-]+/gi, '').replace(/\b(?:EUR|USD|CHF|GBP)?\s?\d+[\.,]?\d*\b/gi, '').replace(/\s{2,}/g, ' ').trim();
+  if (!gen) gen = (description || title || '').toString().trim();
+  processed['gen_description'] = gen;
 
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }
 
 // ---------------------------------------------------------------------------
-// Generic row processor (ecommerce, next, aboutyou, etc.)
+// Generic row processor (fallback for unknown use cases)
 // ---------------------------------------------------------------------------
 async function processGenericRow(
   row: Record<string, unknown>,
