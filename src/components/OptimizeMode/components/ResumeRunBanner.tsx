@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Cloud, Play, X } from 'lucide-react';
+import { AlertTriangle, Cloud, Play, X, Square } from 'lucide-react';
+import { cancelServerRun } from '@/lib/api/serverRun';
 import type { RunRecord } from '@/lib/runPersistence';
 
 interface ResumeRunBannerProps {
@@ -48,6 +49,23 @@ const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDis
                         {' '}&middot;{' '}
                         <span className="font-medium">Started:</span> {date}
                       </p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={async () => {
+                          try {
+                            await cancelServerRun(run.id);
+                          } catch {
+                            // If cancel API fails, just dismiss locally
+                          }
+                          onDismiss(run);
+                        }}
+                      >
+                        <Square className="h-3.5 w-3.5 mr-1.5" />
+                        Cancel
+                      </Button>
                     </div>
                   </div>
                 </div>
