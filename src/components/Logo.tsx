@@ -16,26 +16,20 @@ export function Logo({ className, size = "md", showName = true }: LogoProps) {
   return (
     <div className={cn("flex items-center", className)}>
       <svg
-        className={cn(sizeClasses[size], "shrink-0")}
+        className={cn(sizeClasses[size], "text-foreground shrink-0")}
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 750 750"
+        viewBox="0 0 403.5 750"
+        fill="currentColor"
       >
         <defs>
-          <clipPath id="logo-a"><path d="M0 0h750v747.406H0z"/></clipPath>
-          <clipPath id="logo-b"><path d="M60 0h630c33.137 0 60 26.863 60 60v627.406c0 33.137-26.863 60-60 60H60c-33.137 0-60-26.863-60-60V60C0 26.863 26.863 0 60 0z"/></clipPath>
-          <clipPath id="logo-c"><path d="M0 0h750v748H0z"/></clipPath>
-          <clipPath id="logo-d"><path d="M213.547 389H529v286H213.547z"/></clipPath>
+          <clipPath id="logo-a"><path d="M8 .59h394V394H8z"/></clipPath>
+          <clipPath id="logo-b"><path d="M0 393h393v356.535H0z"/></clipPath>
         </defs>
         <g clipPath="url(#logo-a)">
-          <g clipPath="url(#logo-b)">
-            <g clipPath="url(#logo-c)">
-              <path d="M0 0h750.324v747.406H0z" fill="#000"/>
-            </g>
-          </g>
+          <path fillRule="evenodd" d="M50.21 242.969c-55.335-55.39-55.335-145.274 0-200.621 55.34-55.391 145.224-55.391 200.56 0l150.453 150.449v200.621l-200.559.031z"/>
         </g>
-        <path fill="#fff" fillRule="evenodd" d="M253.777 269.145c-44.336-44.368-44.336-116.364 0-160.696 44.34-44.367 116.356-44.367 160.696 0L535.02 228.957v160.695l-160.696.024z"/>
-        <g clipPath="url(#logo-d)">
-          <path fill="#fff" fillRule="evenodd" d="M334.117 670.934 213.574 550.402l.028-160.672 160.671-.023 120.54 120.535c44.335 44.344 44.335 116.363 0 160.695-44.34 44.368-116.36 44.368-160.696 0z"/>
+        <g clipPath="url(#logo-b)">
+          <path fillRule="evenodd" d="M150.48 744.59.035 594.11l.031-200.59 200.536-.032 150.437 150.485c55.336 55.359 55.336 145.273 0 200.625-55.336 55.39-145.223 55.39-200.559 0z"/>
         </g>
       </svg>
       {showName && (
