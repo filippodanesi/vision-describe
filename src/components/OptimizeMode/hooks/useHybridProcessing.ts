@@ -187,12 +187,21 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         },
         (payload: any) => {
           const updated = payload.new;
+          const previous = payload.old;
           if (!updated) return;
 
           const count = updated.processed_count || 0;
+          const prevCount = previous?.processed_count || 0;
           setProcessedRows(count);
           if (totalRowCount > 0) {
             setProgress(Math.round((count / totalRowCount) * 100));
+          }
+
+          // Log progress updates
+          if (count > prevCount) {
+            const pct = totalRowCount > 0 ? Math.round((count / totalRowCount) * 100) : 0;
+            const chainInfo = updated.chain_count > 0 ? ` (chain #${updated.chain_count})` : '';
+            addLog(`Server: ${count}/${totalRowCount} rows processed (${pct}%)${chainInfo}`);
           }
 
           if (updated.status === 'completed') {
