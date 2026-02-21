@@ -937,7 +937,14 @@ export const OptimizeMode: React.FC = () => {
   const steps = getStepsForUseCase(useCase);
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="animate-in fade-in-0 duration-300 max-w-4xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-xl font-medium tracking-tight">Optimize</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          AI-powered content optimization for e-commerce platforms
+        </p>
+      </div>
+
       <StepIndicator steps={steps} currentStep={currentStep} />
 
       {renderStep()}

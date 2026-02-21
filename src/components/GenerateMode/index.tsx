@@ -10,7 +10,14 @@ export const GenerateMode: React.FC = () => {
   const handleBack = () => setSubMode(GenerateSubMode.SELECT);
 
   return (
-    <div>
+    <div className="animate-in fade-in-0 duration-300 space-y-6">
+      <div>
+        <h1 className="text-xl font-medium tracking-tight">Generate</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Analyze product images or translate CSV content with AI
+        </p>
+      </div>
+
       {subMode === GenerateSubMode.SELECT && (
         <SubModeSelector onSelect={setSubMode} />
       )}
