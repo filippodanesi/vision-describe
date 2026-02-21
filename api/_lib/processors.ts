@@ -75,15 +75,15 @@ async function processPartooRow(
 
   const mapping = config.mappings?.mapping as Record<string, string> || config.mappings as Record<string, string> || {};
 
-  // Extract store fields using mapping or defaults
-  const nameKey = mapping.name || 'name';
-  const cityKey = mapping.city || 'city';
-  const countryKey = mapping.country || 'country';
-  const addressKey = mapping.address || 'address_full';
-  const zipcodeKey = mapping.zipcode || 'zipcode';
-  const statusKey = mapping.status || 'status';
-  const shortDescKey = mapping.shortDescription || 'short_description';
-  const longDescKey = mapping.longDescription || 'long_description';
+  // Extract store fields using mapping or defaults (must match Partoo Excel column names)
+  const nameKey = mapping.name || 'Name';
+  const cityKey = mapping.city || 'City';
+  const countryKey = mapping.country || 'Country';
+  const addressKey = mapping.address || 'Address';
+  const zipcodeKey = mapping.zipcode || 'Zipcode';
+  const statusKey = mapping.status || 'Status';
+  const shortDescKey = mapping.shortDescription || 'Short description';
+  const longDescKey = mapping.longDescription || 'Long description';
 
   const name = String(row[nameKey] ?? '');
   const city = String(row[cityKey] ?? '');
