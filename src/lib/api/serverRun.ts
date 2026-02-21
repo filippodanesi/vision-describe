@@ -1,7 +1,7 @@
 /**
  * Client-side API for server-side run management.
  *
- * startServerRun  — uploads file data + config, returns runId
+ * startServerRun  — uploads rows to Supabase Storage, then calls /api/start-run with the path
  * cancelServerRun — cancels a running server-side run
  */
 import { supabase } from '../supabase';
@@ -23,8 +23,8 @@ export interface ServerRunConfig {
 /**
  * Start a server-side processing run.
  *
- * For files > 4 MB: upload directly to Supabase Storage first,
- * then pass `fileStoragePath`. Otherwise rows are sent inline.
+ * Always uploads rows to Supabase Storage first (avoids Vercel 4.5 MB body limit),
+ * then passes only the storage path + config to /api/start-run.
  */
 export async function startServerRun(
   rows: Record<string, unknown>[],
@@ -36,6 +36,28 @@ export async function startServerRun(
     throw new Error('Not authenticated');
   }
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('Not authenticated');
+  }
+
+  // 1. Upload rows to Supabase Storage (bypasses Vercel body size limit)
+  const tempId = crypto.randomUUID();
+  const storagePath = `${user.id}/${tempId}.json`;
+  const rowsJson = JSON.stringify(rows);
+
+  const { error: uploadError } = await supabase.storage
+    .from('run-files')
+    .upload(storagePath, rowsJson, {
+      contentType: 'application/json',
+      upsert: true,
+    });
+
+  if (uploadError) {
+    throw new Error(`Failed to upload file data: ${uploadError.message}`);
+  }
+
+  // 2. Call /api/start-run with just the storage path (small payload)
   const response = await fetch('/api/start-run', {
     method: 'POST',
     headers: {
@@ -43,7 +65,8 @@ export async function startServerRun(
       'Authorization': `Bearer ${session.access_token}`,
     },
     body: JSON.stringify({
-      rows,
+      fileStoragePath: storagePath,
+      totalRows: rows.length,
       fileName,
       config,
     }),
