@@ -7,6 +7,7 @@
  * maxDuration: 30s (Vercel Pro)
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { waitUntil } from '@vercel/functions';
 import { supabaseAdmin, verifyUserJwt } from './_lib/supabaseAdmin';
 import type { StartRunResponse } from './_lib/types';
 
@@ -108,26 +109,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to create run record' });
     }
 
-    // 4. Fire-and-forget: invoke /api/process-run
+    // 4. Return runId to client immediately
+    const response: StartRunResponse = { runId };
+    res.status(200).json(response);
+
+    // 5. Invoke /api/process-run in the background using waitUntil.
+    //    This keeps the function alive long enough to send the request
+    //    without blocking the client response.
     const chainingSecret = process.env.CHAINING_SECRET;
-    // Use the incoming request host (production domain) instead of VERCEL_URL
-    // which points to the deployment-specific domain behind Deployment Protection.
     const vercelUrl = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
 
-    fetch(`${vercelUrl}/api/process-run`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-chaining-secret': chainingSecret || '',
-      },
-      body: JSON.stringify({ runId }),
-    }).catch((err) => {
-      console.error('Failed to invoke process-run:', err);
-    });
-
-    // 5. Return runId immediately
-    const response: StartRunResponse = { runId };
-    return res.status(200).json(response);
+    waitUntil(
+      fetch(`${vercelUrl}/api/process-run`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-chaining-secret': chainingSecret || '',
+        },
+        body: JSON.stringify({ runId }),
+      })
+        .then((r) => console.log(`process-run invoked: status=${r.status}`))
+        .catch((err) => console.error('Failed to invoke process-run:', err))
+    );
   } catch (err: any) {
     console.error('start-run error:', err);
     return res.status(500).json({ error: err.message || 'Internal server error' });
