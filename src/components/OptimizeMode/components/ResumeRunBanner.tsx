@@ -22,13 +22,13 @@ const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDis
         const isRunning = run.status === 'running';
         const isInterrupted = run.status === 'interrupted';
 
-        // Server-side run still running → informational banner
+        // Server-side run still running
         if (isServer && isRunning) {
           return (
-            <Card key={run.id} className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30">
+            <Card key={run.id} className="border-border bg-muted/40">
               <CardContent className="py-4 px-5">
                 <div className="flex items-start gap-3">
-                  <Cloud className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+                  <Cloud className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground">
                       Processing in progress on server
@@ -53,7 +53,7 @@ const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDis
                     <div className="flex items-center gap-2 mt-3">
                       <Button
                         size="sm"
-                        variant="destructive"
+                        variant="outline"
                         onClick={async () => {
                           try {
                             await cancelServerRun(run.id);
@@ -74,13 +74,13 @@ const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDis
           );
         }
 
-        // Server-side run interrupted → offer retry
+        // Server-side run interrupted
         if (isServer && isInterrupted) {
           return (
-            <Card key={run.id} className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30">
+            <Card key={run.id} className="border-border bg-muted/40">
               <CardContent className="py-4 px-5">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                  <AlertTriangle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground">
                       Server run interrupted
@@ -107,7 +107,7 @@ const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDis
                       </p>
                     </div>
                     <div className="flex items-center gap-2 mt-3">
-                      <Button size="sm" onClick={() => onResume(run)}>
+                      <Button size="sm" variant="outline" onClick={() => onResume(run)}>
                         <Play className="h-3.5 w-3.5 mr-1.5" />
                         Retry on server
                       </Button>
@@ -123,12 +123,12 @@ const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDis
           );
         }
 
-        // Client-side interrupted run → existing behavior
+        // Client-side interrupted run
         return (
-          <Card key={run.id} className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30">
+          <Card key={run.id} className="border-border bg-muted/40">
             <CardContent className="py-4 px-5">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                <AlertTriangle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground">
                     Interrupted run detected
@@ -151,7 +151,7 @@ const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDis
                     </p>
                   </div>
                   <div className="flex items-center gap-2 mt-3">
-                    <Button size="sm" onClick={() => onResume(run)}>
+                    <Button size="sm" variant="outline" onClick={() => onResume(run)}>
                       <Play className="h-3.5 w-3.5 mr-1.5" />
                       Resume
                     </Button>
