@@ -29,13 +29,13 @@ export function Logo({ className, size = "md", showName = true }: LogoProps) {
         <g clipPath="url(#logo-a)">
           <g clipPath="url(#logo-b)">
             <g clipPath="url(#logo-c)">
-              <path d="M0 0h750.324v747.406H0z" fill="currentColor"/>
+              <path d="M0 0h750.324v747.406H0z" fill="var(--background, #fff)"/>
             </g>
           </g>
         </g>
-        <path fill="var(--background, #fff)" fillRule="evenodd" d="M253.777 269.145c-44.336-44.368-44.336-116.364 0-160.696 44.34-44.367 116.356-44.367 160.696 0L535.02 228.957v160.695l-160.696.024z"/>
+        <path fill="currentColor" fillRule="evenodd" d="M253.777 269.145c-44.336-44.368-44.336-116.364 0-160.696 44.34-44.367 116.356-44.367 160.696 0L535.02 228.957v160.695l-160.696.024z"/>
         <g clipPath="url(#logo-d)">
-          <path fill="var(--background, #fff)" fillRule="evenodd" d="M334.117 670.934 213.574 550.402l.028-160.672 160.671-.023 120.54 120.535c44.335 44.344 44.335 116.363 0 160.695-44.34 44.368-116.36 44.368-160.696 0z"/>
+          <path fill="currentColor" fillRule="evenodd" d="M334.117 670.934 213.574 550.402l.028-160.672 160.671-.023 120.54 120.535c44.335 44.344 44.335 116.363 0 160.695-44.34 44.368-116.36 44.368-160.696 0z"/>
         </g>
       </svg>
       {showName && (
