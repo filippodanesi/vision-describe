@@ -466,6 +466,7 @@ async function processPartooRow(
     const closureMsg = getClosedStoreMessage(language, city);
     processed[shortDescKey] = closureMsg.short;
     processed[longDescKey] = closureMsg.long;
+    processed._optimizedFields = ['Short Description', 'Long Description'];
     return { result: processed, cost: 0, tokensIn: 0, tokensOut: 0 };
   }
 
@@ -529,6 +530,12 @@ async function processPartooRow(
       processed[aboutKey] = parsedAbout;
     }
   }
+
+  const fields: string[] = [];
+  if (needsShort) fields.push('Short Description');
+  if (needsLong) fields.push('Long Description');
+  if (needsAbout) fields.push('About');
+  processed._optimizedFields = fields;
 
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }
@@ -915,6 +922,7 @@ FORMAT:
     processed['gen_warnings'] = (processed['gen_warnings'] ? processed['gen_warnings'] + '; ' : '') + 'PolicyTermsDetected';
   }
 
+  processed._optimizedFields = ['Bullets', 'Description', 'A+ Short'];
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }
 
@@ -1078,12 +1086,17 @@ async function processNextRow(
   totalOut += res.tokens.outputTokens;
 
   const parsed = parseNextResponse(res.content);
+  const fields: string[] = [];
   if (parsed) {
     processed[productTitleKey] = sanitizeStripMarkdown(parsed.productTitle).slice(0, 100);
     processed[copyFeaturesKey] = sanitizeStripMarkdown(parsed.copyDesignFeatures).slice(0, 1000);
+    fields.push('Product Title', 'Copy Design Features');
   } else {
     processed.gen_error = 'Failed to parse AI response';
   }
+  if (processed[sizeKey] !== existingSize) fields.push('Size (EU→GB)');
+  if (processed[standardColorKey] !== existingStdColor || processed[colorNameKey] !== colorName) fields.push('Color');
+  processed._optimizedFields = fields;
 
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }
@@ -1216,12 +1229,16 @@ async function processAboutYouRow(
   totalOut += res.tokens.outputTokens;
 
   const parsed = parseAboutYouResponse(res.content);
+  const fields: string[] = [];
   if (parsed) {
     processed[styleWordingKey] = sanitizeStripMarkdown(parsed.styleName).slice(0, 80);
     processed[longDescKey] = sanitizeStripMarkdown(parsed.longDescription).slice(0, 500);
+    fields.push('Style Name', 'Long Description');
   } else {
     processed.gen_error = 'Failed to parse AI response';
   }
+  if (processed[colorTransKey] !== existingColorTrans || processed[colorNameKey] !== colorNameSupplier) fields.push('Color');
+  processed._optimizedFields = fields;
 
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }
@@ -1308,6 +1325,7 @@ async function processEcommerceRow(
   gen = gen.replace(/https?:\/\/\S+/gi, '').replace(/[\w.+-]+@[\w-]+\.[\w.-]+/gi, '').replace(/\b(?:EUR|USD|CHF|GBP)?\s?\d+[\.,]?\d*\b/gi, '').replace(/\s{2,}/g, ' ').trim();
   if (!gen) gen = (description || title || '').toString().trim();
   processed['gen_description'] = gen;
+  processed._optimizedFields = ['Description'];
 
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }

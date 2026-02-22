@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Cloud, Play, X, Square } from 'lucide-react';
+import { AlertTriangle, Cloud, Play, X, Square, Eye } from 'lucide-react';
 import { cancelServerRun } from '@/lib/api/serverRun';
 import type { RunRecord } from '@/lib/runPersistence';
 
@@ -9,9 +9,10 @@ interface ResumeRunBannerProps {
   runs: RunRecord[];
   onResume: (run: RunRecord) => void;
   onDismiss: (run: RunRecord) => void;
+  onReconnect?: (run: RunRecord) => void;
 }
 
-const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDismiss }) => {
+const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDismiss, onReconnect }) => {
   if (runs.length === 0) return null;
 
   return (
@@ -51,9 +52,15 @@ const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDis
                       </p>
                     </div>
                     <div className="flex items-center gap-2 mt-3">
+                      {onReconnect && (
+                        <Button size="sm" variant="outline" onClick={() => onReconnect(run)}>
+                          <Eye className="h-3.5 w-3.5 mr-1.5" />
+                          View Progress
+                        </Button>
+                      )}
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
                         onClick={async () => {
                           try {
                             await cancelServerRun(run.id);

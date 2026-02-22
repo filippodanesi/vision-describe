@@ -15,6 +15,7 @@ import {
   updateRunStatus,
   heartbeat as runHeartbeat,
   getRunResults,
+  type RunRecord,
 } from '@/lib/runPersistence';
 import { supabase } from '@/lib/supabase';
 
@@ -93,6 +94,7 @@ export interface HybridProcessingHook {
     costTracker?: any
   ) => Promise<any[]>;
   cancelProcessing: () => void;
+  reconnectToRun: (run: RunRecord) => Promise<any[]>;
 }
 
 export const useHybridProcessing = (): HybridProcessingHook => {
@@ -224,16 +226,29 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           const tokIn = row.tokens_in || 0;
           const tokOut = row.tokens_out || 0;
 
-          // Build a concise per-row log line
+          // Identify the row by the most recognizable field
+          const label =
+            data['Business identification'] || data['Business ID'] ||
+            data['vendor_sku#1.value'] || data['item_name#1.value'] ||
+            data['Next Supplier Code'] || data['Manufacturers Style No'] ||
+            data['Style No supplier'] || data['Style name supplier'] ||
+            data['MaterialSAPMaterialNo'] || data['ColorSAPMaterialNo'] ||
+            data['ProductID'] || data['ID'] ||
+            `Row ${idx + 1}`;
+
+          // What fields were optimized
+          const fields = Array.isArray(data._optimizedFields) ? data._optimizedFields as string[] : [];
+          const fieldsStr = fields.length > 0 ? ` → ${fields.join(', ')}` : '';
+
           const hasError = '_error' in data;
-          const label = data['Business ID'] || data['MaterialSAPMaterialNo'] || data['ColorSAPMaterialNo'] || data['ProductID'] || data['ID'] || `Row ${idx + 1}`;
           if (hasError) {
             addLog(`Row ${idx + 1} (${label}): error — ${data._error}`);
-          } else if (tokIn === 0 && tokOut === 0) {
-            addLog(`Row ${idx + 1} (${label}): skipped (no AI call needed)`);
+          } else if (tokIn === 0 && tokOut === 0 && fields.length === 0) {
+            addLog(`Row ${idx + 1} (${label}): skipped`);
           } else {
             const costStr = cost > 0 ? ` | $${cost.toFixed(4)}` : '';
-            addLog(`Row ${idx + 1} (${label}): ${tokIn + tokOut} tok${costStr}`);
+            const tokStr = tokIn + tokOut > 0 ? ` ${tokIn + tokOut} tok` : '';
+            addLog(`Row ${idx + 1} (${label}):${fieldsStr}${tokStr}${costStr}`);
           }
         }
       )
@@ -679,6 +694,37 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     }
   };
 
+  /** Reconnect to a running server-side run (e.g. after navigating away and back) */
+  const reconnectToRun = useCallback(async (run: RunRecord): Promise<any[]> => {
+    setIsProcessing(true);
+    setProcessingMode('server');
+    setTotalRows(run.total_rows);
+    setProcessedRows(run.processed_count || 0);
+    setProgress(run.total_rows > 0 ? Math.round(((run.processed_count || 0) / run.total_rows) * 100) : 0);
+    setLogs([]);
+    cancelRequested.current = false;
+    runIdRef.current = run.id;
+    setCurrentRunId(run.id);
+
+    addLog(`Reconnected to server run ${run.id.substring(0, 8)}...`);
+    addLog(`Progress: ${run.processed_count || 0}/${run.total_rows} rows`);
+
+    // Subscribe to Realtime updates
+    subscribeToRunUpdates(run.id, run.total_rows);
+
+    try {
+      // Wait for completion
+      const results = await waitForServerCompletion(run.id, run.total_rows);
+      runIdRef.current = null;
+      setIsProcessing(false);
+      return results;
+    } catch (err) {
+      runIdRef.current = null;
+      setIsProcessing(false);
+      throw err;
+    }
+  }, [addLog, subscribeToRunUpdates]);
+
   return {
     isProcessing,
     progress,
@@ -691,5 +737,6 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     currentRunId,
     processFile,
     cancelProcessing,
+    reconnectToRun,
   };
 };

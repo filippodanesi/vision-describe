@@ -132,7 +132,8 @@ export const OptimizeMode: React.FC = () => {
     processingMode,
     costTracker,
     processFile,
-    cancelProcessing
+    cancelProcessing,
+    reconnectToRun,
   } = useHybridProcessing();
 
   const [processedData, setProcessedData] = useState<any[] | null>(null);
@@ -164,6 +165,35 @@ export const OptimizeMode: React.FC = () => {
     toast('Upload the same file to resume processing', {
       description: `Re-upload the file "${run.file_name || 'original file'}" to continue where you left off.`,
     });
+  };
+
+  /** Reconnect to a server-side run that's still running */
+  const handleReconnectRun = async (run: RunRecord) => {
+    setUseCase(run.use_case as UseCase);
+    setSelectedModel(run.model_id);
+    setCurrentStep(ProcessingStep.PROCESSING);
+    setProcessingStartTime(new Date());
+    // Remove from interrupted list so banner hides
+    setInterruptedRuns((prev) => prev.filter((r) => r.id !== run.id));
+
+    try {
+      const results = await reconnectToRun(run);
+      setProcessedData(results);
+      setProcessingEndTime(new Date());
+      setCurrentStep(ProcessingStep.COMPLETE);
+      toast('File processed successfully!', {
+        description: 'Server-side processing completed.',
+      });
+    } catch (error) {
+      console.error('Reconnect error:', error);
+      toast('Processing error', {
+        description: error instanceof Error ? error.message : 'Server run failed.',
+        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+      });
+      setCurrentStep(ProcessingStep.UPLOAD);
+      // Re-fetch interrupted runs
+      findInterruptedRuns().then(setInterruptedRuns).catch(() => {});
+    }
   };
 
   const handleDismissRun = async (run: RunRecord) => {
@@ -517,6 +547,7 @@ export const OptimizeMode: React.FC = () => {
               runs={interruptedRuns}
               onResume={handleResumeRun}
               onDismiss={handleDismissRun}
+              onReconnect={handleReconnectRun}
             />
             {!hasKeys && (
               <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
