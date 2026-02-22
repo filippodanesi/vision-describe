@@ -17,6 +17,9 @@ interface XlsxExportButtonProps {
   isDisabled?: boolean;
 }
 
+/** Internal metadata fields added by server processors — must never appear in exports */
+const isInternalField = (key: string) => key.startsWith('_');
+
 const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCase = 'ecommerce', results, isDisabled }) => {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -71,9 +74,9 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
           const processed = resultsByBizId.get(cellBizId);
           if (!processed) continue; // row was filtered out — leave original values
 
-          // Write all columns from the processed row, preserving existing cell properties
+          // Write only original columns from the processed row (skip internal _* fields)
           for (const [colName, colIdx] of colMap) {
-            if (colName in processed) {
+            if (colName in processed && !isInternalField(colName)) {
               const addr = XLSX.utils.encode_cell({ r, c: colIdx });
               const newVal = String(processed[colName] ?? '');
               const existing = ws[addr];
@@ -92,7 +95,7 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
         const fileName = generateFileName('optimized', useCase, 'xlsx');
         downloadBuffer(wbOut, fileName);
       } else if (originalMeta?.arrayBuffer) {
-        // Clone original workbook structure (ecommerce/amazon)
+        // Clone original workbook structure (ecommerce/amazon/next/aboutyou)
         workbook = new ExcelJS.Workbook();
         await workbook.xlsx.load(originalMeta.arrayBuffer);
         const wsName = originalMeta.worksheetName || (workbook.worksheets[0]?.name || 'Sheet1');
@@ -104,31 +107,48 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
         const headerRow = worksheet.getRow(headerRowIndex);
         headerRow.eachCell((cell, idx) => { existingHeaders[idx - 1] = String(cell.value ?? `Column${idx}`); });
 
-        const genCols = useCase === 'amazon'
-          ? ['gen_bullet_1','gen_bullet_2','gen_bullet_3','gen_bullet_4','gen_bullet_5','gen_description','gen_aplus_short']
-          : ['gen_description'];
+        if (useCase === 'amazon' || useCase === 'ecommerce') {
+          // Only add gen_* columns for use cases that produce them
+          const genCols = useCase === 'amazon'
+            ? ['gen_bullet_1','gen_bullet_2','gen_bullet_3','gen_bullet_4','gen_bullet_5','gen_description','gen_aplus_short']
+            : ['gen_description'];
 
-        const ensureHeader = (name: string) => {
-          if (!existingHeaders.includes(name)) {
-            existingHeaders.push(name);
-            headerRow.getCell(existingHeaders.length).value = name;
-          }
-        };
-        genCols.forEach(ensureHeader);
-        headerRow.commit();
-
-        // Write rows aligned by index
-        const startDataRow = originalMeta?.dataStartRow || (headerRowIndex + 1);
-        for (let i = 0; i < results.length; i++) {
-          const excelRowIndex = startDataRow + i;
-          const wsRow = worksheet.getRow(excelRowIndex);
-          for (const name of genCols) {
-            const colIndex = existingHeaders.indexOf(name) + 1;
-            if (colIndex > 0) {
-              wsRow.getCell(colIndex).value = results[i][name] ?? '';
+          const ensureHeader = (name: string) => {
+            if (!existingHeaders.includes(name)) {
+              existingHeaders.push(name);
+              headerRow.getCell(existingHeaders.length).value = name;
             }
+          };
+          genCols.forEach(ensureHeader);
+          headerRow.commit();
+
+          // Write rows aligned by index — only gen_* columns
+          const startDataRow = originalMeta?.dataStartRow || (headerRowIndex + 1);
+          for (let i = 0; i < results.length; i++) {
+            const excelRowIndex = startDataRow + i;
+            const wsRow = worksheet.getRow(excelRowIndex);
+            for (const name of genCols) {
+              const colIndex = existingHeaders.indexOf(name) + 1;
+              if (colIndex > 0) {
+                wsRow.getCell(colIndex).value = results[i][name] ?? '';
+              }
+            }
+            wsRow.commit();
           }
-          wsRow.commit();
+        } else {
+          // NEXT / AboutYou: overwrite existing columns in-place (no gen_* columns)
+          const startDataRow = originalMeta?.dataStartRow || (headerRowIndex + 1);
+          for (let i = 0; i < results.length; i++) {
+            const excelRowIndex = startDataRow + i;
+            const wsRow = worksheet.getRow(excelRowIndex);
+            for (let hIdx = 0; hIdx < existingHeaders.length; hIdx++) {
+              const colName = existingHeaders[hIdx];
+              if (colName && colName in results[i] && !isInternalField(colName)) {
+                wsRow.getCell(hIdx + 1).value = results[i][colName] ?? '';
+              }
+            }
+            wsRow.commit();
+          }
         }
 
         // Download as XLSX
@@ -136,10 +156,12 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
         const fileName = generateFileName('optimized', useCase, 'xlsx');
         downloadBuffer(buffer, fileName);
       } else {
-        // Create a new workbook from results
+        // Fallback: no original file available (e.g. reconnect scenario)
+        // Create a new workbook but strip internal metadata fields
         workbook = new ExcelJS.Workbook();
-        worksheet = workbook.addWorksheet('Results');
-        const headers = Object.keys(results[0]);
+        const sheetName = originalMeta?.worksheetName || 'Sheet1';
+        worksheet = workbook.addWorksheet(sheetName);
+        const headers = Object.keys(results[0]).filter(k => !isInternalField(k));
         worksheet.addRow(headers);
         results.forEach(row => worksheet.addRow(headers.map(h => row[h] ?? '')));
         const buffer = await workbook.xlsx.writeBuffer();
@@ -172,5 +194,3 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
 };
 
 export default XlsxExportButton;
-
-
