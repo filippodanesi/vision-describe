@@ -208,50 +208,6 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           }
         }
       )
-      // Listen to per-row results for detailed activity log
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'run_results',
-          filter: `run_id=eq.${runId}`,
-        },
-        (payload: any) => {
-          const row = payload.new;
-          if (!row) return;
-          const idx = row.row_index;
-          const data = row.result_data || {};
-          const cost = row.cost || 0;
-          const tokIn = row.tokens_in || 0;
-          const tokOut = row.tokens_out || 0;
-
-          // Identify the row by the most recognizable field
-          const label =
-            data['Business identification'] || data['Business ID'] ||
-            data['vendor_sku#1.value'] || data['item_name#1.value'] ||
-            data['Next Supplier Code'] || data['Manufacturers Style No'] ||
-            data['Style No supplier'] || data['Style name supplier'] ||
-            data['MaterialSAPMaterialNo'] || data['ColorSAPMaterialNo'] ||
-            data['ProductID'] || data['ID'] ||
-            `Row ${idx + 1}`;
-
-          // What fields were optimized
-          const fields = Array.isArray(data._optimizedFields) ? data._optimizedFields as string[] : [];
-          const fieldsStr = fields.length > 0 ? ` → ${fields.join(', ')}` : '';
-
-          const hasError = '_error' in data;
-          if (hasError) {
-            addLog(`Row ${idx + 1} (${label}): error — ${data._error}`);
-          } else if (tokIn === 0 && tokOut === 0 && fields.length === 0) {
-            addLog(`Row ${idx + 1} (${label}): skipped`);
-          } else {
-            const costStr = cost > 0 ? ` | $${cost.toFixed(4)}` : '';
-            const tokStr = tokIn + tokOut > 0 ? ` ${tokIn + tokOut} tok` : '';
-            addLog(`Row ${idx + 1} (${label}):${fieldsStr}${tokStr}${costStr}`);
-          }
-        }
-      )
       .subscribe();
 
     realtimeChannelRef.current = channel;
@@ -488,16 +444,19 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     }
   };
 
-  /** Wait for a server-side run to complete by polling */
+  /** Wait for a server-side run to complete by polling.
+   *  Also fetches new run_results each cycle to populate the activity log
+   *  (does not depend on Realtime). */
   const waitForServerCompletion = async (runId: string, totalRowCount: number): Promise<any[]> => {
     const POLL_INTERVAL = 3000; // 3 seconds
+    const loggedIndices = new Set<number>();
 
     return new Promise((resolve, reject) => {
       const poll = async () => {
         try {
           const { data: run, error } = await supabase
             .from('runs')
-            .select('status, processed_count, error_message')
+            .select('status, processed_count, error_message, chain_count')
             .eq('id', runId)
             .single();
 
@@ -506,31 +465,74 @@ export const useHybridProcessing = (): HybridProcessingHook => {
             return;
           }
 
-          // Update progress from DB in case Realtime missed an update
-          if (run.processed_count != null) {
-            setProcessedRows(run.processed_count);
-            if (totalRowCount > 0) {
-              setProgress(Math.round((run.processed_count / totalRowCount) * 100));
+          // Update progress
+          const count = run.processed_count ?? 0;
+          setProcessedRows(count);
+          if (totalRowCount > 0) {
+            setProgress(Math.round((count / totalRowCount) * 100));
+          }
+
+          // Fetch new run_results we haven't logged yet
+          if (count > loggedIndices.size) {
+            const { data: newResults } = await supabase
+              .from('run_results')
+              .select('row_index, result_data, cost, tokens_in, tokens_out')
+              .eq('run_id', runId)
+              .order('row_index', { ascending: true });
+
+            if (newResults) {
+              for (const r of newResults) {
+                if (loggedIndices.has(r.row_index)) continue;
+                loggedIndices.add(r.row_index);
+
+                const data = (r.result_data || {}) as Record<string, unknown>;
+                const cost = r.cost || 0;
+                const tokIn = r.tokens_in || 0;
+                const tokOut = r.tokens_out || 0;
+
+                const label =
+                  data['Business identification'] || data['Business ID'] ||
+                  data['vendor_sku#1.value'] || data['item_name#1.value'] ||
+                  data['Next Supplier Code'] || data['Manufacturers Style No'] ||
+                  data['Style No supplier'] || data['Style name supplier'] ||
+                  data['MaterialSAPMaterialNo'] || data['ColorSAPMaterialNo'] ||
+                  data['ProductID'] || data['ID'] ||
+                  `Row ${r.row_index + 1}`;
+
+                const fields = Array.isArray(data._optimizedFields) ? data._optimizedFields as string[] : [];
+                const fieldsStr = fields.length > 0 ? ` → ${fields.join(', ')}` : '';
+                const hasError = '_error' in data;
+
+                if (hasError) {
+                  addLog(`Row ${r.row_index + 1} (${label}): error — ${data._error}`);
+                } else if (tokIn === 0 && tokOut === 0 && fields.length === 0) {
+                  addLog(`Row ${r.row_index + 1} (${label}): skipped`);
+                } else {
+                  const costStr = cost > 0 ? ` | $${cost.toFixed(4)}` : '';
+                  const tokStr = tokIn + tokOut > 0 ? ` ${tokIn + tokOut} tok` : '';
+                  addLog(`Row ${r.row_index + 1} (${label}):${fieldsStr}${tokStr}${costStr}`);
+                }
+              }
             }
           }
 
           if (run.status === 'completed') {
-            // Fetch all results
+            addLog(`Server processing completed (${count} rows)`);
+            setProgress(100);
             const results = await getRunResults(runId);
-            const processedRows = results.map(r => r.result_data);
-            resolve(processedRows as any[]);
+            resolve(results.map(r => r.result_data) as any[]);
             return;
           }
 
           if (run.status === 'cancelled') {
-            // Return partial results
+            addLog('Run cancelled');
             const results = await getRunResults(runId);
-            const processedRows = results.map(r => r.result_data);
-            resolve(processedRows as any[]);
+            resolve(results.map(r => r.result_data) as any[]);
             return;
           }
 
           if (run.status === 'interrupted') {
+            addLog(`Run interrupted: ${run.error_message || 'unknown error'}`);
             reject(new Error(run.error_message || 'Server processing was interrupted'));
             return;
           }
