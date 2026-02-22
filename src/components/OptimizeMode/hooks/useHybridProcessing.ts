@@ -490,14 +490,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
                 const tokIn = r.tokens_in || 0;
                 const tokOut = r.tokens_out || 0;
 
-                const label =
-                  data['Business identification'] || data['Business ID'] ||
-                  data['vendor_sku#1.value'] || data['item_name#1.value'] ||
-                  data['Next Supplier Code'] || data['Manufacturers Style No'] ||
-                  data['Style No supplier'] || data['Style name supplier'] ||
-                  data['MaterialSAPMaterialNo'] || data['ColorSAPMaterialNo'] ||
-                  data['ProductID'] || data['ID'] ||
-                  `Row ${r.row_index + 1}`;
+                const label = data._label as string || `Row ${r.row_index + 1}`;
 
                 const fields = Array.isArray(data._optimizedFields) ? data._optimizedFields as string[] : [];
                 const fieldsStr = fields.length > 0 ? ` → ${fields.join(', ')}` : '';

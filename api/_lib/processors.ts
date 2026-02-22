@@ -467,6 +467,8 @@ async function processPartooRow(
     processed[shortDescKey] = closureMsg.short;
     processed[longDescKey] = closureMsg.long;
     processed._optimizedFields = ['Short Description', 'Long Description'];
+    const bizIdKey = Object.keys(row).find(k => /business\s*id/i.test(k));
+    processed._label = (bizIdKey ? String(row[bizIdKey] ?? '') : '') || name || city || `Row ${rowIndex + 1}`;
     return { result: processed, cost: 0, tokensIn: 0, tokensOut: 0 };
   }
 
@@ -536,6 +538,10 @@ async function processPartooRow(
   if (needsLong) fields.push('Long Description');
   if (needsAbout) fields.push('About');
   processed._optimizedFields = fields;
+
+  // Set label for activity log (use Business identification or store name)
+  const bizIdKey = Object.keys(row).find(k => /business\s*id/i.test(k));
+  processed._label = (bizIdKey ? String(row[bizIdKey] ?? '') : '') || name || city || `Row ${rowIndex + 1}`;
 
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }
@@ -923,6 +929,7 @@ FORMAT:
   }
 
   processed._optimizedFields = ['Bullets', 'Description', 'A+ Short'];
+  processed._label = String(row[idKey] ?? '').trim() || String(row[titleKey] ?? '').trim() || `Row ${rowIndex + 1}`;
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }
 
@@ -1097,6 +1104,7 @@ async function processNextRow(
   if (processed[sizeKey] !== existingSize) fields.push('Size (EU→GB)');
   if (processed[standardColorKey] !== existingStdColor || processed[colorNameKey] !== colorName) fields.push('Color');
   processed._optimizedFields = fields;
+  processed._label = supplierCode || styleNo || `Row ${rowIndex + 1}`;
 
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }
@@ -1239,6 +1247,7 @@ async function processAboutYouRow(
   }
   if (processed[colorTransKey] !== existingColorTrans || processed[colorNameKey] !== colorNameSupplier) fields.push('Color');
   processed._optimizedFields = fields;
+  processed._label = styleNo || styleName || `Row ${rowIndex + 1}`;
 
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }
@@ -1326,6 +1335,7 @@ async function processEcommerceRow(
   if (!gen) gen = (description || title || '').toString().trim();
   processed['gen_description'] = gen;
   processed._optimizedFields = ['Description'];
+  processed._label = String(row['MaterialSAPMaterialNo'] ?? row['ColorSAPMaterialNo'] ?? row['ProductID'] ?? row['ID'] ?? '').trim() || `Row ${rowIndex + 1}`;
 
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }
