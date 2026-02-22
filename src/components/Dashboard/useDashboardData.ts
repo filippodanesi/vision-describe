@@ -1,30 +1,37 @@
-import { useMemo } from 'react';
-import { useCostTracker, type CostRecord } from '../OptimizeMode/hooks/useCostTracker';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
 import { getModelById } from '@/lib/models';
+import type { RunRecord } from '@/lib/runPersistence';
+
+/* ── Types ─────────────────────────────────────────────────────── */
 
 export interface ModelStats {
   modelId: string;
   modelName: string;
   provider: 'openai' | 'anthropic';
-  operations: number;
+  runs: number;
+  totalRows: number;
   totalTokens: number;
   totalCost: number;
-  avgCostPerOp: number;
+  avgCostPerRun: number;
 }
 
 export interface DashboardData {
-  costHistory: CostRecord[];
-  remainingBudget: { openai: number; anthropic: number };
-  totalCost: { openai: number; anthropic: number };
+  runs: RunRecord[];
+  loading: boolean;
   sessionStats: {
-    totalOperations: number;
-    totalActualCost: number;
+    totalRuns: number;
+    totalRows: number;
     totalTokens: number;
+    totalCost: number;
   };
+  costByProvider: { openai: number; anthropic: number };
   modelStats: ModelStats[];
-  recentActivity: CostRecord[];
-  resetTracking: () => void;
+  recentRuns: RunRecord[];
+  refresh: () => void;
 }
+
+/* ── Helpers ───────────────────────────────────────────────────── */
 
 function getProvider(modelId: string): 'openai' | 'anthropic' {
   return modelId.startsWith('claude') ? 'anthropic' : 'openai';
@@ -32,9 +39,7 @@ function getProvider(modelId: string): 'openai' | 'anthropic' {
 
 function getDisplayName(modelId: string): string {
   const model = getModelById(modelId);
-  if (model) return model.name;
-  // Fallback: capitalize the model id
-  return modelId;
+  return model?.name ?? modelId;
 }
 
 export function formatTokens(n: number): string {
@@ -44,7 +49,7 @@ export function formatTokens(n: number): string {
 }
 
 export function formatCost(n: number): string {
-  return '$' + n.toFixed(2);
+  return '$' + n.toFixed(4);
 }
 
 export function timeAgo(timestamp: number): string {
@@ -59,64 +64,113 @@ export function timeAgo(timestamp: number): string {
   return `${days} days ago`;
 }
 
+const USE_CASE_LABELS: Record<string, string> = {
+  partoo: 'Partoo',
+  amazon: 'Amazon',
+  next: 'NEXT',
+  aboutyou: 'About You',
+  ecommerce: 'E-commerce',
+};
+
+export function useCaseLabel(useCase: string): string {
+  return USE_CASE_LABELS[useCase] ?? useCase;
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  running: 'Running',
+  completed: 'Completed',
+  interrupted: 'Interrupted',
+  cancelled: 'Cancelled',
+};
+
+export function statusLabel(status: string): string {
+  return STATUS_LABELS[status] ?? status;
+}
+
+/* ── Hook ──────────────────────────────────────────────────────── */
+
 export function useDashboardData(): DashboardData {
-  const {
-    costHistory,
-    remainingBudget,
-    totalCost,
-    getSessionStats,
-    resetTracking,
-  } = useCostTracker();
+  const [runs, setRuns] = useState<RunRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchRuns = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('runs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    if (!error && data) {
+      setRuns(data as RunRecord[]);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchRuns();
+  }, [fetchRuns]);
 
   const sessionStats = useMemo(() => {
-    const stats = getSessionStats();
+    const completed = runs.filter(r => r.status === 'completed');
     return {
-      totalOperations: stats.totalOperations,
-      totalActualCost: stats.totalActualCost,
-      totalTokens: stats.totalTokens,
+      totalRuns: completed.length,
+      totalRows: completed.reduce((s, r) => s + (r.processed_count || 0), 0),
+      totalTokens: completed.reduce((s, r) => s + (r.total_tokens_in || 0) + (r.total_tokens_out || 0), 0),
+      totalCost: completed.reduce((s, r) => s + (r.total_cost || 0), 0),
     };
-  }, [costHistory]);
+  }, [runs]);
+
+  const costByProvider = useMemo(() => {
+    const result = { openai: 0, anthropic: 0 };
+    for (const r of runs) {
+      if (r.status !== 'completed') continue;
+      const p = getProvider(r.model_id);
+      result[p] += r.total_cost || 0;
+    }
+    return result;
+  }, [runs]);
 
   const modelStats = useMemo<ModelStats[]>(() => {
     const map = new Map<string, ModelStats>();
-    for (const record of costHistory) {
-      const existing = map.get(record.model);
-      const cost = record.actualCost ?? record.estimatedCost;
-      const tokens =
-        (record.actualInputTokens ?? record.estimatedInputTokens) +
-        (record.actualOutputTokens ?? record.estimatedOutputTokens);
+    for (const r of runs) {
+      if (r.status !== 'completed') continue;
+      const existing = map.get(r.model_id);
+      const tokens = (r.total_tokens_in || 0) + (r.total_tokens_out || 0);
+      const cost = r.total_cost || 0;
+      const rows = r.processed_count || 0;
 
       if (existing) {
-        existing.operations += 1;
+        existing.runs += 1;
+        existing.totalRows += rows;
         existing.totalTokens += tokens;
         existing.totalCost += cost;
-        existing.avgCostPerOp = existing.totalCost / existing.operations;
+        existing.avgCostPerRun = existing.totalCost / existing.runs;
       } else {
-        map.set(record.model, {
-          modelId: record.model,
-          modelName: getDisplayName(record.model),
-          provider: getProvider(record.model),
-          operations: 1,
+        map.set(r.model_id, {
+          modelId: r.model_id,
+          modelName: getDisplayName(r.model_id),
+          provider: getProvider(r.model_id),
+          runs: 1,
+          totalRows: rows,
           totalTokens: tokens,
           totalCost: cost,
-          avgCostPerOp: cost,
+          avgCostPerRun: cost,
         });
       }
     }
-    return Array.from(map.values()).sort((a, b) => b.operations - a.operations);
-  }, [costHistory]);
+    return Array.from(map.values()).sort((a, b) => b.runs - a.runs);
+  }, [runs]);
 
-  const recentActivity = useMemo<CostRecord[]>(() => {
-    return [...costHistory].sort((a, b) => b.timestamp - a.timestamp).slice(0, 50);
-  }, [costHistory]);
+  const recentRuns = useMemo(() => runs.slice(0, 50), [runs]);
 
   return {
-    costHistory,
-    remainingBudget,
-    totalCost,
+    runs,
+    loading,
     sessionStats,
+    costByProvider,
     modelStats,
-    recentActivity,
-    resetTracking,
+    recentRuns,
+    refresh: fetchRuns,
   };
 }

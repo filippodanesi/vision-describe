@@ -177,6 +177,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
 
     const channel = supabase
       .channel(`run-${runId}`)
+      // Listen to run status/progress updates
       .on(
         'postgres_changes',
         {
@@ -187,21 +188,12 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         },
         (payload: any) => {
           const updated = payload.new;
-          const previous = payload.old;
           if (!updated) return;
 
           const count = updated.processed_count || 0;
-          const prevCount = previous?.processed_count || 0;
           setProcessedRows(count);
           if (totalRowCount > 0) {
             setProgress(Math.round((count / totalRowCount) * 100));
-          }
-
-          // Log progress updates
-          if (count > prevCount) {
-            const pct = totalRowCount > 0 ? Math.round((count / totalRowCount) * 100) : 0;
-            const chainInfo = updated.chain_count > 0 ? ` (chain #${updated.chain_count})` : '';
-            addLog(`Server: ${count}/${totalRowCount} rows processed (${pct}%)${chainInfo}`);
           }
 
           if (updated.status === 'completed') {
@@ -211,6 +203,37 @@ export const useHybridProcessing = (): HybridProcessingHook => {
             addLog('Run cancelled');
           } else if (updated.status === 'interrupted') {
             addLog(`Run interrupted: ${updated.error_message || 'unknown error'}`);
+          }
+        }
+      )
+      // Listen to per-row results for detailed activity log
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'run_results',
+          filter: `run_id=eq.${runId}`,
+        },
+        (payload: any) => {
+          const row = payload.new;
+          if (!row) return;
+          const idx = row.row_index;
+          const data = row.result_data || {};
+          const cost = row.cost || 0;
+          const tokIn = row.tokens_in || 0;
+          const tokOut = row.tokens_out || 0;
+
+          // Build a concise per-row log line
+          const hasError = '_error' in data;
+          const label = data['Business ID'] || data['MaterialSAPMaterialNo'] || data['ColorSAPMaterialNo'] || data['ProductID'] || data['ID'] || `Row ${idx + 1}`;
+          if (hasError) {
+            addLog(`Row ${idx + 1} (${label}): error — ${data._error}`);
+          } else if (tokIn === 0 && tokOut === 0) {
+            addLog(`Row ${idx + 1} (${label}): skipped (no AI call needed)`);
+          } else {
+            const costStr = cost > 0 ? ` | $${cost.toFixed(4)}` : '';
+            addLog(`Row ${idx + 1} (${label}): ${tokIn + tokOut} tok${costStr}`);
           }
         }
       )
