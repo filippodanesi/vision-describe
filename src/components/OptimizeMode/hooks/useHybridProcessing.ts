@@ -460,7 +460,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         try {
           const { data: run, error } = await supabase
             .from('runs')
-            .select('status, processed_count, error_message, chain_count')
+            .select('status, processed_count, error_message, chain_count, total_cost, total_tokens_in, total_tokens_out, model_id')
             .eq('id', runId)
             .single();
 
@@ -539,16 +539,27 @@ export const useHybridProcessing = (): HybridProcessingHook => {
             }
           }
 
-          if (run.status === 'completed') {
-            addLog(`Server processing completed (${count} rows)`);
-            setProgress(100);
-            const results = await getRunResults(runId);
-            resolve(results.map(r => r.result_data) as any[]);
-            return;
-          }
+          if (run.status === 'completed' || run.status === 'cancelled') {
+            if (run.status === 'completed') {
+              addLog(`Server processing completed (${count} rows)`);
+            } else {
+              addLog('Run cancelled');
+            }
+            setProgress(run.status === 'completed' ? 100 : progress);
 
-          if (run.status === 'cancelled') {
-            addLog('Run cancelled');
+            // Sync server cost data into costTracker so the Processing Summary shows it
+            const serverCost = run.total_cost || 0;
+            const serverTokensIn = run.total_tokens_in || 0;
+            const serverTokensOut = run.total_tokens_out || 0;
+            if (serverCost > 0 || serverTokensIn > 0 || serverTokensOut > 0) {
+              costTracker.trackOperation(
+                run.model_id || 'unknown',
+                'x'.repeat(Math.max(1, serverTokensIn * 4)),   // approximate chars for token estimate
+                'x'.repeat(Math.max(1, serverTokensOut * 4)),
+                { inputTokens: serverTokensIn, outputTokens: serverTokensOut }
+              );
+            }
+
             const results = await getRunResults(runId);
             resolve(results.map(r => r.result_data) as any[]);
             return;
