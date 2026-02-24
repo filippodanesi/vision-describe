@@ -413,6 +413,34 @@ async function processPartooRow(
   const zipcode = String(row[zipcodeKey] ?? '').trim();
   const status = String(row[statusKey] ?? 'open').trim();
 
+  // Business ID filter — skip row if not in filter list
+  const businessIdKey = mapping.businessId || 'Business identification';
+  const bizIdKeyActual = Object.keys(row).find(k => k === businessIdKey) ||
+    Object.keys(row).find(k => /business\s*id/i.test(k)) ||
+    Object.keys(row).find(k => /business\s*identification/i.test(k));
+  const businessId = bizIdKeyActual ? String(row[bizIdKeyActual] ?? '').trim() : '';
+
+  if (config.businessIdsFilter && config.businessIdsFilter.length > 0) {
+    const filterSet = new Set(config.businessIdsFilter);
+    if (!filterSet.has(businessId)) {
+      // Not in filter — return original row unchanged
+      processed._label = businessId || name || city || `Row ${rowIndex + 1}`;
+      return { result: processed, cost: 0, tokensIn: 0, tokensOut: 0 };
+    }
+  }
+
+  // Store type filter — skip row if store type not selected
+  if (config.storeTypeFilter && config.storeTypeFilter.length > 0) {
+    const groups = String(row[mapping.groups || 'Groupes'] ?? '').trim() || undefined;
+    const storeType = categorizeStoreType(groups);
+    const filterSet = new Set(config.storeTypeFilter);
+    if (!filterSet.has(storeType)) {
+      // Store type not selected — skip entirely (don't include in output)
+      processed._label = businessId || name || city || `Row ${rowIndex + 1}`;
+      return { result: processed, cost: 0, tokensIn: 0, tokensOut: 0 };
+    }
+  }
+
   // Dynamic column picking for language-specific description columns
   const language = detectLanguage(country, city);
   const deriveLangCodes = (lang: string): string[] => {
@@ -467,8 +495,7 @@ async function processPartooRow(
     processed[shortDescKey] = closureMsg.short;
     processed[longDescKey] = closureMsg.long;
     processed._optimizedFields = ['Short Description', 'Long Description'];
-    const bizIdKey = Object.keys(row).find(k => /business\s*id/i.test(k));
-    processed._label = (bizIdKey ? String(row[bizIdKey] ?? '') : '') || name || city || `Row ${rowIndex + 1}`;
+    processed._label = businessId || name || city || `Row ${rowIndex + 1}`;
     return { result: processed, cost: 0, tokensIn: 0, tokensOut: 0 };
   }
 
@@ -540,8 +567,7 @@ async function processPartooRow(
   processed._optimizedFields = fields;
 
   // Set label for activity log (use Business identification or store name)
-  const bizIdKey = Object.keys(row).find(k => /business\s*id/i.test(k));
-  processed._label = (bizIdKey ? String(row[bizIdKey] ?? '') : '') || name || city || `Row ${rowIndex + 1}`;
+  processed._label = businessId || name || city || `Row ${rowIndex + 1}`;
 
   return { result: processed, cost: 0, tokensIn: totalIn, tokensOut: totalOut };
 }
