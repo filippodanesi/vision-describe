@@ -133,24 +133,48 @@ export async function heartbeat(runId: string): Promise<void> {
 }
 
 export async function getCompletedRowIndices(runId: string): Promise<Set<number>> {
-  const { data, error } = await supabase
-    .from('run_results')
-    .select('row_index')
-    .eq('run_id', runId);
+  // Paginate to fetch ALL indices (Supabase default limit is 1000)
+  const PAGE_SIZE = 1000;
+  const allIndices: number[] = [];
+  let from = 0;
 
-  if (error || !data) return new Set();
-  return new Set(data.map((r) => r.row_index));
+  while (true) {
+    const { data, error } = await supabase
+      .from('run_results')
+      .select('row_index')
+      .eq('run_id', runId)
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error || !data || data.length === 0) break;
+    allIndices.push(...data.map((r) => r.row_index));
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+
+  return new Set(allIndices);
 }
 
 export async function getRunResults(runId: string): Promise<RunResultRecord[]> {
-  const { data, error } = await supabase
-    .from('run_results')
-    .select('*')
-    .eq('run_id', runId)
-    .order('row_index', { ascending: true });
+  // Paginate to fetch ALL results (Supabase default limit is 1000)
+  const PAGE_SIZE = 1000;
+  const allData: RunResultRecord[] = [];
+  let from = 0;
 
-  if (error || !data) return [];
-  return data as RunResultRecord[];
+  while (true) {
+    const { data, error } = await supabase
+      .from('run_results')
+      .select('*')
+      .eq('run_id', runId)
+      .order('row_index', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error || !data || data.length === 0) break;
+    allData.push(...(data as RunResultRecord[]));
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+
+  return allData;
 }
 
 export async function findInterruptedRuns(): Promise<RunRecord[]> {

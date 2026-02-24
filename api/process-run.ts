@@ -89,13 +89,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const rowsText = await fileData.text();
     const allRows: Record<string, unknown>[] = JSON.parse(rowsText);
 
-    // 5. Get already-completed row indices
-    const { data: completedData } = await supabaseAdmin
-      .from('run_results')
-      .select('row_index')
-      .eq('run_id', runId);
+    // 5. Get already-completed row indices (paginate — Supabase default limit is 1000)
+    const completedIndices = new Set<number>();
+    {
+      const PAGE_SIZE = 1000;
+      let from = 0;
+      while (true) {
+        const { data: page } = await supabaseAdmin
+          .from('run_results')
+          .select('row_index')
+          .eq('run_id', runId)
+          .range(from, from + PAGE_SIZE - 1);
 
-    const completedIndices = new Set((completedData || []).map((r: any) => r.row_index));
+        if (!page || page.length === 0) break;
+        for (const r of page) completedIndices.add((r as any).row_index);
+        if (page.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+    }
 
     // 6. Processing loop
     let processedInThisChain = 0;
@@ -232,7 +243,10 @@ async function markError(runId: string, message: string) {
   }).eq('id', runId);
 }
 
-/** Self-chain: invoke another instance of this function */
+/** Self-chain: invoke another instance of this function.
+ *  Alternates between /api/process-run and /api/process-run-chain
+ *  to avoid Vercel's 508 Loop Detected error.
+ *  Uses AbortController so we don't wait for the full 720s response. */
 async function selfChain(runId: string, currentChainCount: number, req: VercelRequest) {
   const chainingSecret = process.env.CHAINING_SECRET;
   const vercelUrl = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
@@ -243,17 +257,35 @@ async function selfChain(runId: string, currentChainCount: number, req: VercelRe
     updated_at: new Date().toISOString(),
   }).eq('id', runId);
 
+  // Alternate endpoint to break Vercel's loop detection
+  const currentPath = req.url || '';
+  const nextEndpoint = currentPath.includes('process-run-chain')
+    ? '/api/process-run'
+    : '/api/process-run-chain';
+
   try {
-    const r = await fetch(`${vercelUrl}/api/process-run`, {
+    // Abort after 30s — we only need the request to reach Vercel and spawn
+    // the new function, not wait for the full 720s processing response
+    const controller = new AbortController();
+    const abortTimer = setTimeout(() => controller.abort(), 30_000);
+
+    const r = await fetch(`${vercelUrl}${nextEndpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-chaining-secret': chainingSecret || '',
       },
       body: JSON.stringify({ runId }),
+      signal: controller.signal,
     });
+    clearTimeout(abortTimer);
     console.log(`Run ${runId}: self-chain invoked (chain #${currentChainCount + 1}, status=${r.status})`);
-  } catch (err) {
-    console.error(`Run ${runId}: self-chain failed:`, err);
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      // Expected — request was sent, we just didn't wait for the full response
+      console.log(`Run ${runId}: self-chain fired (chain #${currentChainCount + 1}), not waiting for response`);
+    } else {
+      console.error(`Run ${runId}: self-chain failed:`, err);
+    }
   }
 }

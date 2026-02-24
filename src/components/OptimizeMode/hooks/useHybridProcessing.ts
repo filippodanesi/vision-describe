@@ -473,12 +473,14 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           }
 
           // Fetch new run_results we haven't logged yet
+          // Use .range() to skip already-logged results (Supabase default limit is 1000)
           if (count > loggedIndices.size) {
             const { data: newResults } = await supabase
               .from('run_results')
               .select('row_index, result_data, cost, tokens_in, tokens_out')
               .eq('run_id', runId)
-              .order('row_index', { ascending: true });
+              .order('row_index', { ascending: true })
+              .range(loggedIndices.size, loggedIndices.size + 999);
 
             if (newResults) {
               for (const r of newResults) {
