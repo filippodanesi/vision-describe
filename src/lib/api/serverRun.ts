@@ -81,6 +81,31 @@ export async function startServerRun(
 }
 
 /**
+ * Resume a stalled server-side run.
+ * Called when polling detects no progress for a while.
+ * Returns true if the server accepted the resume, false if the run is still active.
+ */
+export async function resumeServerRun(runId: string): Promise<boolean> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('Not authenticated');
+  }
+
+  const response = await fetch('/api/resume-run', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ runId }),
+  });
+
+  if (!response.ok) return false;
+  const data = await response.json();
+  return data.resumed === true;
+}
+
+/**
  * Cancel a server-side processing run.
  */
 export async function cancelServerRun(runId: string): Promise<void> {

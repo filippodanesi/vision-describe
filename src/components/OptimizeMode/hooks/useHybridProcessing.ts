@@ -6,7 +6,7 @@ import {
   ProcessingChunk,
   ProcessingResult
 } from '@/lib/api/serverProcessing';
-import { startServerRun, cancelServerRun } from '@/lib/api/serverRun';
+import { startServerRun, cancelServerRun, resumeServerRun } from '@/lib/api/serverRun';
 import { optimizeTextWithAI } from '../utils/optimizationUtils';
 import { processAmazonRows } from '../processing/processAmazon';
 import {
@@ -449,7 +449,11 @@ export const useHybridProcessing = (): HybridProcessingHook => {
    *  (does not depend on Realtime). */
   const waitForServerCompletion = async (runId: string, totalRowCount: number): Promise<any[]> => {
     const POLL_INTERVAL = 3000; // 3 seconds
+    const STALE_THRESHOLD = 90_000; // 90 seconds without progress → resume
     const loggedIndices = new Set<number>();
+    let lastSeenCount = -1;
+    let lastProgressTime = Date.now();
+    let resumeAttempted = false;
 
     return new Promise((resolve, reject) => {
       const poll = async () => {
@@ -470,6 +474,30 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           setProcessedRows(count);
           if (totalRowCount > 0) {
             setProgress(Math.round((count / totalRowCount) * 100));
+          }
+
+          // Stale detection: if processed_count hasn't changed, try to resume
+          if (count !== lastSeenCount) {
+            lastSeenCount = count;
+            lastProgressTime = Date.now();
+            resumeAttempted = false; // reset so we can retry if it stalls again
+          } else if (
+            run.status === 'running' &&
+            Date.now() - lastProgressTime > STALE_THRESHOLD &&
+            !resumeAttempted
+          ) {
+            resumeAttempted = true;
+            addLog('Processing appears stalled — requesting server resume...');
+            try {
+              const resumed = await resumeServerRun(runId);
+              if (resumed) {
+                addLog('Server processing resumed');
+              } else {
+                addLog('Server reports run is still active, waiting...');
+              }
+            } catch {
+              addLog('Failed to request resume, will keep polling...');
+            }
           }
 
           // Fetch new run_results we haven't logged yet
