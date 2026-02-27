@@ -19,10 +19,10 @@ import { supabaseAdmin, getUserApiKeys } from './_lib/supabaseAdmin';
 import { processRow } from './_lib/processors';
 import type { ProcessRunPayload, RunDbRecord, RunConfig } from './_lib/types';
 
-export const config = { maxDuration: 800 };
+export const config = { maxDuration: 300 };
 
-/** Time limit for self-chaining (720s = 12 min), leaving 80s buffer */
-const CHAIN_THRESHOLD_MS = 720 * 1000;
+/** Time limit for self-chaining (240s = 4 min), leaving 60s buffer */
+const CHAIN_THRESHOLD_MS = 240 * 1000;
 /** Check for cancellation every N rows */
 const CANCEL_CHECK_INTERVAL = 10;
 

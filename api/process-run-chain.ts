@@ -10,4 +10,4 @@
  * pick up re-exported config from another module.
  */
 export { default } from './process-run';
-export const config = { maxDuration: 800 };
+export const config = { maxDuration: 300 };
