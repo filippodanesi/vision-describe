@@ -4,7 +4,7 @@
   ],
   "functions": {
     "api/start-run.ts": { "maxDuration": 30 },
-    "api/process-run.ts": { "maxDuration": 800 },
+    "api/process-run.ts": { "maxDuration": 300 },
     "api/cancel-run.ts": { "maxDuration": 10 }
   },
   "headers": [
