@@ -246,5 +246,32 @@ export async function downloadBatchResults(
   }
 
   const data = await response.json();
-  return data.results;
+  return data.rows;
+}
+
+/**
+ * Cancel an Anthropic batch run.
+ */
+export async function cancelBatchRun(
+  batchId: string,
+  runId: string
+): Promise<void> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('Not authenticated');
+  }
+
+  const response = await fetch('/api/batch-cancel', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ batchId, runId }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: response.statusText }));
+    throw new Error(err.error || `Server error: ${response.status}`);
+  }
 }

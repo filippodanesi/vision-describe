@@ -6,7 +6,7 @@ import {
   ProcessingChunk,
   ProcessingResult
 } from '@/lib/api/serverProcessing';
-import { startServerRun, cancelServerRun, resumeServerRun, startBatchRun, pollBatchStatus, downloadBatchResults } from '@/lib/api/serverRun';
+import { startServerRun, cancelServerRun, resumeServerRun, startBatchRun, pollBatchStatus, downloadBatchResults, cancelBatchRun } from '@/lib/api/serverRun';
 import { optimizeTextWithAI } from '../utils/optimizationUtils';
 import { processAmazonRows } from '../processing/processAmazon';
 import {
@@ -112,6 +112,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
   const cancelRequested = useRef(false);
   const startTimeRef = useRef<number>(0);
   const runIdRef = useRef<string | null>(null);
+  const batchIdRef = useRef<string | null>(null);
   const realtimeChannelRef = useRef<any>(null);
 
   // Cleanup Realtime subscription on unmount
@@ -159,7 +160,6 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     cancelRequested.current = true;
     addLog('Cancellation requested by user');
 
-    // For server-side runs, also call the cancel API
     const rid = runIdRef.current;
     if (rid && processingMode === 'server') {
       try {
@@ -167,6 +167,18 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         addLog('Server-side cancellation sent');
       } catch (err) {
         console.error('Failed to cancel server run:', err);
+      }
+    }
+
+    // For batch runs, cancel on Anthropic too
+    const bid = batchIdRef.current;
+    if (bid && rid && processingMode === 'batch') {
+      try {
+        await cancelBatchRun(bid, rid);
+        addLog('Batch cancellation sent to Anthropic');
+      } catch (err) {
+        console.error('Failed to cancel batch:', err);
+        addLog('Batch cancel failed — it may still complete on Anthropic');
       }
     }
   }, [processingMode, addLog]);
@@ -275,6 +287,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     );
 
     runIdRef.current = runId;
+    batchIdRef.current = batchId;
     setCurrentRunId(runId);
     addLog(`Batch ${batchId.substring(0, 12)}... created with ${total} requests`);
     addLog(`Languages: ${langs.join(', ')}`);
@@ -309,17 +322,25 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     }
 
     if (cancelRequested.current) {
-      addLog('Batch cancelled');
+      addLog('Batch cancelled on Anthropic');
+      batchIdRef.current = null;
+      setIsProcessing(false);
       return [];
     }
 
     // 3. Download results
     addLog('Batch complete! Downloading results...');
-    const results = await downloadBatchResults(batchId, runId, rows, langs);
-    addLog(`Downloaded ${results.length} processed rows`);
-
-    setProgress(100);
-    return results;
+    try {
+      const results = await downloadBatchResults(batchId, runId, rows, langs);
+      addLog(`Downloaded ${results?.length ?? 0} processed rows`);
+      setProgress(100);
+      batchIdRef.current = null;
+      return results || [];
+    } catch (err) {
+      addLog(`Download error: ${err instanceof Error ? err.message : 'unknown'}`);
+      batchIdRef.current = null;
+      throw err;
+    }
   };
 
   // --- Client-side processing fallback ---
