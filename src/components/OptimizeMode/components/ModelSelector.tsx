@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { models } from '@/lib/models';
-import { Brain, Zap, Globe, HelpCircle } from 'lucide-react';
+import { Brain, Zap, HelpCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -27,12 +26,11 @@ const getBadgeClass = (_value: string) => {
 
 const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelSelected, useCase = 'ecommerce', providerFilter }) => {
   const [selectedModel, setSelectedModel] = useState<string>('');
-  const [targetLanguage, setTargetLanguage] = useState<string>('en');
   const [dryRun, setDryRun] = useState<boolean>(false);
   const filteredModels = providerFilter ? models.filter(m => m.provider === providerFilter) : models;
 
   const handleConfirm = () => {
-    if (selectedModel) onModelSelected(selectedModel, { dryRun, targetLanguage });
+    if (selectedModel) onModelSelected(selectedModel, { dryRun });
   };
 
   return (
@@ -79,34 +77,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelSelected, useCase 
           })}
         </div>
 
-        {useCase === 'ecommerce' && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              Target Language
-              <Tooltip>
-                <TooltipTrigger>
-                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Select the language for the generated content. The AI will translate from the source language if needed.</p>
-                </TooltipContent>
-              </Tooltip>
-            </label>
-            <Select value={targetLanguage} onValueChange={setTargetLanguage}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select target language" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="de">Deutsch</SelectItem>
-                <SelectItem value="fr">Français</SelectItem>
-                <SelectItem value="it">Italiano</SelectItem>
-                <SelectItem value="es">Español</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )}
 
         <div className="flex items-center gap-3">
           <Button
