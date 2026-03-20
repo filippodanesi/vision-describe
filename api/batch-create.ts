@@ -32,15 +32,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const user = await verifyUserJwt(jwt);
 
     // 2. Parse request body
-    const { rows, config: runConfig, langs, fileName } = req.body as {
-      rows: Record<string, unknown>[];
+    const { rows: inlineRows, fileStoragePath, config: runConfig, langs, fileName } = req.body as {
+      rows?: Record<string, unknown>[];
+      fileStoragePath?: string;
       config: RunConfig;
       langs: string[];
       fileName: string;
     };
 
-    if (!rows || !Array.isArray(rows) || rows.length === 0) {
-      return res.status(400).json({ error: 'Missing or empty rows array' });
+    // Load rows from Storage or inline
+    let rows: Record<string, unknown>[];
+    if (fileStoragePath) {
+      const { data: fileData, error: downloadError } = await supabaseAdmin.storage
+        .from('run-files')
+        .download(fileStoragePath);
+      if (downloadError || !fileData) {
+        return res.status(400).json({ error: 'File not found at provided storage path' });
+      }
+      const text = await fileData.text();
+      rows = JSON.parse(text);
+      if (runConfig.dryRun) rows = rows.slice(0, 10);
+    } else if (inlineRows && Array.isArray(inlineRows) && inlineRows.length > 0) {
+      rows = runConfig.dryRun ? inlineRows.slice(0, 10) : inlineRows;
+    } else {
+      return res.status(400).json({ error: 'Provide either fileStoragePath or rows' });
     }
     if (!runConfig || !runConfig.modelId) {
       return res.status(400).json({ error: 'Missing required config.modelId' });
