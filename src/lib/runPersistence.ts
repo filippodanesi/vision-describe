@@ -23,7 +23,7 @@ export interface RunRecord {
   total_tokens_out: number;
   processed_count: number;
   file_storage_path: string | null;
-  processing_mode: 'client' | 'server';
+  processing_mode: 'client' | 'server' | 'batch';
   chain_count: number;
   error_message: string | null;
   created_at: string;
