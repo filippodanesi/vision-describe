@@ -105,7 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         system: Array<{
           type: 'text';
           text: string;
-          cache_control: { type: 'ephemeral'; ttl: string };
+          cache_control: { type: 'ephemeral' };
         }>;
         messages: Array<{ role: 'user'; content: string }>;
       };
@@ -132,7 +132,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               {
                 type: 'text',
                 text: ECOMMERCE_SYSTEM_PROMPT,
-                cache_control: { type: 'ephemeral', ttl: '1h' },
+                cache_control: { type: 'ephemeral' },
               },
             ],
             messages: [{ role: 'user', content: userPrompt }],

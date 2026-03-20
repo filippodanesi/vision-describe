@@ -297,8 +297,8 @@ export const useHybridProcessing = (): HybridProcessingHook => {
 
         // Update ETA
         const elapsed = Date.now() - startTimeRef.current;
-        if (processed > 0) {
-          const remaining = Math.round((elapsed / processed) * (total - processed) / 1000);
+        if (processedReqs > 0) {
+          const remaining = Math.round((elapsed / processedReqs) * (total - processedReqs) / 1000);
           const mins = Math.floor(remaining / 60);
           const secs = remaining % 60;
           setEstimatedTimeRemaining(mins > 0 ? `~${mins}m ${secs}s remaining` : `~${secs}s remaining`);
@@ -463,7 +463,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         setProcessingMode('server');
         runIdRef.current = runId;
         setCurrentRunId(runId);
-        addLog(`Server run ${runId.substring(0, 8)}... started — you can safely close this tab`);
+        addLog(`Server run ${runId.substring(0, 8)}... started`);
 
         // Subscribe to Realtime updates
         subscribeToRunUpdates(runId, effectiveRows.length);
