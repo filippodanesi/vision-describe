@@ -287,7 +287,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
       try {
         const result = await pollBatchStatus(batchId, runId);
         status = result.status;
-        const counts = result.requestCounts;
+        const counts = result.request_counts;
         const processedReqs = counts.succeeded + counts.errored + counts.canceled + counts.expired;
         const processedRowCount = Math.floor(processedReqs / langs.length);
         setProcessedRows(processedRowCount);

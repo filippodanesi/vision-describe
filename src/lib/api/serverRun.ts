@@ -194,7 +194,7 @@ export async function startBatchRun(
 export async function pollBatchStatus(
   batchId: string,
   runId: string
-): Promise<{ status: string; requestCounts: any }> {
+): Promise<{ status: string; request_counts: any }> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.access_token) {
     throw new Error('Not authenticated');
