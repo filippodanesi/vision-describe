@@ -121,7 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ).trim();
           }
 
-          mergedRows[rowIndex][`gen_MaterialLongDescriptionEcom_${lang}`] = gen;
+          mergedRows[rowIndex][`MaterialLongDescriptionEcom_${lang}`] = gen;
         }
 
         succeededCount++;

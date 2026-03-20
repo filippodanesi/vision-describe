@@ -107,21 +107,8 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
         const headerRow = worksheet.getRow(headerRowIndex);
         headerRow.eachCell((cell, idx) => { existingHeaders[idx - 1] = String(cell.value ?? `Column${idx}`); });
 
-        if (useCase === 'amazon' || useCase === 'ecommerce') {
-          // Only add gen_* columns for use cases that produce them
-          let genCols: string[];
-          if (useCase === 'amazon') {
-            genCols = ['gen_bullet_1','gen_bullet_2','gen_bullet_3','gen_bullet_4','gen_bullet_5','gen_description','gen_aplus_short'];
-          } else {
-            // Ecommerce: detect all gen_* columns from results (batch mode creates gen_MaterialLongDescriptionEcom_{lang})
-            const allGenKeys = new Set<string>();
-            for (const row of results) {
-              for (const key of Object.keys(row)) {
-                if (key.startsWith('gen_')) allGenKeys.add(key);
-              }
-            }
-            genCols = allGenKeys.size > 0 ? Array.from(allGenKeys).sort() : ['gen_description'];
-          }
+        if (useCase === 'amazon') {
+          const genCols = ['gen_bullet_1','gen_bullet_2','gen_bullet_3','gen_bullet_4','gen_bullet_5','gen_description','gen_aplus_short'];
 
           const ensureHeader = (name: string) => {
             if (!existingHeaders.includes(name)) {
@@ -132,7 +119,6 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
           genCols.forEach(ensureHeader);
           headerRow.commit();
 
-          // Write rows aligned by index — only gen_* columns
           const startDataRow = originalMeta?.dataStartRow || (headerRowIndex + 1);
           for (let i = 0; i < results.length; i++) {
             const excelRowIndex = startDataRow + i;
@@ -146,7 +132,7 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
             wsRow.commit();
           }
         } else {
-          // NEXT / AboutYou: overwrite existing columns in-place (no gen_* columns)
+          // Ecommerce / NEXT / AboutYou: overwrite existing columns in-place
           const startDataRow = originalMeta?.dataStartRow || (headerRowIndex + 1);
           for (let i = 0; i < results.length; i++) {
             const excelRowIndex = startDataRow + i;

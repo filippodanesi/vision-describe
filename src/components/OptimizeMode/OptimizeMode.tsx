@@ -946,9 +946,9 @@ export const OptimizeMode: React.FC = () => {
                           if (useCase === 'ecommerce') {
                             const sapNo = row['MaterialSAPMaterialNo'] || row['ColorSAPMaterialNo'] || '-';
                             const productName = row['MaterialMaterialDescription_en'] || '-';
-                            // Find the first gen_ field for preview
-                            const genKey = Object.keys(row).find(k => k.startsWith('gen_MaterialLongDescriptionEcom_')) || 'gen_description';
-                            const desc = String(row[genKey] || row['gen_description'] || '');
+                            // Preview: show first language description
+                            const descKey = Object.keys(row).find(k => k.startsWith('MaterialLongDescriptionEcom_'));
+                            const desc = descKey ? String(row[descKey] || '') : '';
                             return (
                               <TableRow key={index} className="hover:bg-muted/30">
                                 <TableCell className="font-mono text-xs text-muted-foreground">{sapNo}</TableCell>
