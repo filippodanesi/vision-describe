@@ -257,7 +257,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
 
     const langs = context?.langs || [context?.lang || 'en'];
     const totalRequests = rows.length * langs.length;
-    setTotalRows(totalRequests);
+    setTotalRows(rows.length);
 
     // 1. Upload and create batch
     const config = {
@@ -288,11 +288,12 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         const result = await pollBatchStatus(batchId, runId);
         status = result.status;
         const counts = result.requestCounts;
-        const processed = counts.succeeded + counts.errored + counts.canceled + counts.expired;
-        setProcessedRows(processed);
-        setProgress(Math.round((processed / total) * 100));
+        const processedReqs = counts.succeeded + counts.errored + counts.canceled + counts.expired;
+        const processedRowCount = Math.floor(processedReqs / langs.length);
+        setProcessedRows(processedRowCount);
+        setProgress(Math.round((processedReqs / total) * 100));
 
-        addLog(`Batch progress: ${counts.succeeded} succeeded, ${counts.processing} processing, ${counts.errored} errored`);
+        addLog(`Batch: ${counts.succeeded}/${total} requests done (${processedRowCount}/${rows.length} rows × ${langs.length} langs)`);
 
         // Update ETA
         const elapsed = Date.now() - startTimeRef.current;

@@ -842,6 +842,12 @@ export const OptimizeMode: React.FC = () => {
                               <TableHead className="font-normal text-foreground text-xs">Product Name</TableHead>
                               <TableHead className="font-normal text-foreground text-xs w-[300px]">Description</TableHead>
                             </>
+                          ) : useCase === 'ecommerce' ? (
+                            <>
+                              <TableHead className="font-normal text-foreground text-xs">SAP No</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs">Product Name</TableHead>
+                              <TableHead className="font-normal text-foreground text-xs w-[300px]">Optimized Text</TableHead>
+                            </>
                           ) : (
                             <>
                               <TableHead className="font-normal text-foreground text-xs">SKU</TableHead>
@@ -928,6 +934,25 @@ export const OptimizeMode: React.FC = () => {
                               <TableRow key={index} className="hover:bg-muted/30">
                                 <TableCell className="font-mono text-xs text-muted-foreground">{sku}</TableCell>
                                 <TableCell className="text-xs text-foreground">{title}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground max-w-[300px]">
+                                  <div className="line-clamp-2" title={desc}>
+                                    {desc ? desc.substring(0, 120) + (desc.length > 120 ? '...' : '') : '-'}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
+
+                          if (useCase === 'ecommerce') {
+                            const sapNo = row['MaterialSAPMaterialNo'] || row['ColorSAPMaterialNo'] || '-';
+                            const productName = row['MaterialMaterialDescription_en'] || '-';
+                            // Find the first gen_ field for preview
+                            const genKey = Object.keys(row).find(k => k.startsWith('gen_MaterialLongDescriptionEcom_')) || 'gen_description';
+                            const desc = String(row[genKey] || row['gen_description'] || '');
+                            return (
+                              <TableRow key={index} className="hover:bg-muted/30">
+                                <TableCell className="font-mono text-xs text-muted-foreground">{sapNo}</TableCell>
+                                <TableCell className="text-xs text-foreground">{productName}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground max-w-[300px]">
                                   <div className="line-clamp-2" title={desc}>
                                     {desc ? desc.substring(0, 120) + (desc.length > 120 ? '...' : '') : '-'}
