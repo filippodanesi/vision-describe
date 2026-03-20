@@ -109,9 +109,19 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
 
         if (useCase === 'amazon' || useCase === 'ecommerce') {
           // Only add gen_* columns for use cases that produce them
-          const genCols = useCase === 'amazon'
-            ? ['gen_bullet_1','gen_bullet_2','gen_bullet_3','gen_bullet_4','gen_bullet_5','gen_description','gen_aplus_short']
-            : ['gen_description'];
+          let genCols: string[];
+          if (useCase === 'amazon') {
+            genCols = ['gen_bullet_1','gen_bullet_2','gen_bullet_3','gen_bullet_4','gen_bullet_5','gen_description','gen_aplus_short'];
+          } else {
+            // Ecommerce: detect all gen_* columns from results (batch mode creates gen_MaterialLongDescriptionEcom_{lang})
+            const allGenKeys = new Set<string>();
+            for (const row of results) {
+              for (const key of Object.keys(row)) {
+                if (key.startsWith('gen_')) allGenKeys.add(key);
+              }
+            }
+            genCols = allGenKeys.size > 0 ? Array.from(allGenKeys).sort() : ['gen_description'];
+          }
 
           const ensureHeader = (name: string) => {
             if (!existingHeaders.includes(name)) {
