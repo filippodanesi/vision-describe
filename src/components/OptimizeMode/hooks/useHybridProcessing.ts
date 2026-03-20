@@ -293,7 +293,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
         setProcessedRows(processedRowCount);
         setProgress(Math.round((processedReqs / total) * 100));
 
-        addLog(`Batch: ${counts.succeeded}/${total} requests done (${processedRowCount}/${rows.length} rows × ${langs.length} langs)`);
+        addLog(`Batch: ${counts.succeeded} done, ${counts.processing || 0} processing, ${counts.errored || 0} errors / ${total} total (${processedRowCount}/${rows.length} rows × ${langs.length} langs)`);
 
         // Update ETA
         const elapsed = Date.now() - startTimeRef.current;

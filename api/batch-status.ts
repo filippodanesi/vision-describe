@@ -42,6 +42,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const client = new Anthropic({ apiKey });
     const batch = await client.messages.batches.retrieve(batchId);
 
+    console.log('batch-status response:', JSON.stringify({
+      id: batch.id,
+      processing_status: batch.processing_status,
+      request_counts: batch.request_counts,
+    }));
+
     // 5. Update run's processed_count based on succeeded requests
     const succeededCount = batch.request_counts?.succeeded ?? 0;
     await supabaseAdmin.from('runs').update({
