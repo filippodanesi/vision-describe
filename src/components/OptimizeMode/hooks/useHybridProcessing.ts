@@ -6,7 +6,7 @@ import {
   ProcessingChunk,
   ProcessingResult
 } from '@/lib/api/serverProcessing';
-import { startServerRun, cancelServerRun, resumeServerRun } from '@/lib/api/serverRun';
+import { startServerRun, cancelServerRun, resumeServerRun, startBatchRun, pollBatchStatus, downloadBatchResults } from '@/lib/api/serverRun';
 import { optimizeTextWithAI } from '../utils/optimizationUtils';
 import { processAmazonRows } from '../processing/processAmazon';
 import {
@@ -68,7 +68,7 @@ export interface HybridProcessingHook {
   processedRows: number;
   logs: string[];
   estimatedTimeRemaining: string;
-  processingMode: 'server' | 'client' | 'checking';
+  processingMode: 'server' | 'client' | 'batch' | 'checking';
   costTracker: ReturnType<typeof useCostTracker>;
   currentRunId: string | null;
   processFile: (
@@ -80,6 +80,7 @@ export interface HybridProcessingHook {
       useCase?: 'ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
       mappings?: any;
       lang?: string;
+      langs?: string[];
       dryRun?: boolean;
       businessIdsFilter?: Set<string> | null;
       storeTypeFilter?: Set<string> | null;
@@ -104,7 +105,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
   const [processedRows, setProcessedRows] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
   const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<string>('');
-  const [processingMode, setProcessingMode] = useState<'server' | 'client' | 'checking'>('checking');
+  const [processingMode, setProcessingMode] = useState<'server' | 'client' | 'batch' | 'checking'>('checking');
   const [currentRunId, setCurrentRunId] = useState<string | null>(null);
 
   const costTracker = useCostTracker();
@@ -127,8 +128,8 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     const handleBeforeUnload = () => {
       const rid = runIdRef.current;
       if (!rid) return;
-      // For server-side runs, don't mark as interrupted — the server continues
-      if (processingMode === 'server') return;
+      // For server-side and batch runs, don't mark as interrupted — the server continues
+      if (processingMode === 'server' || processingMode === 'batch') return;
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       if (!supabaseUrl || !supabaseKey) return;
@@ -226,6 +227,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
       selectedColumns,
       mappings: context?.mappings,
       lang: context?.lang,
+      langs: context?.langs,
       dryRun: context?.dryRun,
       businessIdsFilter: context?.businessIdsFilter
         ? Array.from(context.businessIdsFilter)
@@ -240,6 +242,83 @@ export const useHybridProcessing = (): HybridProcessingHook => {
 
     const { runId } = await startServerRun(rows, context?.fileName || 'file.xlsx', config);
     return { runId };
+  };
+
+  // --- Batch processing path (Anthropic Batch API) ---
+  const processWithBatch = async (
+    rows: any[],
+    selectedColumns: string[],
+    model: Model,
+    context?: any,
+    costTracker?: any
+  ): Promise<any[]> => {
+    setProcessingMode('batch');
+    addLog('Starting Anthropic Batch processing (50% cost savings)...');
+
+    const langs = context?.langs || [context?.lang || 'en'];
+    const totalRequests = rows.length * langs.length;
+    setTotalRows(totalRequests);
+
+    // 1. Upload and create batch
+    const config = {
+      useCase: context?.useCase || 'ecommerce',
+      modelId: model.id,
+      selectedColumns,
+      mappings: context?.mappings,
+      langs,
+      dryRun: context?.dryRun,
+      projectId: context?.projectId,
+    };
+
+    const { runId, batchId, totalRequests: total } = await startBatchRun(
+      rows, context?.fileName || 'file.xlsx', config, langs
+    );
+
+    runIdRef.current = runId;
+    setCurrentRunId(runId);
+    addLog(`Batch ${batchId.substring(0, 12)}... created with ${total} requests`);
+    addLog(`Languages: ${langs.join(', ')}`);
+
+    // 2. Poll for completion
+    let status = 'in_progress';
+    while (status === 'in_progress' && !cancelRequested.current) {
+      await new Promise(r => setTimeout(r, 15000)); // Poll every 15s
+
+      try {
+        const result = await pollBatchStatus(batchId, runId);
+        status = result.status;
+        const counts = result.requestCounts;
+        const processed = counts.succeeded + counts.errored + counts.canceled + counts.expired;
+        setProcessedRows(processed);
+        setProgress(Math.round((processed / total) * 100));
+
+        addLog(`Batch progress: ${counts.succeeded} succeeded, ${counts.processing} processing, ${counts.errored} errored`);
+
+        // Update ETA
+        const elapsed = Date.now() - startTimeRef.current;
+        if (processed > 0) {
+          const remaining = Math.round((elapsed / processed) * (total - processed) / 1000);
+          const mins = Math.floor(remaining / 60);
+          const secs = remaining % 60;
+          setEstimatedTimeRemaining(mins > 0 ? `~${mins}m ${secs}s remaining` : `~${secs}s remaining`);
+        }
+      } catch (err) {
+        addLog(`Poll error: ${err instanceof Error ? err.message : 'unknown'}`);
+      }
+    }
+
+    if (cancelRequested.current) {
+      addLog('Batch cancelled');
+      return [];
+    }
+
+    // 3. Download results
+    addLog('Batch complete! Downloading results...');
+    const results = await downloadBatchResults(batchId, runId, rows, langs);
+    addLog(`Downloaded ${results.length} processed rows`);
+
+    setProgress(100);
+    return results;
   };
 
   // --- Client-side processing fallback ---
@@ -335,6 +414,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
       useCase?: 'ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
       mappings?: any;
       lang?: string;
+      langs?: string[];
       dryRun?: boolean;
       businessIdsFilter?: Set<string> | null;
       storeTypeFilter?: Set<string> | null;
@@ -361,6 +441,18 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     // --- Try server-side processing first ---
     // Skip server-side for resume runs (they already have a run record)
     if (!context?.resumeRunId) {
+      // Use batch mode for multi-language Anthropic runs
+      const langs = context?.langs;
+      if (langs && langs.length > 0 && model.provider === 'anthropic' && context?.useCase === 'ecommerce') {
+        try {
+          const results = await processWithBatch(effectiveRows, selectedColumns, model, context, costTracker);
+          setIsProcessing(false);
+          return results;
+        } catch (err) {
+          addLog(`Batch processing failed: ${err instanceof Error ? err.message : 'unknown'}, falling back to server...`);
+        }
+      }
+
       try {
         setProcessingMode('checking');
         addLog('Starting server-side processing...');
@@ -591,6 +683,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
       useCase?: 'ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
       mappings?: any;
       lang?: string;
+      langs?: string[];
       dryRun?: boolean;
       businessIdsFilter?: Set<string> | null;
       storeTypeFilter?: Set<string> | null;

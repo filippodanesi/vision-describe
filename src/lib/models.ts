@@ -37,6 +37,16 @@ export const models: Model[] = [
     speed: 'Fast',
     cost: 'Medium',
     quality: 'Excellent',
+  },
+  {
+    id: 'claude-haiku-4-5-20251001',
+    name: 'Claude Haiku 4.5',
+    description: 'Fastest Anthropic model — ideal for high-volume batch processing (200K context)',
+    provider: 'anthropic',
+    costEffective: true,
+    speed: 'Fast',
+    cost: 'Low',
+    quality: 'Good',
   }
 ];
 

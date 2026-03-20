@@ -6,6 +6,13 @@
  */
 import { callAI, AiResponse } from './aiClients';
 import { RunConfig } from './types';
+import {
+  wiringAndPaddingCompact,
+  seriesNameRules,
+  truthfulnessRules,
+  ECOMMERCE_SYSTEM_PROMPT,
+  buildEcommerceUserPrompt,
+} from './ecommercePrompts';
 
 /** Helper to determine provider from model id */
 function getProvider(modelId: string): 'openai' | 'anthropic' {
@@ -573,32 +580,10 @@ async function processPartooRow(
 }
 
 // ===========================================================================
-// Shared helpers — inlined from src/lib/prompts/rules/
+// Shared helpers — imported from ecommercePrompts.ts
+// (wiringAndPaddingCompact, seriesNameRules, truthfulnessRules,
+//  ECOMMERCE_SYSTEM_PROMPT, buildEcommerceUserPrompt)
 // ===========================================================================
-
-function wiringAndPaddingCompact(): string {
-  return `WIRING & PADDING (FOR BRA PRODUCTS):
-- When wiring/padding info is provided, include as FIRST bullet point
-- Format: "[Wiring], [padding] bra for [benefit]"
-- Examples: "Non-wired, padded bra for everyday comfort" / "Wired, non-padded bra for natural shaping"
-- SWIMWEAR: Skip wiring for one-pieces, mention padding only if relevant
-- BEACHWEAR: Do NOT include wiring/padding info`;
-}
-
-function seriesNameRules(): string {
-  return `SERIES NAME FORMATTING:
-- ALWAYS remove the "O-" or "O -" prefix from series names
-- For series ending in "T" (e.g., "Ladyform Soft T"), use the name without "T"
-- ALWAYS refer to series as "the [Series Name] series" for clarity`;
-}
-
-function truthfulnessRules(): string {
-  return `TRUTHFULNESS & ANTI-INFERENCE (CRITICAL):
-- NEVER add technical specifications not explicitly stated in the input
-- NEVER infer product features from generic terms
-- Stay STRICTLY within the information provided in the source material
-- When translating technical terms, use NEUTRAL language unless specifics are provided`;
-}
 
 function preFlight(): string {
   return `PRE-FLIGHT VERIFICATION (internal only — do NOT include in output):
@@ -1280,26 +1265,8 @@ async function processAboutYouRow(
 
 // ===========================================================================
 // Ecommerce processor — full port of client-side logic
+// (ECOMMERCE_SYSTEM_PROMPT now imported from ecommercePrompts.ts)
 // ===========================================================================
-
-const ECOMMERCE_SYSTEM_PROMPT = `
-You optimize e-commerce long descriptions. Return ONLY plain text.
-- Keep facts, improve readability and flow.
-- 1–3 paragraphs, no pricing/shipping/competitor references.
-- Maintain brand-safe tone.
-
-${wiringAndPaddingCompact()}
-
-${seriesNameRules()}
-
-${truthfulnessRules()}
-
-PRE-FLIGHT VERIFICATION (internal only — do NOT include in output):
-Silently verify before returning:
-1. Every technical claim exists explicitly in the input source — remove any that do not
-2. Replace inferred details with neutral language
-3. No assumptions or invented specs in the output
-`;
 
 async function processEcommerceRow(
   row: Record<string, unknown>,

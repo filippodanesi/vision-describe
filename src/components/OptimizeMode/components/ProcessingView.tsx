@@ -9,7 +9,7 @@ interface ProcessingViewProps {
   processedRows: number;
   logs: string[];
   estimatedTimeRemaining?: string;
-  processingMode?: 'server' | 'client' | 'checking';
+  processingMode?: 'server' | 'client' | 'batch' | 'checking';
   onCancel: () => void;
 }
 
@@ -51,6 +51,14 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
           <Monitor className="h-4 w-4 text-muted-foreground shrink-0" />
           <p className="text-sm text-muted-foreground">
             Processing in your browser — keep this tab open
+          </p>
+        </div>
+      )}
+      {processingMode === 'batch' && (
+        <div className="flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-3 dark:border-purple-900 dark:bg-purple-950/30">
+          <Cloud className="h-4 w-4 text-purple-500 shrink-0" />
+          <p className="text-sm text-purple-700 dark:text-purple-300">
+            Batch processing on Anthropic servers — 50% cost savings — you can close this tab
           </p>
         </div>
       )}

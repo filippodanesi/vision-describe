@@ -19,6 +19,7 @@ export interface RunConfig {
   selectedColumns?: string[];
   mappings?: Record<string, unknown>;
   lang?: string;
+  langs?: string[];
   dryRun?: boolean;
   businessIdsFilter?: string[];
   storeTypeFilter?: string[];
@@ -58,7 +59,8 @@ export interface RunDbRecord {
   total_tokens_out: number;
   processed_count: number;
   file_storage_path: string | null;
-  processing_mode: 'client' | 'server';
+  processing_mode: 'client' | 'server' | 'batch';
+  batch_id?: string;
   chain_count: number;
   error_message: string | null;
   created_at: string;

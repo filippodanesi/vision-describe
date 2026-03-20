@@ -72,7 +72,7 @@ export async function callAnthropic(
 ): Promise<AiResponse> {
   const client = new Anthropic({ apiKey });
 
-  const isSonnet45 = modelId.includes('sonnet-4-5');
+  const isSonnet45Plus = modelId.includes('sonnet-4-5') || modelId.includes('sonnet-4-6');
 
   const requestParams: Record<string, unknown> = {
     model: modelId,
@@ -84,10 +84,10 @@ export async function callAnthropic(
       },
     ],
     messages: [{ role: 'user', content: userPrompt }],
-    max_tokens: isSonnet45 ? 16000 : 2000,
+    max_tokens: isSonnet45Plus ? 16000 : 2000,
   };
 
-  if (isSonnet45) {
+  if (isSonnet45Plus) {
     requestParams.thinking = { type: 'enabled', budget_tokens: 5000 };
   }
 

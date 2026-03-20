@@ -5,7 +5,10 @@
   "functions": {
     "api/start-run.ts": { "maxDuration": 30 },
     "api/process-run.ts": { "maxDuration": 300 },
-    "api/cancel-run.ts": { "maxDuration": 10 }
+    "api/cancel-run.ts": { "maxDuration": 10 },
+    "api/batch-create.ts": { "maxDuration": 60 },
+    "api/batch-status.ts": { "maxDuration": 10 },
+    "api/batch-results.ts": { "maxDuration": 300 }
   },
   "headers": [
     {

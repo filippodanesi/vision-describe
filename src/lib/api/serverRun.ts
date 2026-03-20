@@ -12,6 +12,7 @@ export interface ServerRunConfig {
   selectedColumns?: string[];
   mappings?: Record<string, unknown>;
   lang?: string;
+  langs?: string[];
   dryRun?: boolean;
   businessIdsFilter?: string[];
   storeTypeFilter?: string[];
@@ -127,4 +128,123 @@ export async function cancelServerRun(runId: string): Promise<void> {
     const err = await response.json().catch(() => ({ error: response.statusText }));
     throw new Error(err.error || `Server error: ${response.status}`);
   }
+}
+
+/**
+ * Start a batch processing run on Anthropic's Batch API.
+ */
+export async function startBatchRun(
+  rows: Record<string, unknown>[],
+  fileName: string,
+  config: ServerRunConfig,
+  langs: string[]
+): Promise<{ runId: string; batchId: string; totalRequests: number }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('Not authenticated');
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('Not authenticated');
+  }
+
+  // 1. Upload rows to Supabase Storage (bypasses Vercel body size limit)
+  const tempId = crypto.randomUUID();
+  const storagePath = `${user.id}/${tempId}.json`;
+  const rowsJson = JSON.stringify(rows);
+
+  const { error: uploadError } = await supabase.storage
+    .from('run-files')
+    .upload(storagePath, rowsJson, {
+      contentType: 'application/json',
+      upsert: true,
+    });
+
+  if (uploadError) {
+    throw new Error(`Failed to upload file data: ${uploadError.message}`);
+  }
+
+  // 2. Call /api/batch-create with storage path + config
+  const response = await fetch('/api/batch-create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({
+      fileStoragePath: storagePath,
+      fileName,
+      config,
+      langs,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: response.statusText }));
+    throw new Error(err.error || `Server error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Poll the status of an Anthropic batch run.
+ */
+export async function pollBatchStatus(
+  batchId: string,
+  runId: string
+): Promise<{ status: string; requestCounts: any }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('Not authenticated');
+  }
+
+  const response = await fetch('/api/batch-status', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ batchId, runId }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: response.statusText }));
+    throw new Error(err.error || `Server error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Download and merge results from a completed Anthropic batch.
+ */
+export async function downloadBatchResults(
+  batchId: string,
+  runId: string,
+  rows: Record<string, unknown>[],
+  langs: string[]
+): Promise<any[]> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('Not authenticated');
+  }
+
+  const response = await fetch('/api/batch-results', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ batchId, runId, rows, langs }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: response.statusText }));
+    throw new Error(err.error || `Server error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.results;
 }

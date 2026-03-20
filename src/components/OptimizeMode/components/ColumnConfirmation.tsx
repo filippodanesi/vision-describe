@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { CheckCircle, AlertTriangle, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { USECASE_PROFILES } from '../usecases';
@@ -92,7 +93,7 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
   onBack,
 }) => {
   const [mappings, setMappings] = useState<ColumnMapping[]>([]);
-  const [workLang, setWorkLang] = useState<string>('');
+  const [selectedLangs, setSelectedLangs] = useState<string[]>([]);
   const [availableLangs, setAvailableLangs] = useState<string[]>([]);
   const [amazonMapping, setAmazonMapping] = useState<{
     productId?: string;
@@ -130,11 +131,14 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
         .filter(Boolean) as string[]
     ));
     setAvailableLangs(langs);
-    const defaultLang = langs[0] || '';
-    setWorkLang(defaultLang);
+    // Default: ALL languages selected
+    setSelectedLangs(langs);
 
-    const selectedForLang = selectedColumns.filter(c => new RegExp(`MaterialLongDescriptionEcom_${defaultLang}$`, 'i').test(c));
-    const initialMappings: ColumnMapping[] = (selectedForLang.length ? selectedForLang : selectedColumns).map(column => {
+    // Build mappings for ALL selected languages (all by default)
+    const selectedForLangs = selectedColumns.filter(c =>
+      langs.some(l => new RegExp(`MaterialLongDescriptionEcom_${l}$`, 'i').test(c))
+    );
+    const initialMappings: ColumnMapping[] = (selectedForLangs.length ? selectedForLangs : selectedColumns).map(column => {
       const langMatch = column.match(/_([a-z]{2})$/i);
       const language = langMatch ? langMatch[1].toUpperCase() : 'UNK';
       const availableShortDescColumns = fileData.columns.filter(col => {
@@ -144,7 +148,7 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
         const isAltStyle = /^materialalternativestyle_/i.test(col);
         return isShortDesc || isSC || isAltStyle;
       });
-      const matchedShortDescColumn = langMatch 
+      const matchedShortDescColumn = langMatch
         ? findMatchingShortDescriptionColumn(fileData.columns, langMatch[1])
         : '';
       return {
@@ -157,6 +161,37 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
 
     setMappings(initialMappings);
   }, [selectedColumns, fileData.columns, useCase]);
+
+  // Rebuild mappings when selectedLangs changes (after initial load)
+  useEffect(() => {
+    if (useCase === 'amazon' || availableLangs.length === 0) return;
+
+    const selectedForLangs = selectedColumns.filter(c =>
+      selectedLangs.some(l => new RegExp(`MaterialLongDescriptionEcom_${l}$`, 'i').test(c))
+    );
+    const newMappings: ColumnMapping[] = (selectedForLangs.length ? selectedForLangs : []).map(column => {
+      const langMatch = column.match(/_([a-z]{2})$/i);
+      const language = langMatch ? langMatch[1].toUpperCase() : 'UNK';
+      const availableShortDescColumns = fileData.columns.filter(col => {
+        const lower = col.toLowerCase();
+        const isShortDesc = lower.includes('short description');
+        const isSC = /^sc(\b|[_\s-][a-z]{2}$|$)/i.test(col);
+        const isAltStyle = /^materialalternativestyle_/i.test(col);
+        return isShortDesc || isSC || isAltStyle;
+      });
+      const matchedShortDescColumn = langMatch
+        ? findMatchingShortDescriptionColumn(fileData.columns, langMatch[1])
+        : '';
+      return {
+        longDescColumn: column,
+        language,
+        matchedShortDescColumn,
+        availableShortDescColumns,
+      };
+    });
+
+    setMappings(newMappings);
+  }, [selectedLangs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleShortDescChange = (index: number, newShortDescColumn: string) => {
     // Convert special value back to empty string
@@ -171,7 +206,7 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
       onConfirm({ useCase: 'amazon', mapping: amazonMapping } as any);
       return;
     }
-    onConfirm({ useCase: 'ecommerce', workLang, mappings } as any);
+    onConfirm({ useCase: 'ecommerce', workLangs: selectedLangs, mappings } as any);
   };
 
 
@@ -209,19 +244,47 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
       )}
 
       {useCase === 'ecommerce' && availableLangs.length > 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
-          <label className="text-sm font-medium text-gray-700 mb-2 block">Content language (input = output)</label>
-          <Select value={workLang} onValueChange={(v) => setWorkLang(v)}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select content language" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableLangs.map(l => (
-                <SelectItem key={l} value={l}>{l}</SelectItem>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Content Languages</CardTitle>
+            <CardDescription>Select which languages to process (input = output)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-gray-500">{selectedLangs.length} of {availableLangs.length} selected</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (selectedLangs.length === availableLangs.length) {
+                    setSelectedLangs([]);
+                  } else {
+                    setSelectedLangs([...availableLangs]);
+                  }
+                }}
+              >
+                {selectedLangs.length === availableLangs.length ? 'Deselect All' : 'Select All'}
+              </Button>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {availableLangs.map(lang => (
+                <label key={lang} className="flex items-center gap-2 cursor-pointer rounded-md border border-gray-200 px-3 py-2 hover:bg-gray-50 transition-colors">
+                  <Checkbox
+                    checked={selectedLangs.includes(lang)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedLangs(prev => [...prev, lang]);
+                      } else {
+                        setSelectedLangs(prev => prev.filter(l => l !== lang));
+                      }
+                    }}
+                  />
+                  <span className="text-sm font-mono font-medium uppercase">{lang}</span>
+                </label>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <div className="space-y-4">

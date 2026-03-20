@@ -402,6 +402,7 @@ export const OptimizeMode: React.FC = () => {
           mappings: columnMappings,
           dryRun: options?.dryRun,
           lang: options?.targetLanguage,
+          langs: columnMappings?.workLangs,
           businessIdsFilter: businessIdsFilter,
           storeTypeFilter: storeTypeFilter,
           colorMappings,
