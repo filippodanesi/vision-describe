@@ -14,7 +14,7 @@ import Papa from 'papaparse';
 
 interface FileUploadProps {
   onFileUploaded: (data: { rows: any[]; columns: string[]; meta?: any }) => void;
-  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
+  useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
 }
 
 /**

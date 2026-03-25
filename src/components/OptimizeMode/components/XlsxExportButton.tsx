@@ -12,7 +12,7 @@ interface XlsxExportButtonProps {
     dataStartRow?: number;
     fileType?: 'xlsx' | 'xlsm';
   };
-  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
+  useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
   results: any[];
   isDisabled?: boolean;
 }

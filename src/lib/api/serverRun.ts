@@ -7,7 +7,7 @@
 import { supabase } from '../supabase';
 
 export interface ServerRunConfig {
-  useCase: 'ecommerce' | 'amazon' | 'partoo' | 'next' | 'aboutyou';
+  useCase: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'partoo' | 'next' | 'aboutyou';
   modelId: string;
   selectedColumns?: string[];
   mappings?: Record<string, unknown>;

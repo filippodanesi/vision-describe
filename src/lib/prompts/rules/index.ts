@@ -3,4 +3,5 @@ export { wiringAndPaddingRules, wiringAndPaddingCompact } from './wiringAndPaddi
 export { seriesNameRules } from './seriesNameFormatting';
 export { aiBannedPhrases } from './aiStyleGuard';
 export { triumphBrandExpressions } from './brandExpressions';
+export { sloggiBrandExpressions, sloggiBrandVoiceCompact } from './sloggiBrandExpressions';
 export { sustainabilityHandling } from './sustainability';

@@ -17,7 +17,7 @@ interface ColumnMapping {
 interface ColumnConfirmationProps {
   fileData: { rows: any[]; columns: string[] };
   selectedColumns: string[];
-  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
+  useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
   onConfirm: (mappings: ColumnMapping[]) => void;
   onBack: () => void;
 }
@@ -243,7 +243,7 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
         </Alert>
       )}
 
-      {useCase === 'ecommerce' && availableLangs.length > 0 && (
+      {(useCase === 'ecommerce' || useCase === 'sloggi-ecommerce') && availableLangs.length > 0 && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Content Languages</CardTitle>

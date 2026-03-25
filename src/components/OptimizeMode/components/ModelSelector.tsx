@@ -16,7 +16,7 @@ import {
 
 interface ModelSelectorProps {
   onModelSelected: (modelId: string, options?: { dryRun?: boolean; targetLanguage?: string }) => void;
-  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
+  useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
   providerFilter?: 'openai' | 'anthropic';
 }
 

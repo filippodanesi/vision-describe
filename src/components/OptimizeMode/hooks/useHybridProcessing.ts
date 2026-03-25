@@ -77,7 +77,7 @@ export interface HybridProcessingHook {
     model: Model,
     apiKey: string,
     context?: {
-      useCase?: 'ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
+      useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
       mappings?: any;
       lang?: string;
       langs?: string[];
@@ -348,7 +348,8 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     chunk: ProcessingChunk,
     globalRowOffset: number = 0,
     totalGlobalRows: number = 0,
-    costTracker?: any
+    costTracker?: any,
+    systemPromptOverride?: string
   ): Promise<ProcessingResult> => {
     const { rows, selectedColumns, model, apiKey } = chunk;
     const processedRows: any[] = [];
@@ -392,7 +393,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           const keywordText = targetKeywords.length > 0 ? targetKeywords[0] : 'no category';
           addLog(`${productId} | ${language.toLowerCase()} | ${keywordText}`);
 
-          const result = await optimizeTextWithAI(original, targetKeywords, {}, model, apiKey);
+          const result = await optimizeTextWithAI(original, targetKeywords, {}, model, apiKey, systemPromptOverride);
           processedRow[column] = result.content;
 
           let costRecord = null;
@@ -433,7 +434,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     model: Model,
     apiKey: string,
     context?: {
-      useCase?: 'ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
+      useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
       mappings?: any;
       lang?: string;
       langs?: string[];
@@ -465,7 +466,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     if (!context?.resumeRunId) {
       // Use batch mode for multi-language Anthropic runs
       const langs = context?.langs;
-      if (langs && langs.length > 0 && model.provider === 'anthropic' && context?.useCase === 'ecommerce') {
+      if (langs && langs.length > 0 && model.provider === 'anthropic' && (context?.useCase === 'ecommerce' || context?.useCase === 'sloggi-ecommerce')) {
         try {
           const results = await processWithBatch(effectiveRows, selectedColumns, model, context, costTracker);
           setIsProcessing(false);
@@ -702,7 +703,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     model: Model,
     apiKey: string,
     context?: {
-      useCase?: 'ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
+      useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
       mappings?: any;
       lang?: string;
       langs?: string[];
@@ -829,7 +830,14 @@ export const useHybridProcessing = (): HybridProcessingHook => {
           continue;
         }
 
-        const result = await processChunkClientSide(chunk, globalRowOffset, rows.length, costTracker);
+        // For sloggi-ecommerce, pass the sloggi system prompt override
+        let systemPromptOverride: string | undefined;
+        if (context?.useCase === 'sloggi-ecommerce') {
+          const { sloggiSystemPrompt } = await import('../utils/prompts/sloggiSystemPrompt');
+          systemPromptOverride = sloggiSystemPrompt;
+        }
+
+        const result = await processChunkClientSide(chunk, globalRowOffset, rows.length, costTracker, systemPromptOverride);
         allProcessedRows.push(...result.processedRows);
         if (activeRunId && result.processedRows.length > 0) {
           saveRowResult(activeRunId, i, result.processedRows[0] as Record<string, unknown>, result.cost?.totalCost, result.cost?.tokenUsage?.input, result.cost?.tokenUsage?.output);

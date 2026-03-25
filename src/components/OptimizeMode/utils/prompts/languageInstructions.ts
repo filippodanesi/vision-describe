@@ -245,10 +245,10 @@ export const BRAND_TOV = {
   },
   
   sloggi: {
-    tone: 'Comfortable, easy-going, reliable',
-    keywords: ['comfort', 'everyday', 'simple', 'practical', 'feel-good'],
-    style: 'Friendly, approachable, unpretentious',
-    avoid: ['too formal', 'complicated', 'fashion-focused']
+    tone: 'Authentic, joyful, inclusive, bold — peer-to-peer, never preachy',
+    keywords: ['comfort', 'move in comfort', 'freedom', 'everyday', 'feel-good', 'nothing should hold us back', 'inclusive'],
+    style: 'Simple, clear, direct. Peer-to-peer — celebrate everyone. Joyful and positive without being silly.',
+    avoid: ['luxury/aspirational tone', 'humour/puns/jokes', 'gendered greetings ("hey ladies")', 'forced friendliness', 'complex/pretentious language', 'objectifying language']
   }
 };
 

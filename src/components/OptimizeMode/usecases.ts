@@ -1,4 +1,4 @@
-export type UseCase = 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
+export type UseCase = 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
 
 export type MappingField =
   | 'productId'
@@ -48,6 +48,22 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
   ecommerce: {
     id: 'inriver-ecommerce-v1',
     label: 'E-commerce (triumph.com)',
+    detectors: {
+      productId: [rx('^MaterialSAPMaterialNo$')],
+      title: [rx('^MaterialSeriesName$')],
+      descriptionIn: [rx('^MaterialLongDescriptionEcom_([a-z]{2})$')],
+      bulletIn1: [rx('^Short description .*')],
+      bulletIn2: [rx('^Short description .*')],
+      bulletIn3: [rx('^Short description .*')],
+      bulletIn4: [rx('^Short description .*')],
+      bulletIn5: [rx('^Short description .*')],
+    },
+    required: ['productId', 'descriptionIn'],
+    outputColumns: ['gen_description'],
+  },
+  'sloggi-ecommerce': {
+    id: 'inriver-sloggi-ecommerce-v1',
+    label: 'E-commerce (sloggi.com)',
     detectors: {
       productId: [rx('^MaterialSAPMaterialNo$')],
       title: [rx('^MaterialSeriesName$')],

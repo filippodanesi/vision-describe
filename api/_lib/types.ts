@@ -14,7 +14,7 @@ export interface StartRunRequest {
 }
 
 export interface RunConfig {
-  useCase: 'ecommerce' | 'amazon' | 'partoo' | 'next' | 'aboutyou';
+  useCase: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'partoo' | 'next' | 'aboutyou';
   modelId: string;
   selectedColumns?: string[];
   mappings?: Record<string, unknown>;

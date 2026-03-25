@@ -1,7 +1,13 @@
 import { Model } from '@/lib/models';
 import { optimizeTextWithAI } from '../utils/optimizationUtils';
-import { ECOMMERCE_SYSTEM_PROMPT } from '../utils/prompts/ecommerceSystemPrompt';
+import { ECOMMERCE_SYSTEM_PROMPT, SLOGGI_ECOMMERCE_SYSTEM_PROMPT } from '../utils/prompts/ecommerceSystemPrompt';
 import { buildEcomOptimizePrompt } from '../utils/prompts/ecommerceTasks';
+
+/** Detect whether a row belongs to sloggi based on MaterialBrand column. */
+function isSloggiBrand(row: Record<string, unknown>): boolean {
+  const brand = String(row['MaterialBrand'] ?? row['MaterialMasterBrand'] ?? '').trim().toLowerCase();
+  return brand === 'sloggi' || brand === 'sg';
+}
 
 export async function processEcommerceRows(
   rows: any[],
@@ -64,12 +70,15 @@ export async function processEcommerceRows(
     const seriesDescription = String(row['MaterialB2CSeriesDescription_en'] ?? '').trim();
     const styleDescription = String(row['MaterialB2CStyleDescription_en'] ?? '').trim();
 
-    addLog?.(`${id} | ecom:${lang} | wiring=${wiringInfo || 'N/A'} | padding=${paddingInfo || 'N/A'}`);
+    const sloggi = isSloggiBrand(row);
+    addLog?.(`${id} | ecom:${lang} | brand=${sloggi ? 'sloggi' : 'triumph'} | wiring=${wiringInfo || 'N/A'} | padding=${paddingInfo || 'N/A'}`);
 
     if (!description) {
       out.push(processed);
       continue;
     }
+
+    const systemPrompt = sloggi ? SLOGGI_ECOMMERCE_SYSTEM_PROMPT : ECOMMERCE_SYSTEM_PROMPT;
 
     const res = await optimizeTextWithAI(
       buildEcomOptimizePrompt({
@@ -88,7 +97,7 @@ export async function processEcommerceRows(
       null,
       model,
       apiKey,
-      ECOMMERCE_SYSTEM_PROMPT
+      systemPrompt
     );
     let gen = (res.content || '').trim();
     // Basic validations: strip links/emails/prices, normalize spacing

@@ -842,7 +842,7 @@ export const OptimizeMode: React.FC = () => {
                               <TableHead className="font-normal text-foreground text-xs">Product Name</TableHead>
                               <TableHead className="font-normal text-foreground text-xs w-[300px]">Description</TableHead>
                             </>
-                          ) : useCase === 'ecommerce' ? (
+                          ) : (useCase === 'ecommerce' || useCase === 'sloggi-ecommerce') ? (
                             <>
                               <TableHead className="font-normal text-foreground text-xs">SAP No</TableHead>
                               <TableHead className="font-normal text-foreground text-xs">Product Name</TableHead>
@@ -943,7 +943,7 @@ export const OptimizeMode: React.FC = () => {
                             );
                           }
 
-                          if (useCase === 'ecommerce') {
+                          if (useCase === 'ecommerce' || useCase === 'sloggi-ecommerce') {
                             const sapNo = row['MaterialSAPMaterialNo'] || row['ColorSAPMaterialNo'] || '-';
                             const productName = row['MaterialMaterialDescription_en'] || '-';
                             // Preview: show first language description

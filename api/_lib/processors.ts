@@ -11,6 +11,7 @@ import {
   seriesNameRules,
   truthfulnessRules,
   ECOMMERCE_SYSTEM_PROMPT,
+  SLOGGI_ECOMMERCE_SYSTEM_PROMPT,
   buildEcommerceUserPrompt,
 } from './ecommercePrompts';
 
@@ -62,6 +63,7 @@ export async function processRow(
     case 'aboutyou':
       return processAboutYouRow(row, rowIndex, model, apiKey, config);
     case 'ecommerce':
+    case 'sloggi-ecommerce':
       return processEcommerceRow(row, rowIndex, model, apiKey, config);
     default:
       return processGenericRow(row, rowIndex, model, apiKey, config);
@@ -1319,7 +1321,8 @@ async function processEcommerceRow(
   if (productGroup) prompt += `- Product Group: ${productGroup}\n`;
   prompt += `LANGUAGE: ${language}\n\nIMPORTANT: If Wiring Type and/or Padding Type are provided, include them as the FIRST bullet point in the format: "[Wiring], [padding] bra for [benefit]"\nReturn ONLY the optimized description.`;
 
-  const res = await serverOptimize(prompt, model, apiKey, ECOMMERCE_SYSTEM_PROMPT);
+  const systemPrompt = config.useCase === 'sloggi-ecommerce' ? SLOGGI_ECOMMERCE_SYSTEM_PROMPT : ECOMMERCE_SYSTEM_PROMPT;
+  const res = await serverOptimize(prompt, model, apiKey, systemPrompt);
   totalIn += res.tokens.inputTokens;
   totalOut += res.tokens.outputTokens;
 

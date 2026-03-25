@@ -6,7 +6,7 @@ interface ExportResultsProps {
   results: any;
   isDisabled: boolean;
   originalMeta?: any;
-  useCase?: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
+  useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
 }
 
 const ExportResults: React.FC<ExportResultsProps> = ({ results, isDisabled, originalMeta, useCase = 'ecommerce' }) => {

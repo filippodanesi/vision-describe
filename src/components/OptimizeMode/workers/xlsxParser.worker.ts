@@ -3,7 +3,7 @@
 // @ts-ignore - Workers run in a different context
 import * as XLSX from 'xlsx';
 
-type UseCase = 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
+type UseCase = 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo';
 
 interface ParseConfig {
   maxRows?: number;
@@ -159,7 +159,7 @@ self.onmessage = (ev: MessageEvent<ParseRequest>) => {
 
     // Pick the correct worksheet per use case
     let sheetName = workbook.SheetNames[0];
-    if (useCase === 'ecommerce') {
+    if (useCase === 'ecommerce' || useCase === 'sloggi-ecommerce') {
       const materialName = workbook.SheetNames.find(n => n.toLowerCase() === 'material');
       if (materialName) sheetName = materialName;
     } else if (useCase === 'amazon') {
@@ -210,7 +210,7 @@ self.onmessage = (ev: MessageEvent<ParseRequest>) => {
 
     // Capture Sheet1 for e-commerce joins
     let sheet1: { columns: string[]; rows: any[] } | undefined;
-    if (useCase === 'ecommerce') {
+    if (useCase === 'ecommerce' || useCase === 'sloggi-ecommerce') {
       const s1Name = workbook.SheetNames.find(n => n.toLowerCase() === 'sheet1');
       if (s1Name) {
         const s1ws = workbook.Sheets[s1Name];

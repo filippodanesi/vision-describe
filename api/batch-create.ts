@@ -12,6 +12,7 @@ import { supabaseAdmin, verifyUserJwt, getUserApiKeys } from './_lib/supabaseAdm
 import type { RunConfig } from './_lib/types';
 import {
   ECOMMERCE_SYSTEM_PROMPT,
+  SLOGGI_ECOMMERCE_SYSTEM_PROMPT,
   buildEcommerceUserPrompt,
 } from './_lib/ecommercePrompts';
 
@@ -97,6 +98,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // 5. Build batch requests — sorted by language for max prompt cache hits
+    const isSloggi = runConfig.useCase === 'sloggi-ecommerce';
+    const systemPrompt = isSloggi ? SLOGGI_ECOMMERCE_SYSTEM_PROMPT : ECOMMERCE_SYSTEM_PROMPT;
+
     const requests: Array<{
       custom_id: string;
       params: {
@@ -131,7 +135,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             system: [
               {
                 type: 'text',
-                text: ECOMMERCE_SYSTEM_PROMPT,
+                text: systemPrompt,
                 cache_control: { type: 'ephemeral' },
               },
             ],

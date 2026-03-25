@@ -23,7 +23,7 @@ export const getTimestampString = (): string => {
 
 export const generateFileName = (
   operation: 'optimized' | 'analysis',
-  useCase: 'ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo',
+  useCase: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'zalando' | 'aboutyou' | 'next' | 'partoo',
   extension: 'xlsx' | 'json' | 'csv' | 'txt'
 ): string => {
   const timestamp = getTimestampString();
