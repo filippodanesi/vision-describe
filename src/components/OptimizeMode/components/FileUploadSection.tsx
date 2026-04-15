@@ -77,7 +77,11 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
           className="hidden"
         />
         
-        <div className="flex flex-col items-center justify-center border border-dashed border-border rounded-lg p-10 cursor-pointer hover:bg-muted/50 transition-colors" onClick={handleUploadClick}>
+        <button
+          type="button"
+          onClick={handleUploadClick}
+          className="flex flex-col items-center justify-center border border-dashed border-border rounded-lg p-10 w-full text-center hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <File className="h-10 w-10 text-muted-foreground mb-2" />
           <p className="text-sm font-medium mb-1">
             {fileName ? fileName : "Click to upload a text file"}
@@ -85,7 +89,7 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
           <p className="text-xs text-muted-foreground">
             TXT, DOC, DOCX, PDF, RTF, MD, HTML, JSON, CSV
           </p>
-        </div>
+        </button>
         
         {fileName && (
           <Button 

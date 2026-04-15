@@ -68,9 +68,8 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
     const apiKey = isAnthropic ? anthropicKey : openaiKey;
 
     if (!apiKey) {
-      toast('API Key Missing', {
-        description: 'Configure your API keys in Settings before processing.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+      toast.error('API Key Missing', {
+        description: 'Configure your API keys in Settings before processing.'
       });
       return;
     }
@@ -160,7 +159,7 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
             </div>
 
             {format.type === 'unknown' && (
-              <div className="flex items-center gap-2 text-sm text-amber-600">
+              <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
                 <AlertCircle className="h-4 w-4" />
                 Unknown format — some features may not work correctly
               </div>

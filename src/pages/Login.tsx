@@ -30,7 +30,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-muted/50 to-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm shadow-lg border-border">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
@@ -42,13 +42,17 @@ const Login: React.FC = () => {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             {error && (
-              <div className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">
+              <div
+                id="login-error"
+                role="alert"
+                className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2"
+              >
                 {error}
               </div>
             )}
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-foreground">
-                Email
+                Email <span className="text-destructive" aria-hidden="true">*</span>
               </label>
               <Input
                 id="email"
@@ -57,12 +61,15 @@ const Login: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
+                aria-required="true"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? 'login-error' : undefined}
                 autoFocus
               />
             </div>
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium text-foreground">
-                Password
+                Password <span className="text-destructive" aria-hidden="true">*</span>
               </label>
               <Input
                 id="password"
@@ -71,6 +78,9 @@ const Login: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 required
+                aria-required="true"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? 'login-error' : undefined}
               />
             </div>
           </CardContent>

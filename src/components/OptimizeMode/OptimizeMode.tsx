@@ -16,7 +16,7 @@ import { UseCase, AVAILABLE_USE_CASES } from './usecases';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, ArrowRight, RefreshCw, Download, CheckCircle2 } from 'lucide-react';
 import { StepIndicator, type StepDef } from '@/components/ui/step-indicator';
-import * as ExcelJS from 'exceljs';
+import { Workbook } from 'exceljs';
 import { useApiKeys } from '@/contexts/ApiKeysContext';
 import {
   getProjects,
@@ -186,9 +186,8 @@ export const OptimizeMode: React.FC = () => {
       });
     } catch (error) {
       console.error('Reconnect error:', error);
-      toast('Processing error', {
-        description: error instanceof Error ? error.message : 'Server run failed.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+      toast.error('Processing error', {
+        description: error instanceof Error ? error.message : 'Server run failed.'
       });
       setCurrentStep(ProcessingStep.UPLOAD);
       // Re-fetch interrupted runs
@@ -210,9 +209,8 @@ export const OptimizeMode: React.FC = () => {
     // --- Resume flow: if resuming, validate and fast-track to processing ---
     if (resumingRun) {
       if (data.rows.length !== resumingRun.total_rows) {
-        toast('Row count mismatch', {
-          description: `Expected ${resumingRun.total_rows} rows but got ${data.rows.length}. Please upload the same file.`,
-          style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+        toast.error('Row count mismatch', {
+          description: `Expected ${resumingRun.total_rows} rows but got ${data.rows.length}. Please upload the same file.`
         });
         setResumingRun(null);
         return;
@@ -237,9 +235,8 @@ export const OptimizeMode: React.FC = () => {
         // Determine model & API key from the run config
         const modelConfig = getModelById(resumingRun.model_id);
         if (!modelConfig) {
-          toast('Model not found', {
-            description: `Model "${resumingRun.model_id}" is no longer available.`,
-            style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+          toast.error('Model not found', {
+            description: `Model "${resumingRun.model_id}" is no longer available.`
           });
           setResumingRun(null);
           return;
@@ -247,9 +244,8 @@ export const OptimizeMode: React.FC = () => {
         const isAnthropic = resumingRun.model_id.startsWith('claude');
         const apiKey = isAnthropic ? anthropicKey : openaiKey;
         if (!apiKey) {
-          toast('API Key Missing', {
-            description: 'Configure your API keys in Settings before processing.',
-            style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+          toast.error('API Key Missing', {
+            description: 'Configure your API keys in Settings before processing.'
           });
           setResumingRun(null);
           return;
@@ -285,9 +281,8 @@ export const OptimizeMode: React.FC = () => {
         return;
       } catch (error) {
         console.error('Resume error:', error);
-        toast('Error resuming run', {
-          description: error instanceof Error ? error.message : 'Please try again.',
-          style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+        toast.error('Error resuming run', {
+          description: error instanceof Error ? error.message : 'Please try again.'
         });
         setResumingRun(null);
         return;
@@ -373,9 +368,8 @@ export const OptimizeMode: React.FC = () => {
     const apiKey = isAnthropic ? anthropicKey : openaiKey;
 
     if (!apiKey) {
-      toast('API Key Missing', {
-        description: 'Configure your API keys in Settings before processing.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
+      toast.error('API Key Missing', {
+        description: 'Configure your API keys in Settings before processing.'
       });
       return;
     }
@@ -421,9 +415,8 @@ export const OptimizeMode: React.FC = () => {
       });
     } catch (error) {
       console.error('Error optimizing text:', error);
-      toast('Error processing file', {
-        description: error instanceof Error ? error.message : 'Please try again.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
+      toast.error('Error processing file', {
+        description: error instanceof Error ? error.message : 'Please try again.'
       });
       setCurrentStep(ProcessingStep.SELECT_MODEL);
     }
@@ -433,7 +426,7 @@ export const OptimizeMode: React.FC = () => {
     if (!processedData) return;
 
     try {
-      const workbook = new ExcelJS.Workbook();
+      const workbook = new Workbook();
       const worksheet = workbook.addWorksheet("Optimized Descriptions");
 
       if (processedData.length > 0) {
@@ -458,9 +451,8 @@ export const OptimizeMode: React.FC = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error generating Excel file:', error);
-      toast('Error generating file', {
-        description: 'Please try again.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
+      toast.error('Error generating file', {
+        description: 'Please try again.'
       });
     }
   };
@@ -551,7 +543,7 @@ export const OptimizeMode: React.FC = () => {
               onReconnect={handleReconnectRun}
             />
             {!hasKeys && (
-              <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+              <Card className="border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
                 <CardContent className="py-3">
                   <p className="text-sm text-amber-800 dark:text-amber-200">
                     Configure your API keys in <strong>Settings</strong> before processing files.

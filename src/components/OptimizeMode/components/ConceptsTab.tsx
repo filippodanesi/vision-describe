@@ -41,8 +41,8 @@ const ConceptsTab: React.FC<ConceptsTabProps> = ({ concepts, containsTargetKeywo
           {concepts.map((concept: any, index: number) => {
             const hasTargetKeyword = containsTargetKeyword(concept.text);
             return (
-              <TableRow key={index} className={hasTargetKeyword ? "bg-green-500/10" : ""}>
-                <TableCell className={`font-medium ${hasTargetKeyword ? "text-green-600" : ""}`}>
+              <TableRow key={index} className={hasTargetKeyword ? "bg-green-500 dark:bg-green-600/10" : ""}>
+                <TableCell className={`font-medium ${hasTargetKeyword ? "text-green-600 dark:text-green-400" : ""}`}>
                   {concept.text}
                 </TableCell>
                 <TableCell>{(concept.relevance * 100).toFixed(1)}%</TableCell>

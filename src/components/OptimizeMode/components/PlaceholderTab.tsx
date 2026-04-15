@@ -18,7 +18,7 @@ const PlaceholderTab: React.FC<PlaceholderTabProps> = ({ message, helpText }) =>
       </div>
       
       {helpText && (
-        <Alert variant="default" className="bg-blue-50 border-blue-200">
+        <Alert variant="default" className="bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-900">
           <Info className="h-4 w-4" />
           <AlertTitle>Note on text analysis</AlertTitle>
           <AlertDescription className="text-sm">

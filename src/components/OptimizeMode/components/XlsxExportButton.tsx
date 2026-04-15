@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import * as ExcelJS from 'exceljs';
+import { Workbook, type Worksheet } from 'exceljs';
 import * as XLSX from 'xlsx';
 import { generateFileName } from '../utils/fileUtils';
 
@@ -27,8 +27,8 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
     if (!results || results.length === 0) return;
     setIsExporting(true);
     try {
-      let workbook: ExcelJS.Workbook;
-      let worksheet: ExcelJS.Worksheet;
+      let workbook: Workbook;
+      let worksheet: Worksheet;
 
       if (originalMeta?.arrayBuffer && useCase === 'partoo') {
         // Partoo: use SheetJS (same lib the worker uses) to preserve original structure
@@ -96,7 +96,7 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
         downloadBuffer(wbOut, fileName);
       } else if (originalMeta?.arrayBuffer) {
         // Clone original workbook structure (ecommerce/amazon/next/aboutyou)
-        workbook = new ExcelJS.Workbook();
+        workbook = new Workbook();
         await workbook.xlsx.load(originalMeta.arrayBuffer);
         const wsName = originalMeta.worksheetName || (workbook.worksheets[0]?.name || 'Sheet1');
         worksheet = workbook.getWorksheet(wsName) || workbook.worksheets[0];
@@ -154,7 +154,7 @@ const XlsxExportButton: React.FC<XlsxExportButtonProps> = ({ originalMeta, useCa
       } else {
         // Fallback: no original file available (e.g. reconnect scenario)
         // Create a new workbook but strip internal metadata fields
-        workbook = new ExcelJS.Workbook();
+        workbook = new Workbook();
         const sheetName = originalMeta?.worksheetName || 'Sheet1';
         worksheet = workbook.addWorksheet(sheetName);
         const headers = Object.keys(results[0]).filter(k => !isInternalField(k));

@@ -66,7 +66,7 @@ const AnthropicConfigTab: React.FC<AnthropicConfigTabProps> = ({
           Your key is loaded from your account Settings. You can override it here.
         </p>
         {anthropicKeyWarning && (
-          <p className="text-xs text-amber-600 mt-1">{anthropicKeyWarning}</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">{anthropicKeyWarning}</p>
         )}
       </div>
       

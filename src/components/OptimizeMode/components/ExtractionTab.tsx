@@ -24,7 +24,7 @@ interface ExtractionTabProps {
 const ExtractionTab: React.FC<ExtractionTabProps> = ({ results, containsTargetKeyword, targetKeywords }) => {
   return (
     <Tabs defaultValue="entities">
-      <TabsList className="w-full grid grid-cols-4">
+      <TabsList className="w-full grid grid-cols-2 sm:grid-cols-4">
         <TabsTrigger value="entities">Entities</TabsTrigger>
         <TabsTrigger value="keywords">Keywords</TabsTrigger>
         <TabsTrigger value="concepts">Concepts</TabsTrigger>

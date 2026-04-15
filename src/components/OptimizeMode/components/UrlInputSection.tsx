@@ -147,7 +147,7 @@ const UrlInputSection: React.FC<UrlInputSectionProps> = ({
           <div className="space-y-4 py-4">
             <p className="text-sm text-muted-foreground">
               To use the URL scraping feature, please enter your Firecrawl API key.
-              You can get one by signing up at <a href="https://firecrawl.dev" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">firecrawl.dev</a>.
+              You can get one by signing up at <a href="https://firecrawl.dev" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">firecrawl.dev</a>.
             </p>
             <Input
               type="password"

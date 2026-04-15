@@ -115,13 +115,13 @@ const InputPanel: React.FC<InputPanelProps> = ({
             setEnableReanalyze(false);
           }}
           disabled={(!text || isAnalyzing) && !enableReanalyze}
-          className="w-full bg-vercel text-white hover:bg-vercel/90"
+          className="w-full"
         >
           {isAnalyzing ? "Analyzing..." : "Analyze"}
         </Button>
         
         {enableReanalyze && (
-          <Alert variant="warning" className="p-2 bg-blue-50">
+          <Alert variant="warning" className="p-2 bg-blue-50 dark:bg-blue-950/50">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="text-xs">
               Analysis features have changed. Click Analyze to update results.

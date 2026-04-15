@@ -36,7 +36,7 @@ import { UseCase, AVAILABLE_USE_CASES } from './usecases';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, ArrowRight, RefreshCw, Download, CheckCircle2 } from 'lucide-react';
 import { StepIndicator, type StepDef } from '@/components/ui/step-indicator';
-import * as ExcelJS from 'exceljs';
+import { Workbook } from 'exceljs';
 import { useApiKeys } from '@/contexts/ApiKeysContext';
 
 // Import components
@@ -149,9 +149,8 @@ const VisionDescribe: React.FC = () => {
   // Warn if no API keys configured
   useEffect(() => {
     if (!hasKeys) {
-      toast('Configuration Required', {
-        description: 'Please configure your API keys in Settings before processing.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
+      toast.error('Configuration Required', {
+        description: 'Please configure your API keys in Settings before processing.'
       });
     }
   }, [hasKeys]);
@@ -246,9 +245,8 @@ const VisionDescribe: React.FC = () => {
     const apiKey = isAnthropic ? anthropicKey : openaiKey;
 
     if (!apiKey) {
-      toast('API Key Missing', {
-        description: 'Configure your API keys in Settings before processing.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
+      toast.error('API Key Missing', {
+        description: 'Configure your API keys in Settings before processing.'
       });
       return;
     }
@@ -290,9 +288,8 @@ const VisionDescribe: React.FC = () => {
       });
     } catch (error) {
       console.error('Error optimizing text:', error);
-      toast('Error processing file', {
-        description: error instanceof Error ? error.message : 'Please try again.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
+      toast.error('Error processing file', {
+        description: error instanceof Error ? error.message : 'Please try again.'
       });
       setCurrentStep(ProcessingStep.SELECT_MODEL);
     }
@@ -303,7 +300,7 @@ const VisionDescribe: React.FC = () => {
 
     try {
       // Create a new workbook using ExcelJS
-      const workbook = new ExcelJS.Workbook();
+      const workbook = new Workbook();
       const worksheet = workbook.addWorksheet("Optimized Descriptions");
 
       // Add headers
@@ -333,9 +330,8 @@ const VisionDescribe: React.FC = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error generating Excel file:', error);
-      toast('Error generating file', {
-        description: 'Please try again.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
+      toast.error('Error generating file', {
+        description: 'Please try again.'
       });
     }
   };

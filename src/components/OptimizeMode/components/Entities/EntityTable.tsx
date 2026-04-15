@@ -39,8 +39,8 @@ const EntityTable: React.FC<EntityTableProps> = ({
             const hasTargetKeyword = containsTargetKeyword(entity.text);
             const wordCount = countWords(entity.text);
             return (
-              <TableRow key={index} className={hasTargetKeyword ? "bg-green-500/10" : ""}>
-                <TableCell className={`font-medium ${hasTargetKeyword ? "text-green-600" : ""}`}>
+              <TableRow key={index} className={hasTargetKeyword ? "bg-green-500 dark:bg-green-600/10" : ""}>
+                <TableCell className={`font-medium ${hasTargetKeyword ? "text-green-600 dark:text-green-400" : ""}`}>
                   {entity.text}
                   {wordCount > 1 && (
                     <Badge variant="outline" className="ml-2 text-xs">

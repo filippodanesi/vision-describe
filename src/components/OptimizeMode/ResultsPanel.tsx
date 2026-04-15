@@ -82,7 +82,7 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
         {/* Main Results Tabs */}
         <Tabs defaultValue="extraction" className="w-full">
-          <TabsList className="w-full grid grid-cols-3">
+          <TabsList className="w-full grid grid-cols-3 h-auto">
             <TabsTrigger value="extraction">Extraction</TabsTrigger>
             <TabsTrigger value="classification">Classification</TabsTrigger>
             <TabsTrigger value="tone">Tone Analysis</TabsTrigger>
@@ -116,7 +116,12 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           <div className="flex items-center justify-between py-2">
             <h3 className="text-sm font-medium">API Response</h3>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="p-0 h-7 w-7">
+              <Button
+                variant="ghost"
+                size="sm"
+                aria-label={isJsonOpen ? 'Collapse API response' : 'Expand API response'}
+                className="p-0 h-8 w-8 sm:h-7 sm:w-7"
+              >
                 <ChevronDown className={`h-4 w-4 transition-transform ${isJsonOpen ? "transform rotate-180" : ""}`} />
               </Button>
             </CollapsibleTrigger>

@@ -111,7 +111,7 @@ const EntitiesTab: React.FC<EntitiesTabProps> = ({ entities, containsTargetKeywo
       />
 
       {filteredEntities.length === 0 && entities.length > 0 && (
-        <Alert variant="info" className="bg-blue-50 text-blue-800 border-blue-200">
+        <Alert variant="info" className="bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             No entities match the current filters. Try adjusting your filter settings.

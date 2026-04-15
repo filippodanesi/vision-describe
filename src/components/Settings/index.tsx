@@ -27,9 +27,8 @@ export const Settings: React.FC = () => {
       await saveKeys(openai.trim(), anthropic.trim());
       toast('Settings saved', { description: 'Your API keys have been updated.' });
     } catch (err) {
-      toast('Error saving settings', {
-        description: err instanceof Error ? err.message : 'Please try again.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+      toast.error('Error saving settings', {
+        description: err instanceof Error ? err.message : 'Please try again.'
       });
     } finally {
       setSaving(false);
@@ -77,7 +76,9 @@ export const Settings: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowOpenai(!showOpenai)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showOpenai ? 'Hide OpenAI API key' : 'Show OpenAI API key'}
+                title={showOpenai ? 'Hide key' : 'Show key'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
               >
                 {showOpenai ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -98,7 +99,9 @@ export const Settings: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowAnthropic(!showAnthropic)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showAnthropic ? 'Hide Anthropic API key' : 'Show Anthropic API key'}
+                title={showAnthropic ? 'Hide key' : 'Show key'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
               >
                 {showAnthropic ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>

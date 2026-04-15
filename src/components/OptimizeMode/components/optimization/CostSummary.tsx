@@ -116,7 +116,7 @@ const CostSummary: React.FC<CostSummaryProps> = ({ costTracker, activeProvider, 
                       </>
                     )}
                     {lastCostRecord.actualCost !== undefined && lastCostRecord.estimatedCost !== lastCostRecord.actualCost && (
-                      <p className="mt-1 text-yellow-600">
+                      <p className="mt-1 text-yellow-600 dark:text-yellow-400">
                         Estimated: ${lastCostRecord.estimatedCost.toFixed(5)}
                       </p>
                     )}

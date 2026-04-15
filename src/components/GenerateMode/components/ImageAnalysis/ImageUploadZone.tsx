@@ -145,6 +145,8 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
                 <img
                   src={img.preview}
                   alt={img.name}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full aspect-square object-cover rounded-md border"
                 />
                 <button

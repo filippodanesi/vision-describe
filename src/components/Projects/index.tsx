@@ -62,8 +62,7 @@ export const Projects: React.FC = () => {
       toast('Project created');
       await loadProjects();
     } else {
-      toast('Error creating project', {
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+      toast.error('Error creating project', {
       });
     }
   };
@@ -78,8 +77,7 @@ export const Projects: React.FC = () => {
       }
       await loadProjects();
     } else {
-      toast('Error deleting project', {
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+      toast.error('Error deleting project', {
       });
     }
   };

@@ -1,88 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { optimizeTextWithAI } from '../utils/optimizationUtils';
+import { findMatchingShortDescriptionColumn } from '../utils/columnMatching';
 import { useCostTracker } from './useCostTracker';
 import type { Model } from '@/lib/models';
-
-// Keep alive functions for continuous processing
-
-// Utility function to find matching short description column
-const findMatchingShortDescriptionColumn = (columnNames: string[], targetLanguage: string): string => {
-  const lang = targetLanguage.toLowerCase();
-  const langUpper = lang.toUpperCase();
-  
-  console.log(`🔍 Looking for Short description column matching language: ${langUpper}`);
-  
-  // First priority: exact language match with strict patterns
-  for (const key of columnNames) {
-    const lower = key.toLowerCase();
-    if (lower.includes('short description')) {
-      console.log(`  📝 Checking column: "${key}"`);
-      
-      // Be more strict about exact matches - check for exact language codes
-      const patterns = [
-        ` ${lang}$`,           // "Short description de" (end of string)
-        ` ${langUpper}$`,      // "Short description DE" (end of string)
-        `\\[${lang}\\]`,       // "Short description [de]" (escaped brackets)
-        `\\[${langUpper}\\]`,  // "Short description [DE]" (escaped brackets)
-        `_${lang}$`,          // "Short description_de" (end of string)
-        `_${langUpper}$`,     // "Short description_DE" (end of string)
-        ` ${lang} `,          // "Short description de " (with space after)
-        ` ${langUpper} `      // "Short description DE " (with space after)
-      ];
-      
-      for (const pattern of patterns) {
-        const regex = new RegExp(pattern);
-        if (regex.test(lower) || regex.test(key)) {
-          console.log(`  ✅ Found exact match with pattern "${pattern}": "${key}"`);
-          return key;
-        }
-      }
-      
-      console.log(`  ❌ No exact match for "${key}"`);
-    }
-  }
-  
-  // Second priority: Look for "Short descriptions" plural form with same strict patterns
-  for (const key of columnNames) {
-    const lower = key.toLowerCase();
-    if (lower.includes('short descriptions')) {
-      console.log(`  📝 Checking plural column: "${key}"`);
-      
-      const patterns = [
-        ` ${lang}$`,           // "Short descriptions de" (end of string)
-        ` ${langUpper}$`,      // "Short descriptions DE" (end of string)
-        `\\[${lang}\\]`,       // "Short descriptions [de]" (escaped brackets)
-        `\\[${langUpper}\\]`,  // "Short descriptions [DE]" (escaped brackets)
-        `_${lang}$`,          // "Short descriptions_de" (end of string)
-        `_${langUpper}$`,     // "Short descriptions_DE" (end of string)
-        ` ${lang} `,          // "Short descriptions de " (with space after)
-        ` ${langUpper} `      // "Short descriptions DE " (with space after)
-      ];
-      
-      for (const pattern of patterns) {
-        const regex = new RegExp(pattern);
-        if (regex.test(lower) || regex.test(key)) {
-          console.log(`  ✅ Found exact match (plural) with pattern "${pattern}": "${key}"`);
-          return key;
-        }
-      }
-      
-      console.log(`  ❌ No exact match for plural "${key}"`);
-    }
-  }
-  
-  // Debug: log what we found to help troubleshoot
-  console.log(`❌ No exact match found for language ${langUpper}`);
-  const shortDescColumns = columnNames.filter(name => 
-    name.toLowerCase().includes('short') && name.toLowerCase().includes('description')
-  );
-  if (shortDescColumns.length > 0) {
-    console.log(`📋 Available short description columns:`, shortDescColumns);
-  }
-  
-  return '';
-};
 
 interface UseFileProcessingReturn {
   isProcessing: boolean;

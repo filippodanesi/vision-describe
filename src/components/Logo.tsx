@@ -20,6 +20,9 @@ export function Logo({ className, size = "md", showName = true }: LogoProps) {
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 403.5 750"
         fill="currentColor"
+        role="img"
+        aria-label={showName ? undefined : 'VisionDescribe'}
+        aria-hidden={showName ? true : undefined}
       >
         <defs>
           <clipPath id="logo-a"><path d="M8 .59h394V394H8z"/></clipPath>

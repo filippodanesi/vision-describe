@@ -82,17 +82,17 @@ const StoreTypeFilter: React.FC<StoreTypeFilterProps> = ({
   if (categories.length <= 1) return null; // No point showing filter with only one type
 
   return (
-    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+    <div className="bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-900 rounded-lg p-4">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-1">
-          <Filter className="w-5 h-5 text-purple-600" />
+          <Filter className="w-5 h-5 text-purple-600 dark:text-purple-400" />
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-purple-900 mb-1">
+          <h3 className="text-sm font-medium text-purple-900 dark:text-purple-100 mb-1">
             Store Type Filter (Optional)
           </h3>
-          <p className="text-xs text-purple-700 mb-3">
+          <p className="text-xs text-purple-700 dark:text-purple-300 mb-3">
             Select which store types to process. Deselected types will be skipped entirely.
           </p>
 
@@ -112,11 +112,11 @@ const StoreTypeFilter: React.FC<StoreTypeFilterProps> = ({
                     checked={isChecked}
                     onChange={() => handleToggle(category)}
                     disabled={disabled}
-                    className="rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+                    className="rounded border-purple-300 dark:border-purple-800 text-purple-600 dark:text-purple-400 focus:ring-purple-500"
                   />
-                  <span className="text-sm text-purple-900">
+                  <span className="text-sm text-purple-900 dark:text-purple-100">
                     {category}{' '}
-                    <span className="text-purple-600 font-mono text-xs">({count})</span>
+                    <span className="text-purple-600 dark:text-purple-400 font-mono text-xs">({count})</span>
                   </span>
                 </label>
               );
@@ -124,7 +124,7 @@ const StoreTypeFilter: React.FC<StoreTypeFilterProps> = ({
           </div>
 
           {selected.size < categories.length && (
-            <p className="mt-2 text-xs text-purple-600">
+            <p className="mt-2 text-xs text-purple-600 dark:text-purple-400">
               {Array.from(selected).join(', ')} selected &mdash;{' '}
               {rows.length - Array.from(selected).reduce((sum, cat) => sum + (categoryCounts.get(cat) || 0), 0)} rows will be skipped
             </p>

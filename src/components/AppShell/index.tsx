@@ -254,7 +254,7 @@ export const AppShell: React.FC = () => {
         </Sidebar>
 
         <SidebarInset>
-          <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur-xl px-4">
+          <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
               orientation="vertical"
@@ -265,7 +265,7 @@ export const AppShell: React.FC = () => {
                 {activeGroup && (
                   <>
                     <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href="#">{activeGroup.title}</BreadcrumbLink>
+                      <span className="text-muted-foreground">{activeGroup.title}</span>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator className="hidden md:block" />
                   </>

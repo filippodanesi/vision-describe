@@ -54,10 +54,10 @@ const RelationsTab: React.FC<RelationsTabProps> = ({ relations, containsTargetKe
               : "";
 
             return (
-              <TableRow key={index} className={hasTargetKeyword ? "bg-green-500/10" : ""}>
+              <TableRow key={index} className={hasTargetKeyword ? "bg-green-500 dark:bg-green-600/10" : ""}>
                 <TableCell>{relation.type}</TableCell>
                 <TableCell>{relationArgs}</TableCell>
-                <TableCell className={hasTargetKeyword ? "text-green-600" : ""}>{sentence}</TableCell>
+                <TableCell className={hasTargetKeyword ? "text-green-600 dark:text-green-400" : ""}>{sentence}</TableCell>
                 <TableCell>{(relation.score * 100).toFixed(1)}%</TableCell>
               </TableRow>
             );

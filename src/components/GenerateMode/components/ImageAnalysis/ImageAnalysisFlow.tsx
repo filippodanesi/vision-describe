@@ -46,9 +46,8 @@ export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) 
     const apiKey = isAnthropic ? anthropicKey : openaiKey;
 
     if (!apiKey) {
-      toast('API Key Missing', {
-        description: 'Configure your API keys in Settings before processing.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+      toast.error('API Key Missing', {
+        description: 'Configure your API keys in Settings before processing.'
       });
       return;
     }

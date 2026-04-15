@@ -113,11 +113,11 @@ const KeywordsTab: React.FC<KeywordsTabProps> = ({
               let textClassName = "font-medium";
               
               if (matchType === "exact") {
-                rowClassName = "bg-green-500/10";
-                textClassName = "font-medium text-green-600";
+                rowClassName = "bg-green-500 dark:bg-green-600/10";
+                textClassName = "font-medium text-green-600 dark:text-green-400";
               } else if (matchType === "partial") {
-                rowClassName = "bg-orange-500/10";
-                textClassName = "font-medium text-orange-600";
+                rowClassName = "bg-orange-500 dark:bg-orange-600/10";
+                textClassName = "font-medium text-orange-600 dark:text-orange-400";
               }
               
               return (
@@ -141,11 +141,11 @@ const KeywordsTab: React.FC<KeywordsTabProps> = ({
       {targetKeywords.length > 0 && (
         <div className="flex flex-col gap-1 mt-2 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500/70"></div>
+            <div className="w-3 h-3 rounded-full bg-green-500 dark:bg-green-600/70"></div>
             <span>Exact match</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-500/70"></div>
+            <div className="w-3 h-3 rounded-full bg-orange-500 dark:bg-orange-600/70"></div>
             <span>Partial match</span>
           </div>
         </div>

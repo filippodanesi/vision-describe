@@ -103,7 +103,7 @@ export const QuickCredentialsInput: React.FC<QuickCredentialsInputProps> = ({
         <span className="text-sm font-medium">Quick Input</span>
         <div className="flex items-center gap-2">
           {credentialsFileExists && (
-            <div className="flex items-center text-green-500">
+            <div className="flex items-center text-green-600 dark:text-green-400">
               <CheckCircle className="h-4 w-4 mr-1" />
               <span className="text-xs">Credentials loaded</span>
             </div>

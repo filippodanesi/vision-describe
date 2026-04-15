@@ -44,7 +44,7 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
   };
 
   const getProviderColor = (provider: 'openai' | 'anthropic') => {
-    return provider === 'openai' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
+    return provider === 'openai' ? 'bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-300' : 'bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300';
   };
 
   const getProviderIcon = (provider: 'openai' | 'anthropic') => {
@@ -64,23 +64,23 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-medium text-blue-600">{stats.totalOperations}</div>
-              <div className="text-sm text-gray-600">Products Processed</div>
+              <div className="text-2xl font-medium text-blue-600 dark:text-blue-400">{stats.totalOperations}</div>
+              <div className="text-sm text-muted-foreground">Products Processed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-medium text-green-600">{formatNumber(stats.totalTokens)}</div>
-              <div className="text-sm text-gray-600">Total Tokens</div>
+              <div className="text-2xl font-medium text-green-600 dark:text-green-400">{formatNumber(stats.totalTokens)}</div>
+              <div className="text-sm text-muted-foreground">Total Tokens</div>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-medium text-purple-600">{formatNumber(stats.totalTokensInput)}</div>
-              <div className="text-sm text-gray-600">Input Tokens</div>
+              <div className="text-2xl font-medium text-purple-600 dark:text-purple-400">{formatNumber(stats.totalTokensInput)}</div>
+              <div className="text-sm text-muted-foreground">Input Tokens</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-medium text-orange-600">{formatNumber(stats.totalTokensOutput)}</div>
-              <div className="text-sm text-gray-600">Output Tokens</div>
+              <div className="text-2xl font-medium text-orange-600 dark:text-orange-400">{formatNumber(stats.totalTokensOutput)}</div>
+              <div className="text-sm text-muted-foreground">Output Tokens</div>
             </div>
           </div>
         </CardContent>
@@ -96,40 +96,40 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* OpenAI */}
-          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/50 rounded-lg">
             <div className="flex items-center gap-3">
               <span className="text-2xl">{getProviderIcon('openai')}</span>
               <div>
                 <div className="font-medium">OpenAI</div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   {formatCurrency(remainingBudget.openai)} remaining
                 </div>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-medium text-green-600">
+              <div className="text-lg font-medium text-green-600 dark:text-green-400">
                 {formatCurrency(totalCost.openai)}
               </div>
-              <div className="text-sm text-gray-600">Total Spent</div>
+              <div className="text-sm text-muted-foreground">Total Spent</div>
             </div>
           </div>
 
           {/* Anthropic */}
-          <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/50 rounded-lg">
             <div className="flex items-center gap-3">
               <span className="text-2xl">{getProviderIcon('anthropic')}</span>
               <div>
                 <div className="font-medium">Anthropic</div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   {formatCurrency(remainingBudget.anthropic)} remaining
                 </div>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-medium text-orange-600">
+              <div className="text-lg font-medium text-orange-600 dark:text-orange-400">
                 {formatCurrency(totalCost.anthropic)}
               </div>
-              <div className="text-sm text-gray-600">Total Spent</div>
+              <div className="text-sm text-muted-foreground">Total Spent</div>
             </div>
           </div>
 
@@ -137,7 +137,7 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
           <div className="border-t pt-3">
             <div className="flex items-center justify-between">
               <div className="font-medium">Total Session Cost</div>
-              <div className="text-xl font-medium text-blue-600">
+              <div className="text-xl font-medium text-blue-600 dark:text-blue-400">
                 {formatCurrency(stats.totalActualCost)}
               </div>
             </div>
@@ -163,21 +163,21 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
                 const outputTokens = record.actualOutputTokens || record.estimatedOutputTokens;
                 
                 return (
-                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                     <div className="flex items-center gap-2">
                       <Badge className={getProviderColor(provider)}>
                         {getProviderIcon(provider)}
                       </Badge>
                       <div className="text-sm">
                         <div className="font-medium">{record.model}</div>
-                        <div className="text-gray-600">
+                        <div className="text-muted-foreground">
                           {formatNumber(inputTokens)} → {formatNumber(outputTokens)} tokens
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-medium">{formatCurrency(cost)}</div>
-                      <div className="text-xs text-gray-600">
+                      <div className="text-xs text-muted-foreground">
                         {new Date(record.timestamp).toLocaleTimeString()}
                       </div>
                     </div>
@@ -201,51 +201,51 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <div className="text-xl font-medium text-blue-600">
+                <div className="text-xl font-medium text-blue-600 dark:text-blue-400">
                   {formatCurrency(stats.totalActualCost / stats.totalOperations)}
                 </div>
-                <div className="text-sm text-gray-600">Avg Cost per Product</div>
+                <div className="text-sm text-muted-foreground">Avg Cost per Product</div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-medium text-green-600">
+                <div className="text-xl font-medium text-green-600 dark:text-green-400">
                   {formatNumber(Math.round(stats.totalTokens / stats.totalOperations))}
                 </div>
-                <div className="text-sm text-gray-600">Avg Tokens per Product</div>
+                <div className="text-sm text-muted-foreground">Avg Tokens per Product</div>
               </div>
             </div>
             
             {/* Projection for 100 products */}
             <div className="border-t pt-3">
               <div className="text-center">
-                <div className="text-lg font-medium text-purple-600">
+                <div className="text-lg font-medium text-purple-600 dark:text-purple-400">
                   {formatCurrency((stats.totalActualCost / stats.totalOperations) * 100)}
                 </div>
-                <div className="text-sm text-gray-600">Estimated cost for 100 products</div>
+                <div className="text-sm text-muted-foreground">Estimated cost for 100 products</div>
               </div>
             </div>
             
             {/* Cost Comparison */}
             <div className="border-t pt-3">
               <div className="text-center">
-                <div className="text-sm text-gray-600 mb-2">Cost Comparison</div>
+                <div className="text-sm text-muted-foreground mb-2">Cost Comparison</div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-green-50 p-2 rounded">
-                    <div className="font-medium text-green-800">Manual Work</div>
-                    <div className="text-green-600">$2,500</div>
-                    <div className="text-gray-500">(100 products)</div>
+                  <div className="bg-green-50 dark:bg-green-950/50 p-2 rounded">
+                    <div className="font-medium text-green-700 dark:text-green-300">Manual Work</div>
+                    <div className="text-green-600 dark:text-green-400">$2,500</div>
+                    <div className="text-muted-foreground">(100 products)</div>
                   </div>
-                  <div className="bg-blue-50 p-2 rounded">
-                    <div className="font-medium text-blue-800">AI Processing</div>
-                    <div className="text-blue-600">
+                  <div className="bg-blue-50 dark:bg-blue-950/50 p-2 rounded">
+                    <div className="font-medium text-blue-700 dark:text-blue-300">AI Processing</div>
+                    <div className="text-blue-600 dark:text-blue-400">
                       {stats.totalOperations > 0 
                         ? formatCurrency((stats.totalActualCost / stats.totalOperations) * 100)
                         : formatCurrency(0)
                       }
                     </div>
-                    <div className="text-gray-500">(100 products)</div>
+                    <div className="text-muted-foreground">(100 products)</div>
                   </div>
                 </div>
-                <div className="text-xs text-gray-600 mt-2">
+                <div className="text-xs text-muted-foreground mt-2">
                   {stats.totalOperations > 0 ? (
                     <>Savings: {formatCurrency(2500 - ((stats.totalActualCost / stats.totalOperations) * 100))}</>
                   ) : (

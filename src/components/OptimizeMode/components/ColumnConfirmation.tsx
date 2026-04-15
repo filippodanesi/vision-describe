@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CheckCircle, AlertTriangle, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { USECASE_PROFILES } from '../usecases';
+import { findMatchingShortDescriptionColumn } from '../utils/columnMatching';
 
 interface ColumnMapping {
   longDescColumn: string;
@@ -21,69 +22,6 @@ interface ColumnConfirmationProps {
   onConfirm: (mappings: ColumnMapping[]) => void;
   onBack: () => void;
 }
-
-// Utility function to find matching short description column (same as in hooks)
-const findMatchingShortDescriptionColumn = (columnNames: string[], targetLanguage: string): string => {
-  const lang = targetLanguage.toLowerCase();
-  const langUpper = lang.toUpperCase();
-  
-  // First priority: exact language match with strict patterns
-  for (const key of columnNames) {
-    const lower = key.toLowerCase();
-    if (lower.includes('short description') || lower.startsWith('sc') || lower.startsWith('materialalternativestyle_')) {
-      const patterns = [
-        ` ${lang}$`,           // "Short description de" (end of string)
-        ` ${langUpper}$`,      // "Short description DE" (end of string)
-        `\\[${lang}\\]`,       // "Short description [de]" (escaped brackets)
-        `\\[${langUpper}\\]`,  // "Short description [DE]" (escaped brackets)
-        `_${lang}$`,          // "Short description_de" (end of string)
-        `_${langUpper}$`,     // "Short description_DE" (end of string)
-        ` ${lang} `,          // "Short description de " (with space after)
-        ` ${langUpper} `      // "Short description DE " (with space after)
-      ];
-      
-      for (const pattern of patterns) {
-        const regex = new RegExp(pattern);
-        if (regex.test(lower) || regex.test(key)) {
-          return key;
-        }
-      }
-      // Direct exacts: SC or MaterialAlternativeStyle_<lang>
-      if (/^sc$/i.test(key) || new RegExp(`^sc[_\s-]?${lang}$`, 'i').test(key)) {
-        return key;
-      }
-      if (new RegExp(`^materialalternativestyle_${lang}$`, 'i').test(key)) {
-        return key;
-      }
-    }
-  }
-  
-  // Second priority: Look for the "Short descriptions" plural form
-  for (const key of columnNames) {
-    const lower = key.toLowerCase();
-    if (lower.includes('short descriptions')) {
-      const patterns = [
-        ` ${lang}$`,           // "Short descriptions de" (end of string)
-        ` ${langUpper}$`,      // "Short descriptions DE" (end of string)
-        `\\[${lang}\\]`,       // "Short descriptions [de]" (escaped brackets)
-        `\\[${langUpper}\\]`,  // "Short descriptions [DE]" (escaped brackets)
-        `_${lang}$`,          // "Short descriptions_de" (end of string)
-        `_${langUpper}$`,     // "Short descriptions_DE" (end of string)
-        ` ${lang} `,          // "Short descriptions de " (with space after)
-        ` ${langUpper} `      // "Short descriptions DE " (with space after)
-      ];
-      
-      for (const pattern of patterns) {
-        const regex = new RegExp(pattern);
-        if (regex.test(lower) || regex.test(key)) {
-          return key;
-        }
-      }
-    }
-  }
-  
-  return '';
-};
 
 const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
   fileData,
@@ -219,9 +157,9 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
       <div className="text-center">
         <h2 className="text-xl font-medium mb-2">Confirm Column Mappings</h2>
         {useCase === 'amazon' ? (
-          <p className="text-gray-600">Map Amazon columns such as vendor_sku#1.value, item_name#1.value, rtip_product_description#1.value, bullet_point#*.value</p>
+          <p className="text-muted-foreground">Map Amazon columns such as vendor_sku#1.value, item_name#1.value, rtip_product_description#1.value, bullet_point#*.value</p>
         ) : (
-          <p className="text-gray-600">Verify that each Long Description column is paired with the correct Short Description for keyword extraction</p>
+          <p className="text-muted-foreground">Verify that each Long Description column is paired with the correct Short Description for keyword extraction</p>
         )}
       </div>
 
@@ -251,7 +189,7 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-gray-500">{selectedLangs.length} of {availableLangs.length} selected</span>
+              <span className="text-sm text-muted-foreground">{selectedLangs.length} of {availableLangs.length} selected</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -268,7 +206,7 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
             </div>
             <div className="flex flex-wrap gap-3">
               {availableLangs.map(lang => (
-                <label key={lang} className="flex items-center gap-2 cursor-pointer rounded-md border border-gray-200 px-3 py-2 hover:bg-gray-50 transition-colors">
+                <label key={lang} className="flex items-center gap-2 cursor-pointer rounded-md border border-border px-3 py-2 hover:bg-muted transition-colors">
                   <Checkbox
                     checked={selectedLangs.includes(lang)}
                     onCheckedChange={(checked) => {
@@ -303,9 +241,9 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
                   ['Description In', 'descriptionIn'],
                 ] as const).map(([label, key]) => (
                   <div key={key} className="space-y-1">
-                    <div className="text-gray-700 font-medium">{label}</div>
+                    <div className="text-foreground font-medium">{label}</div>
                     <Select value={(amazonMapping as any)[key] || ''} onValueChange={(v) => setAmazonMapping(prev => ({ ...prev, [key]: v }))}>
-                      <SelectTrigger className={`w-full ${!((amazonMapping as any)[key]) && (key === 'productId' || key === 'descriptionIn') ? 'border-red-300' : ''}`}>
+                      <SelectTrigger className={`w-full ${!((amazonMapping as any)[key]) && (key === 'productId' || key === 'descriptionIn') ? 'border-red-300 dark:border-red-800' : ''}`}>
                         <SelectValue placeholder={`Select ${label} column...`} />
                       </SelectTrigger>
                       <SelectContent>
@@ -317,7 +255,7 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
                   </div>
                 ))}
                 <div className="md:col-span-2 space-y-2">
-                  <div className="text-gray-700 font-medium">Bullets In (up to 5)</div>
+                  <div className="text-foreground font-medium">Bullets In (up to 5)</div>
                   <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
                     {amazonMapping.bullets.map((b, i) => (
                       <Select key={i} value={b || ''} onValueChange={(v) => setAmazonMapping(prev => { const next = [...prev.bullets]; next[i] = v; return { ...prev, bullets: next }; })}>
@@ -350,14 +288,14 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
             <CardContent>
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  <label className="text-sm font-medium text-foreground mb-2 block">
                     Short Description Source (for keywords):
                   </label>
                   <Select 
                     value={mapping.matchedShortDescColumn || "__NONE__"} 
                     onValueChange={(value) => handleShortDescChange(index, value)}
                   >
-                    <SelectTrigger className={`w-full ${!mapping.matchedShortDescColumn ? 'border-red-300' : ''}`}>
+                    <SelectTrigger className={`w-full ${!mapping.matchedShortDescColumn ? 'border-red-300 dark:border-red-800' : ''}`}>
                       <SelectValue placeholder="Select Short Description column..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -372,12 +310,12 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
                 </div>
                 
                 {mapping.matchedShortDescColumn && (
-                  <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                  <div className="bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-900 rounded-md p-3">
                     <div className="flex items-start gap-2">
-                      <Info className="h-4 w-4 text-green-600 mt-0.5" />
+                      <Info className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5" />
                       <div className="text-sm">
-                        <p className="font-medium text-green-800">Preview:</p>
-                        <p className="text-green-700 mt-1">
+                        <p className="font-medium text-green-700 dark:text-green-300">Preview:</p>
+                        <p className="text-green-700 dark:text-green-300 mt-1">
                           Keywords will be extracted from "<strong>{mapping.matchedShortDescColumn}</strong>" 
                           to optimize "<strong>{mapping.longDescColumn}</strong>"
                         </p>

@@ -87,7 +87,7 @@ export const Dashboard: React.FC = () => {
       {modelStats.length > 0 && (
         <section>
           <h2 className="text-base font-medium tracking-tight mb-3">Model Leaderboard</h2>
-          <div className="border rounded-lg">
+          <div className="border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
@@ -207,9 +207,9 @@ function BudgetRow({ label, used, budget }: { label: string; used: number; budge
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    running: 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950',
-    completed: 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-950',
-    interrupted: 'text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950',
+    running: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:text-blue-400 dark:bg-blue-950',
+    completed: 'text-green-600 dark:text-green-400 bg-green-50 dark:text-green-400 dark:bg-green-950',
+    interrupted: 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:text-amber-400 dark:bg-amber-950',
     cancelled: 'text-muted-foreground bg-muted',
   };
 

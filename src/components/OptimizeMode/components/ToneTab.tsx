@@ -9,17 +9,21 @@ interface ToneTabProps {
   classifications: any[];
 }
 
-// Function to get tone badge color
+// Function to get tone badge variant — uses semantic tokens so tones adapt to theme
 const getToneColor = (toneName: string) => {
   switch (toneName) {
-    case 'excited': return 'bg-green-500 hover:bg-green-600';
-    case 'satisfied': return 'bg-blue-500 hover:bg-blue-600';
-    case 'polite': return 'bg-purple-500 hover:bg-purple-600';
-    case 'sympathetic': return 'bg-yellow-500 hover:bg-yellow-600';
-    case 'frustrated': return 'bg-orange-500 hover:bg-orange-600';
-    case 'sad': return 'bg-gray-500 hover:bg-gray-600';
-    case 'impolite': return 'bg-rose-500 hover:bg-rose-600';
-    default: return '';
+    case 'excited':
+    case 'satisfied':
+    case 'polite':
+    case 'sympathetic':
+      return 'bg-primary text-primary-foreground hover:bg-primary/90';
+    case 'frustrated':
+    case 'impolite':
+      return 'bg-destructive text-destructive-foreground hover:bg-destructive/90';
+    case 'sad':
+      return 'bg-muted text-muted-foreground hover:bg-muted/90';
+    default:
+      return '';
   }
 };
 
@@ -28,14 +32,14 @@ const ToneTab: React.FC<ToneTabProps> = ({ classifications }) => {
   if (!classifications || classifications.length === 0) {
     return (
       <div className="space-y-4">
-        <Alert variant="warning" className="bg-amber-50 text-amber-800 border-amber-200">
+        <Alert variant="warning">
           <AlertDescription className="flex items-center">
             <FileText className="h-4 w-4 mr-2" />
             Tone analysis not available. This could be due to text length (2000+ characters), unsupported language, or API settings.
           </AlertDescription>
         </Alert>
-        
-        <Alert variant="default" className="bg-blue-50 text-blue-800 border-blue-200">
+
+        <Alert variant="default">
           <AlertCircle className="h-4 w-4 mr-2" />
           <AlertDescription>
             <div>

@@ -38,8 +38,7 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
       toast('Copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast('Failed to copy', {
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+      toast.error('Failed to copy', {
       });
     }
   };

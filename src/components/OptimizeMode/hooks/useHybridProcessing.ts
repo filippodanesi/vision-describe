@@ -8,6 +8,7 @@ import {
 } from '@/lib/api/serverProcessing';
 import { startServerRun, cancelServerRun, resumeServerRun, startBatchRun, pollBatchStatus, downloadBatchResults, cancelBatchRun } from '@/lib/api/serverRun';
 import { optimizeTextWithAI } from '../utils/optimizationUtils';
+import { findMatchingShortDescriptionColumn } from '../utils/columnMatching';
 import { processAmazonRows } from '../processing/processAmazon';
 import {
   createRun,
@@ -18,48 +19,6 @@ import {
   type RunRecord,
 } from '@/lib/runPersistence';
 import { supabase } from '@/lib/supabase';
-
-// Utility function to find matching short description column
-const findMatchingShortDescriptionColumn = (columnNames: string[], targetLanguage: string): string => {
-  const lang = targetLanguage.toLowerCase();
-  const langUpper = lang.toUpperCase();
-
-  // First priority: exact language match with strict patterns
-  for (const key of columnNames) {
-    const lower = key.toLowerCase();
-    if (lower.includes('short description')) {
-      const patterns = [
-        ` ${lang}$`, ` ${langUpper}$`,
-        `\[${lang}\]`, `\[${langUpper}\]`,
-        `_${lang}$`, `_${langUpper}$`,
-        ` ${lang} `, ` ${langUpper} `
-      ];
-      for (const pattern of patterns) {
-        const regex = new RegExp(pattern);
-        if (regex.test(lower) || regex.test(key)) return key;
-      }
-    }
-  }
-
-  // Second priority: plural form
-  for (const key of columnNames) {
-    const lower = key.toLowerCase();
-    if (lower.includes('short descriptions')) {
-      const patterns = [
-        ` ${lang}$`, ` ${langUpper}$`,
-        `\[${lang}\]`, `\[${langUpper}\]`,
-        `_${lang}$`, `_${langUpper}$`,
-        ` ${lang} `, ` ${langUpper} `
-      ];
-      for (const pattern of patterns) {
-        const regex = new RegExp(pattern);
-        if (regex.test(lower) || regex.test(key)) return key;
-      }
-    }
-  }
-
-  return '';
-};
 
 export interface HybridProcessingHook {
   isProcessing: boolean;

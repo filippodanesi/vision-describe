@@ -18,18 +18,18 @@ const KeywordStatusBadge: React.FC<KeywordStatusBadgeProps> = ({ keyword, status
   
   if (status === "exact") {
     badgeVariant = "outline";
-    badgeClass = "bg-green-100 text-green-800 border-green-300";
+    badgeClass = "bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-300 border-green-300 dark:border-green-800";
     indicator = "✓";
   } else if (status === "partial") {
     badgeVariant = "outline";
-    badgeClass = "bg-amber-100 text-amber-800 border-amber-300";
+    badgeClass = "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800";
     indicator = "~";
   } else if (status === "relevant") {
     badgeVariant = "secondary";
-    badgeClass = "bg-blue-100 text-blue-800 border-blue-300";
+    badgeClass = "bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800";
     indicator = "•";
   } else {
-    badgeClass = "bg-red-100 text-red-800 border-red-300";
+    badgeClass = "bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-300 dark:border-red-800";
   }
   
   return (

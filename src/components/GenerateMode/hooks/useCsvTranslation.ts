@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import Papa from 'papaparse';
-import * as ExcelJS from 'exceljs';
+import { Workbook } from 'exceljs';
 import type { CSVFormat, CSVProduct, TranslatedProduct, TranslationProgress } from '../types';
 import { CsvTranslationStep, LANGUAGE_MAPPING } from '../types';
 import { CSV_TRANSLATION_PROMPT, BELDONA_TRANSLATION_PROMPT } from '../prompts/csvTranslationPrompt';
@@ -177,7 +177,7 @@ export function useCsvTranslation() {
       // Try Excel format
       if (/\.(xlsx?|xlsm)$/i.test(uploadedFile.name)) {
         const buffer = await uploadedFile.arrayBuffer();
-        const workbook = new ExcelJS.Workbook();
+        const workbook = new Workbook();
         await workbook.xlsx.load(buffer);
         const worksheet = workbook.worksheets[0];
 
@@ -318,7 +318,7 @@ export function useCsvTranslation() {
   }, []);
 
   const exportResults = useCallback(async (): Promise<Blob> => {
-    const workbook = new ExcelJS.Workbook();
+    const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('Translations');
 
     if (results.length > 0) {

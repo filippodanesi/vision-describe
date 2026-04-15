@@ -41,8 +41,7 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
       window.URL.revokeObjectURL(url);
       toast('File exported successfully');
     } catch {
-      toast('Export failed', {
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' },
+      toast.error('Export failed', {
       });
     }
   };
@@ -70,7 +69,7 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
               <span className="text-muted-foreground">Errors</span>
               <Badge
                 variant="secondary"
-                className={`font-mono ${totalErrors > 0 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}
+                className={`font-mono ${totalErrors > 0 ? 'bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300' : 'bg-emerald-100 text-emerald-700'}`}
               >
                 {totalErrors}
               </Badge>

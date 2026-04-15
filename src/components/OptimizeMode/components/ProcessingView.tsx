@@ -16,7 +16,7 @@ interface ProcessingViewProps {
 const getLogClass = (log: string): string => {
   const lower = log.toLowerCase();
   if (lower.includes('error') || lower.includes('failed')) return 'text-destructive';
-  if (lower.includes('retry') || lower.includes('warning')) return 'text-amber-600';
+  if (lower.includes('retry') || lower.includes('warning')) return 'text-amber-600 dark:text-amber-400';
   return 'text-muted-foreground';
 };
 
@@ -39,8 +39,8 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
     <div className="space-y-6">
       {/* Server-side processing indicator */}
       {processingMode === 'server' && (
-        <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/30">
-          <Cloud className="h-4 w-4 text-blue-500 shrink-0" />
+        <div className="flex items-center gap-2 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/50 px-4 py-3 dark:border-blue-900 dark:bg-blue-950/30">
+          <Cloud className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
           <p className="text-sm text-blue-700 dark:text-blue-300">
             Processing on server
           </p>
@@ -55,8 +55,8 @@ const ProcessingView: React.FC<ProcessingViewProps> = ({
         </div>
       )}
       {processingMode === 'batch' && (
-        <div className="flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-4 py-3 dark:border-purple-900 dark:bg-purple-950/30">
-          <Cloud className="h-4 w-4 text-purple-500 shrink-0" />
+        <div className="flex items-center gap-2 rounded-lg border border-purple-200 dark:border-purple-900 bg-purple-50 dark:bg-purple-950/50 px-4 py-3 dark:border-purple-900 dark:bg-purple-950/30">
+          <Cloud className="h-4 w-4 text-purple-500 dark:text-purple-400 shrink-0" />
           <p className="text-sm text-purple-700 dark:text-purple-300">
             Batch processing on Anthropic servers — 50% cost savings
           </p>

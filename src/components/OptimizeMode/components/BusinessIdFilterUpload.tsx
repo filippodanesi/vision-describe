@@ -19,7 +19,7 @@ import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, X, FileText, Filter } from 'lucide-react';
 import { toast } from 'sonner';
-import * as ExcelJS from 'exceljs';
+import { Workbook } from 'exceljs';
 
 interface BusinessIdFilterUploadProps {
   onFilterLoaded: (ids: Set<string>) => void;
@@ -79,7 +79,7 @@ const BusinessIdFilterUpload: React.FC<BusinessIdFilterUploadProps> = ({
   const parseExcelFile = async (arrayBuffer: ArrayBuffer): Promise<Set<string>> => {
     const ids = new Set<string>();
     
-    const workbook = new ExcelJS.Workbook();
+    const workbook = new Workbook();
     await workbook.xlsx.load(arrayBuffer);
     
     const worksheet = workbook.worksheets[0];
@@ -124,9 +124,8 @@ const BusinessIdFilterUpload: React.FC<BusinessIdFilterUploadProps> = ({
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
       
       if (!fileExtension || !['csv', 'txt', 'xlsx', 'xls'].includes(fileExtension)) {
-        toast('Invalid file type', {
-          description: 'Please upload a CSV, TXT, or Excel file with business IDs',
-          style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
+        toast.error('Invalid file type', {
+          description: 'Please upload a CSV, TXT, or Excel file with business IDs'
         });
         return;
       }
@@ -144,9 +143,8 @@ const BusinessIdFilterUpload: React.FC<BusinessIdFilterUploadProps> = ({
       }
 
       if (businessIds.size === 0) {
-        toast('No business IDs found', {
-          description: 'The file appears to be empty or invalid. Make sure it contains one business ID per line.',
-          style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
+        toast.error('No business IDs found', {
+          description: 'The file appears to be empty or invalid. Make sure it contains one business ID per line.'
         });
         return;
       }
@@ -163,9 +161,8 @@ const BusinessIdFilterUpload: React.FC<BusinessIdFilterUploadProps> = ({
 
     } catch (error) {
       console.error('Error reading filter file:', error);
-      toast('Error reading file', {
-        description: 'Could not read the filter file. Please check the format and try again.',
-        style: { backgroundColor: 'rgb(239, 68, 68)', color: 'white' }
+      toast.error('Error reading file', {
+        description: 'Could not read the filter file. Please check the format and try again.'
       });
     }
 
@@ -197,18 +194,18 @@ const BusinessIdFilterUpload: React.FC<BusinessIdFilterUploadProps> = ({
   };
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+    <div className="bg-muted/50 border border-border rounded-lg p-4">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-1">
-          <Filter className="w-5 h-5 text-blue-600" />
+          <Filter className="w-5 h-5 text-muted-foreground" />
         </div>
-        
+
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-blue-900 mb-1">
+          <h3 className="text-sm font-medium text-foreground mb-1">
             Business ID Filter (Optional)
           </h3>
-          <p className="text-xs text-blue-700 mb-3">
-            Upload a file with specific business IDs to process only those stores. 
+          <p className="text-xs text-muted-foreground mb-3">
+            Upload a file with specific business IDs to process only those stores.
             All other stores will keep their original descriptions unchanged.
           </p>
 
@@ -220,23 +217,22 @@ const BusinessIdFilterUpload: React.FC<BusinessIdFilterUploadProps> = ({
                   size="sm"
                   onClick={handleUploadClick}
                   disabled={disabled}
-                  className="bg-white hover:bg-blue-50"
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Upload Filter File
                 </Button>
-                <span className="text-xs text-blue-600">
+                <span className="text-xs text-muted-foreground">
                   (CSV, TXT, or Excel with business IDs)
                 </span>
               </>
             ) : (
-              <div className="flex items-center gap-2 bg-white rounded-md px-3 py-2 border border-blue-300">
-                <FileText className="w-4 h-4 text-blue-600" />
+              <div className="flex items-center gap-2 bg-background rounded-md px-3 py-2 border border-border">
+                <FileText className="w-4 h-4 text-muted-foreground" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-blue-900 truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {fileName}
                   </p>
-                  <p className="text-xs text-blue-600">
+                  <p className="text-xs text-muted-foreground">
                     {filterCount} business ID{filterCount !== 1 ? 's' : ''} loaded
                   </p>
                 </div>
@@ -245,9 +241,10 @@ const BusinessIdFilterUpload: React.FC<BusinessIdFilterUploadProps> = ({
                   size="sm"
                   onClick={handleClearFilter}
                   disabled={disabled}
-                  className="h-8 w-8 p-0 hover:bg-red-50"
+                  aria-label="Clear business ID filter"
+                  className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
                 >
-                  <X className="w-4 h-4 text-red-600" />
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
             )}
@@ -265,7 +262,7 @@ const BusinessIdFilterUpload: React.FC<BusinessIdFilterUploadProps> = ({
 
           {/* Format help */}
           {!filterLoaded && (
-            <div className="mt-3 text-xs text-blue-600 space-y-1">
+            <div className="mt-3 text-xs text-muted-foreground space-y-1">
               <p className="font-medium">Accepted formats:</p>
               <ul className="list-disc list-inside space-y-0.5 ml-2">
                 <li>CSV with business IDs in first column</li>

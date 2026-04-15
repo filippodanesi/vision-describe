@@ -60,9 +60,9 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ open, onOpen
           </div>
 
           <div className="space-y-2">
-            <Label>Use Case</Label>
+            <Label htmlFor="use-case">Use Case</Label>
             <Select value={useCase} onValueChange={setUseCase}>
-              <SelectTrigger>
+              <SelectTrigger id="use-case">
                 <SelectValue placeholder="Select use case" />
               </SelectTrigger>
               <SelectContent>

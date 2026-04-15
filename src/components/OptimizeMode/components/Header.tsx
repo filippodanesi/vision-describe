@@ -13,7 +13,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ standalone = false, sectionTitle }) => {
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/40">
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border/40">
       <div className="px-5 py-3.5 flex items-center gap-3">
         {!standalone ? (
           <>

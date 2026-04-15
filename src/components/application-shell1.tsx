@@ -403,7 +403,7 @@ export function ApplicationShell1({ className }: ApplicationShell1Props) {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">Overview</BreadcrumbLink>
+                <span className="text-muted-foreground">Overview</span>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
