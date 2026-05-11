@@ -131,18 +131,22 @@ export async function analyzeWithOpenAI(
 export async function translateWithClaude(
   prompt: string,
   apiKey: string,
-  model: string = 'claude-sonnet-4-6'
+  model: string = 'claude-sonnet-4-6',
+  signal?: AbortSignal
 ): Promise<VisionApiResponse> {
   const client = new Anthropic({
     apiKey,
     dangerouslyAllowBrowser: true,
   });
 
-  const response = await client.messages.create({
-    model,
-    max_tokens: 4096,
-    messages: [{ role: 'user', content: prompt }],
-  });
+  const response = await client.messages.create(
+    {
+      model,
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: prompt }],
+    },
+    signal ? { signal } : undefined
+  );
 
   const textBlock = response.content.find(
     (block) => 'type' in block && block.type === 'text' && 'text' in block
@@ -167,7 +171,8 @@ export async function translateWithClaude(
 export async function translateWithOpenAI(
   prompt: string,
   apiKey: string,
-  model: string = 'gpt-5.2'
+  model: string = 'gpt-5.2',
+  signal?: AbortSignal
 ): Promise<VisionApiResponse> {
   const isNewModel = model.includes('o3') || model.includes('o4') || model.includes('gpt-5') || model.startsWith('o-');
 
@@ -191,6 +196,7 @@ export async function translateWithOpenAI(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
+    signal,
   });
 
   if (!response.ok) {

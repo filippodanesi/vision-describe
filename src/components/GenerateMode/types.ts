@@ -2,6 +2,7 @@ export enum GenerateSubMode {
   SELECT = 'select',
   IMAGE_ANALYSIS = 'image_analysis',
   CSV_TRANSLATION = 'csv_translation',
+  METADATA_GENERATION = 'metadata_generation',
 }
 
 export enum ImageAnalysisStep {
@@ -101,6 +102,71 @@ export const CERTIFICATION_OPTIONS = [
   'Better Cotton Initiative (BCI)',
   'Fair Trade Certified',
   'bluesign®',
+] as const;
+
+// Metadata Generation types
+export enum MetadataGenerationStep {
+  UPLOAD = 'upload',
+  FORMAT_DETECT = 'format_detect',
+  LANGUAGES = 'languages',
+  PROCESSING = 'processing',
+  RESULT = 'result',
+}
+
+// Hardcoded model for the metadata generation flow.
+// Claude Opus 4.7 — most capable Anthropic model, adaptive thinking on by
+// default in this flow, no temperature/top_p/top_k allowed.
+export const METADATA_GENERATION_MODEL = 'claude-opus-4-7';
+
+export type MetadataFormatType = 'aw26-compact' | 'sloggi-b2c' | 'triumph-b2c' | 'unknown';
+
+export interface MetadataFormat {
+  type: MetadataFormatType;
+  headers: string[];
+  sheetNames: string[];
+}
+
+export interface MetadataProduct {
+  sheetName: string;
+  rowIndex: number;
+  materialNumber: string;
+  productName: string;
+  brand: string;
+  productLine?: string;
+  shortDescription?: string;
+  seriesUsp?: string;
+  styleUsp?: string;
+  styleDescription?: string;
+  rawRow: Record<string, any>;
+}
+
+export interface GeneratedProduct {
+  product: MetadataProduct;
+  enMaster?: string;
+  translations: Record<string, string>;
+  errors?: string[];
+}
+
+export interface GenerationProgress {
+  current: number;
+  total: number;
+}
+
+// Inriver language codes matching MaterialLongDescriptionEcom_<code> columns.
+// Order mirrors the order in the source Excel files used by Masterdata.
+export const INRIVER_LANGUAGES = [
+  { code: 'cs', name: 'Czech (Česká republika)' },
+  { code: 'da', name: 'Danish (Danmark)' },
+  { code: 'de', name: 'German (Deutschland)' },
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Spanish (España)' },
+  { code: 'fr', name: 'French (France)' },
+  { code: 'hu', name: 'Hungarian (Magyarország)' },
+  { code: 'it', name: 'Italian (Italia)' },
+  { code: 'nl', name: 'Dutch (Nederland)' },
+  { code: 'pl', name: 'Polish (Polska)' },
+  { code: 'pt-PT', name: 'Portuguese (Portugal)' },
+  { code: 'sv', name: 'Swedish (Sverige)' },
 ] as const;
 
 export const LANGUAGE_MAPPING: Record<string, string> = {

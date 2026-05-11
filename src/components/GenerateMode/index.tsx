@@ -3,6 +3,7 @@ import { GenerateSubMode } from './types';
 import { SubModeSelector } from './components/SubModeSelector';
 import { ImageAnalysisFlow } from './components/ImageAnalysis/ImageAnalysisFlow';
 import { CsvTranslationFlow } from './components/CsvTranslation/CsvTranslationFlow';
+import { MetadataGenerationFlow } from './components/MetadataGeneration/MetadataGenerationFlow';
 
 export const GenerateMode: React.FC = () => {
   const [subMode, setSubMode] = useState<GenerateSubMode>(GenerateSubMode.SELECT);
@@ -14,7 +15,8 @@ export const GenerateMode: React.FC = () => {
       <div>
         <h1 className="text-xl font-medium tracking-tight">Generate</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Analyze product images or translate CSV content with AI
+          Analyze product images, translate CSV content, or generate descriptions
+          from product metadata.
         </p>
       </div>
 
@@ -28,6 +30,10 @@ export const GenerateMode: React.FC = () => {
 
       {subMode === GenerateSubMode.CSV_TRANSLATION && (
         <CsvTranslationFlow onBack={handleBack} />
+      )}
+
+      {subMode === GenerateSubMode.METADATA_GENERATION && (
+        <MetadataGenerationFlow onBack={handleBack} />
       )}
     </div>
   );

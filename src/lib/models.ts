@@ -19,10 +19,19 @@ export const models: Model[] = [
     cost: 'Low',
     quality: 'Excellent',
   },
-{
+  {
+    id: 'claude-opus-4-7',
+    name: 'Claude Opus 4.7',
+    description: 'Most capable Anthropic model — 1M context, adaptive thinking, top text quality',
+    provider: 'anthropic',
+    speed: 'Medium',
+    cost: 'High',
+    quality: 'Excellent',
+  },
+  {
     id: 'claude-opus-4-6',
     name: 'Claude Opus 4.6',
-    description: 'Latest Anthropic flagship — top-tier text quality (200K context)',
+    description: 'Previous Anthropic flagship — top-tier text quality (200K context)',
     provider: 'anthropic',
     speed: 'Medium',
     cost: 'Medium',
