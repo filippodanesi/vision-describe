@@ -122,6 +122,11 @@ Silently verify before returning:
 2. Replace inferred details with neutral language
 3. No assumptions or invented specs in the output
 4. Tone is authentic, joyful, inclusive — not aspirational or luxury-focused
+5. Opener is not a banned template ("Meet the…", "Introducing…", "Welcome to…", "Discover…", "Say hello to…")
+6. Em dash count is 0 or 1
+7. No banned AI words anywhere (delve, leverage, landscape, testament, showcase, robust, comprehensive, seamless as intensifier, harness, foster, elevate, navigate, crucial, intricate, tapestry, realm, embark, vibrant, nestled, journey as metaphor)
+8. No gendered group address ("ladies", "girls", "guys" or any locale-specific equivalent)
+9. Each brand metaphor used at most once ("second skin", "morning to night", "every day", "comfort that moves with you", "feel like nothing")
 `;
 
 export default sloggiSystemPrompt;
