@@ -205,6 +205,7 @@ export function useMetadataGeneration() {
   const [sheets, setSheets] = useState<ParsedSheet[]>([]);
   const [products, setProducts] = useState<MetadataProduct[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [exclusionInput, setExclusionInput] = useState<string>('');
   const [format, setFormat] = useState<MetadataFormat | null>(null);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
     INRIVER_LANGUAGES.map((l) => l.code)
@@ -507,6 +508,7 @@ export function useMetadataGeneration() {
     setSheets([]);
     setProducts([]);
     setSelectedBrands([]);
+    setExclusionInput('');
     setFormat(null);
     setSelectedLanguages(INRIVER_LANGUAGES.map((l) => l.code));
     setIsProcessing(false);
@@ -516,13 +518,23 @@ export function useMetadataGeneration() {
     setError(null);
   }, []);
 
-  const queuedProducts = useMemo(
+  const excludedSkus = useMemo(
     () =>
-      products.filter((p) =>
-        selectedBrands.includes((p.brand || 'unknown').trim())
-      ),
-    [products, selectedBrands]
+      exclusionInput
+        .split(/[\s,;\n]+/)
+        .map((s) => s.trim())
+        .filter(Boolean),
+    [exclusionInput]
   );
+
+  const queuedProducts = useMemo(() => {
+    const excluded = new Set(excludedSkus);
+    return products.filter(
+      (p) =>
+        selectedBrands.includes((p.brand || 'unknown').trim()) &&
+        !excluded.has(String(p.materialNumber).trim())
+    );
+  }, [products, selectedBrands, excludedSkus]);
 
   return {
     step,
@@ -532,6 +544,9 @@ export function useMetadataGeneration() {
     queuedProducts,
     selectedBrands,
     setSelectedBrands,
+    exclusionInput,
+    setExclusionInput,
+    excludedSkus,
     format,
     selectedLanguages,
     setSelectedLanguages,

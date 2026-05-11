@@ -11,6 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { useMetadataGeneration } from '../../hooks/useMetadataGeneration';
 import { MetadataGenerationStep, METADATA_GENERATION_MODEL } from '../../types';
 import { MetadataLanguageMultiSelect } from './MetadataLanguageMultiSelect';
@@ -43,6 +45,9 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
     queuedProducts,
     selectedBrands,
     setSelectedBrands,
+    exclusionInput,
+    setExclusionInput,
+    excludedSkus,
     format,
     selectedLanguages,
     setSelectedLanguages,
@@ -218,7 +223,8 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
             </div>
 
             {brandBreakdown.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-4">
+                <div className="space-y-2">
                 <div className="flex items-baseline justify-between">
                   <span className="text-sm text-muted-foreground">Brands</span>
                   <span className="text-xs text-muted-foreground">
@@ -260,6 +266,35 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
                     Select at least one brand to proceed.
                   </p>
                 )}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-baseline justify-between">
+                    <Label
+                      htmlFor="sku-exclusion"
+                      className="text-sm text-muted-foreground font-normal"
+                    >
+                      Exclude SKUs
+                    </Label>
+                    <span className="text-xs text-muted-foreground">
+                      {excludedSkus.length > 0
+                        ? `${excludedSkus.length} excluded`
+                        : 'optional'}
+                    </span>
+                  </div>
+                  <Textarea
+                    id="sku-exclusion"
+                    value={exclusionInput}
+                    onChange={(e) => setExclusionInput(e.target.value)}
+                    placeholder="e.g. 10228663, 10228693, 10228698 — separated by comma, space or newline"
+                    rows={2}
+                    className="font-mono text-xs"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Material Numbers listed here are dropped from the queue
+                    after the brand filter.
+                  </p>
+                </div>
               </div>
             )}
 
