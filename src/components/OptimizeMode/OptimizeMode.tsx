@@ -14,7 +14,7 @@ import { models } from '@/lib/models';
 import { ProcessingStep } from './types';
 import { UseCase, AVAILABLE_USE_CASES } from './usecases';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, RefreshCw, Download, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RefreshCw, Download } from 'lucide-react';
 import { StepIndicator, type StepDef } from '@/components/ui/step-indicator';
 import { Workbook } from 'exceljs';
 import { useApiKeys } from '@/contexts/ApiKeysContext';
@@ -46,7 +46,6 @@ import {
   type RunRecord,
 } from '@/lib/runPersistence';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -543,20 +542,23 @@ export const OptimizeMode: React.FC = () => {
               onReconnect={handleReconnectRun}
             />
             {!hasKeys && (
-              <Card className="border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
-                <CardContent className="py-3">
-                  <p className="text-sm text-amber-800 dark:text-amber-200">
-                    Configure your API keys in <strong>Settings</strong> before processing files.
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                <p>
+                  Configure your API keys in <strong>Settings</strong> before processing files.
+                </p>
+              </div>
             )}
-            <Card>
-              <CardHeader>
-                <CardTitle className="tracking-tight">Upload your file</CardTitle>
-                <CardDescription>Select a use case and upload your data file</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <section>
+              <div className="mb-4">
+                <p className="label-mono mb-1">Step 01 / Input</p>
+                <h2 className="text-base font-semibold tracking-tightest text-foreground">
+                  Upload your file
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+                  Select a use case and upload your data file.
+                </p>
+              </div>
+              <div className="border border-border bg-card p-5 space-y-4">
                 <div>
                   <label className="text-sm font-medium text-foreground mb-1 block">Use Case</label>
                   <Select value={useCase} onValueChange={(v) => setUseCase(v as UseCase)}>
@@ -599,8 +601,8 @@ export const OptimizeMode: React.FC = () => {
                 {useCase && (
                   <FileUpload onFileUploaded={handleFileUploaded} useCase={useCase} />
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </section>
 
             {fileData && useCase === 'partoo' && (
               <>
@@ -623,21 +625,22 @@ export const OptimizeMode: React.FC = () => {
       case ProcessingStep.SELECT_COLUMNS:
         return (
           <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-4">
+            <div className="mb-4">
+              <p className="label-mono mb-1">Step 02 / Columns</p>
               {useCase === 'amazon' ? (
                 <>
-                  <h2 className="text-base font-medium mb-2 tracking-tight">Select Columns (Amazon)</h2>
-                  <p className="text-sm text-muted-foreground">Choose input columns such as rtip_product_description#1.value and bullet_point#*.value</p>
+                  <h2 className="text-base font-semibold tracking-tightest text-foreground">Select columns (Amazon)</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Choose input columns such as rtip_product_description#1.value and bullet_point#*.value</p>
                 </>
               ) : useCase === 'partoo' ? (
                 <>
-                  <h2 className="text-base font-medium mb-2 tracking-tight">Select Store Data Columns (Partoo)</h2>
-                  <p className="text-sm text-muted-foreground">Select columns like Name, City, Country, Short description, Long description</p>
+                  <h2 className="text-base font-semibold tracking-tightest text-foreground">Select store data columns (Partoo)</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Select columns like Name, City, Country, Short description, Long description</p>
                 </>
               ) : (
                 <>
-                  <h2 className="text-base font-medium mb-2 tracking-tight">Select Language Variants</h2>
-                  <p className="text-sm text-muted-foreground">Choose MaterialLongDescriptionEcom columns to optimize (with or without Color prefix)</p>
+                  <h2 className="text-base font-semibold tracking-tightest text-foreground">Select language variants</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Choose MaterialLongDescriptionEcom columns to optimize (with or without Color prefix)</p>
                 </>
               )}
             </div>
@@ -690,10 +693,11 @@ export const OptimizeMode: React.FC = () => {
       case ProcessingStep.SELECT_MODEL:
         return (
           <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-4">
-              <h2 className="text-base font-medium mb-2 tracking-tight">Choose AI Model</h2>
-              <p className="text-sm text-muted-foreground">
-                Select the model for content optimization
+            <div className="mb-4">
+              <p className="label-mono mb-1">Step 04 / Model</p>
+              <h2 className="text-base font-semibold tracking-tightest text-foreground">Choose AI model</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Select the model for content optimization.
               </p>
             </div>
 
@@ -707,9 +711,15 @@ export const OptimizeMode: React.FC = () => {
 
         return (
           <div className="max-w-3xl mx-auto">
-            <div className="mb-4">
-              <h2 className="text-xl font-medium tracking-tight">Processing File...</h2>
-              <p className="text-sm text-muted-foreground mt-1">Using {modelDisplayName} for optimization</p>
+            <div className="mb-5">
+              <p className="label-mono mb-1">
+                <span className="status-dot animate-pulse mr-2 align-middle" />
+                Processing
+              </p>
+              <h2 className="text-base font-semibold tracking-tightest text-foreground">Processing file</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Running <span className="font-mono">{modelDisplayName}</span> on the queued rows. Do not close the tab.
+              </p>
             </div>
 
             <ProcessingView
@@ -727,55 +737,54 @@ export const OptimizeMode: React.FC = () => {
       case ProcessingStep.COMPLETE:
         return (
           <div className="space-y-6">
-            <div className="text-center">
-              <h3 className="text-xl font-medium text-foreground mb-2 tracking-tight">Processing Complete!</h3>
-              <p className="text-muted-foreground mb-4">Your file has been processed successfully.</p>
+            <div>
+              <p className="label-mono mb-1">
+                <span className="inline-block size-1.5 rounded-full bg-foreground mr-2 align-middle" aria-hidden="true" />
+                Complete
+              </p>
+              <h2 className="text-base font-semibold tracking-tightest text-foreground">Processing complete</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Your file has been processed successfully.</p>
             </div>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary" />
-                  Processing Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Rows Processed</span>
-                      <span className="font-mono font-normal text-foreground">{processedData?.length || 0}</span>
+            <section>
+              <p className="label-mono mb-3">Summary</p>
+              <div className="border border-border bg-card">
+                <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border">
+                  <div className="p-5 space-y-3 text-sm">
+                    <div className="flex justify-between items-baseline">
+                      <span className="label-mono-sm">Rows Processed</span>
+                      <span className="font-mono text-foreground tabular-nums">{processedData?.length || 0}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Model</span>
+                    <div className="flex justify-between items-baseline">
+                      <span className="label-mono-sm">Model</span>
                       <span className="font-mono text-foreground">{getModelById(selectedModel)?.name || selectedModel}</span>
                     </div>
                     {getProcessingTime() && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Time</span>
-                        <span className="font-mono text-foreground">{getProcessingTime()}</span>
+                      <div className="flex justify-between items-baseline">
+                        <span className="label-mono-sm">Time</span>
+                        <span className="font-mono text-foreground tabular-nums">{getProcessingTime()}</span>
                       </div>
                     )}
                   </div>
 
                   {costTracker && (
-                    <div className="space-y-3 border-l border-border pl-8">
-                      <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Total Cost</span>
-                        <Badge variant="secondary" className="bg-secondary text-secondary-foreground hover:bg-secondary font-mono">
+                    <div className="p-5 space-y-3 text-sm">
+                      <div className="flex justify-between items-baseline">
+                        <span className="label-mono-sm">Total Cost</span>
+                        <span className="font-mono text-foreground tabular-nums">
                           ${costTracker.getSessionStats().totalActualCost.toFixed(2)}
-                        </Badge>
+                        </span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Total Tokens</span>
-                        <span className="font-mono text-foreground">
+                      <div className="flex justify-between items-baseline">
+                        <span className="label-mono-sm">Total Tokens</span>
+                        <span className="font-mono text-foreground tabular-nums">
                           {costTracker.getSessionStats().totalTokens.toLocaleString()}
                         </span>
                       </div>
                       {processedData && processedData.length > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">Avg Cost/Row</span>
-                          <span className="font-mono text-foreground">
+                        <div className="flex justify-between items-baseline">
+                          <span className="label-mono-sm">Avg Cost/Row</span>
+                          <span className="font-mono text-foreground tabular-nums">
                             ${(costTracker.getSessionStats().totalActualCost / processedData.length).toFixed(2)}
                           </span>
                         </div>
@@ -783,26 +792,26 @@ export const OptimizeMode: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </CardContent>
-              <CardFooter className="flex items-center justify-center gap-4 pt-4">
-                <ExportResults results={processedData} isDisabled={!processedData || processedData.length === 0} originalMeta={fileData?.meta} useCase={useCase || 'ecommerce'} />
-                <Button variant="outline" onClick={reloadFile}>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Process Another File
-                </Button>
-              </CardFooter>
-            </Card>
+                <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-border">
+                  <ExportResults results={processedData} isDisabled={!processedData || processedData.length === 0} originalMeta={fileData?.meta} useCase={useCase || 'ecommerce'} />
+                  <Button variant="outline" onClick={reloadFile}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Process another file
+                  </Button>
+                </div>
+              </div>
+            </section>
 
             {processedData && processedData.length > 0 && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium text-foreground">Preview (first 10 rows)</h4>
-                  <span className="text-xs text-muted-foreground">
-                    Showing {Math.min(10, processedData.length)} of {processedData.length} rows
+                <div className="flex items-baseline justify-between">
+                  <p className="label-mono">Preview — first 10 rows</p>
+                  <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                    {Math.min(10, processedData.length)} / {processedData.length}
                   </span>
                 </div>
 
-                <div className="border border-border rounded-lg overflow-hidden">
+                <div className="border border-border overflow-hidden">
                   <div className="max-h-[500px] overflow-auto">
                     <Table>
                       <TableHeader>
