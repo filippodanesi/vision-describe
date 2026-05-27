@@ -1,11 +1,10 @@
 import React, { useRef } from 'react';
-import { Loader2, Upload, AlertCircle } from 'lucide-react';
+import { Upload, AlertCircle } from 'lucide-react';
 import { StepIndicator, type StepDef } from '@/components/ui/step-indicator';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 import { useCsvTranslation } from '../../hooks/useCsvTranslation';
 import { CsvTranslationStep } from '../../types';
 import { LanguageMultiSelect } from './LanguageMultiSelect';
@@ -13,6 +12,34 @@ import { TranslationResult } from './TranslationResult';
 import ModelSelector from '@/components/OptimizeMode/components/ModelSelector';
 import { useApiKeys } from '@/contexts/ApiKeysContext';
 import { toast } from 'sonner';
+
+function SpecRow({
+  label,
+  value,
+  mono = false,
+  truncate = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  truncate?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-4 py-2.5">
+      <dt className="label-mono-sm shrink-0">{label}</dt>
+      <dd
+        className={cn(
+          'text-foreground text-right min-w-0',
+          mono && 'font-mono text-xs tabular-nums',
+          truncate && 'truncate',
+        )}
+        title={truncate ? value : undefined}
+      >
+        {value}
+      </dd>
+    </div>
+  );
+}
 
 interface CsvTranslationFlowProps {
   onBack: () => void;
@@ -82,99 +109,103 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
       <StepIndicator steps={STEP_DEFS} currentStep={step} />
 
       {step === CsvTranslationStep.UPLOAD && (
-        <Card className="max-w-xl mx-auto">
-          <CardHeader>
-            <CardTitle>Upload Product File</CardTitle>
-            <CardDescription>
-              Upload a CSV, Excel, or HTML file with product descriptions to translate
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <input
-              type="file"
-              accept=".csv,.xlsx,.xls,.xlsm,.html,.htm"
-              className="hidden"
-              ref={inputRef}
-              onChange={handleFileChange}
-            />
+        <section className="max-w-xl mx-auto">
+          <div className="mb-4">
+            <p className="label-mono mb-1">Step 01 / Input</p>
+            <h2 className="text-base font-semibold tracking-tightest text-foreground">
+              Upload product file
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+              CSV, Excel or HTML file with product descriptions to translate.
+              Triumph, sloggi and Beldona formats are auto-detected.
+            </p>
+          </div>
 
-            <div
-              onClick={() => inputRef.current?.click()}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-              className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-10 cursor-pointer transition-colors border-muted-foreground/25 hover:border-muted-foreground/40"
+          <input
+            type="file"
+            accept=".csv,.xlsx,.xls,.xlsm,.html,.htm"
+            className="hidden"
+            ref={inputRef}
+            onChange={handleFileChange}
+          />
+
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="Drag and drop product file or click to browse"
+            onClick={() => inputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                inputRef.current?.click();
+              }
+            }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+            className="flex flex-col items-center justify-center gap-3 border border-dashed border-border bg-card p-12 cursor-pointer transition-colors hover:border-foreground/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
+          >
+            <Upload className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+            <div className="text-center">
+              <p className="label-mono mb-1">Drop file or click to browse</p>
+              <p className="text-xs text-muted-foreground font-mono">
+                .csv · .xlsx · .xls · .html
+              </p>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {error}
+            </div>
+          )}
+
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={onBack}
+              className="label-mono-sm hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
             >
-              <Upload className="h-8 w-8 text-muted-foreground" />
-              <div className="text-center">
-                <p className="text-sm font-medium text-foreground">
-                  Drag & drop or click to browse
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Supports Triumph, Sloggi, and Beldona formats
-                </p>
-              </div>
-            </div>
-
-            {error && (
-              <div className="flex items-center gap-2 text-sm text-destructive">
-                <AlertCircle className="h-4 w-4" />
-                {error}
-              </div>
-            )}
-
-            <div className="pt-2">
-              <button
-                onClick={onBack}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                ← Back to mode selection
-              </button>
-            </div>
-          </CardContent>
-        </Card>
+              ← Back to mode selection
+            </button>
+          </div>
+        </section>
       )}
 
       {step === CsvTranslationStep.FORMAT_DETECT && format && (
-        <Card className="max-w-xl mx-auto">
-          <CardHeader>
-            <CardTitle>File Detected</CardTitle>
-            <CardDescription>
-              Format and products recognized from your file
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Format</span>
-                <Badge variant="secondary" className="capitalize">{format.type}</Badge>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Products</span>
-                <span className="font-mono font-normal">{products.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">File</span>
-                <span className="text-xs truncate max-w-[150px]">{file?.name}</span>
-              </div>
-            </div>
+        <section className="max-w-xl mx-auto">
+          <div className="mb-4">
+            <p className="label-mono mb-1">Step 02 / Detect</p>
+            <h2 className="text-base font-semibold tracking-tightest text-foreground">
+              File detected
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+              Confirm the format before queuing translations.
+            </p>
+          </div>
 
-            {format.type === 'unknown' && (
-              <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
-                <AlertCircle className="h-4 w-4" />
-                Unknown format — some features may not work correctly
-              </div>
-            )}
+          <dl className="border border-border divide-y divide-border bg-card text-sm">
+            <SpecRow label="Format" value={format.type} mono />
+            <SpecRow label="Products" value={String(products.length)} mono />
+            <SpecRow label="File" value={file?.name ?? ''} truncate />
+          </dl>
 
-            <div className="flex items-center justify-between pt-2">
-              <Button variant="ghost" onClick={() => { reset(); }}>
-                Upload Different File
-              </Button>
-              <Button onClick={() => setStep(CsvTranslationStep.LANGUAGES)} disabled={products.length === 0}>
-                Next: Select Languages
-              </Button>
+          {format.type === 'unknown' && (
+            <div className="mt-4 flex items-center gap-2 border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Unknown format — some features may not work correctly.
             </div>
-          </CardContent>
-        </Card>
+          )}
+
+          <div className="flex items-center justify-between pt-6 mt-6 border-t border-border">
+            <Button variant="ghost" onClick={() => { reset(); }}>
+              Upload different file
+            </Button>
+            <Button onClick={() => setStep(CsvTranslationStep.LANGUAGES)} disabled={products.length === 0}>
+              Next: Select languages
+            </Button>
+          </div>
+        </section>
       )}
 
       {step === CsvTranslationStep.LANGUAGES && (
@@ -188,10 +219,18 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
 
       {step === CsvTranslationStep.MODEL && (
         <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-4">
-            <h2 className="text-lg font-medium mb-2 tracking-tight">Choose AI Model</h2>
-            <p className="text-sm text-muted-foreground">
-              {products.length} products × {selectedLanguages.length} languages = {products.length * selectedLanguages.length} translations
+          <div className="mb-4">
+            <p className="label-mono mb-1">Step 04 / Model</p>
+            <h2 className="text-base font-semibold tracking-tightest text-foreground">
+              Choose AI model
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              <span className="tabular-nums">{products.length}</span> products ×{' '}
+              <span className="tabular-nums">{selectedLanguages.length}</span> languages ={' '}
+              <span className="font-mono tabular-nums">
+                {products.length * selectedLanguages.length}
+              </span>{' '}
+              translations
             </p>
           </div>
           <ModelSelector
@@ -202,21 +241,33 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
       )}
 
       {step === CsvTranslationStep.PROCESSING && (
-        <div className="max-w-xl mx-auto space-y-4">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-foreground">Translating...</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              {progress.current} / {progress.total} translations completed
+        <section className="max-w-xl mx-auto">
+          <div className="mb-5">
+            <div className="flex items-baseline justify-between gap-4 mb-2">
+              <p className="label-mono">
+                <span className="status-dot animate-pulse mr-2 align-middle" />
+                Processing
+              </p>
+              <p className="font-mono text-xs tabular-nums text-muted-foreground">
+                {progress.current.toString().padStart(3, '0')} /{' '}
+                {progress.total.toString().padStart(3, '0')}
+              </p>
+            </div>
+            <h2 className="text-base font-semibold tracking-tightest text-foreground">
+              Translating
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Do not close the tab while translations are in progress.
             </p>
           </div>
 
           <Progress
             value={progress.total > 0 ? (progress.current / progress.total) * 100 : 0}
+            className="h-1"
           />
 
           {logs.length > 0 && (
-            <ScrollArea className="h-40 rounded-md border p-3">
+            <ScrollArea className="h-40 mt-5 border border-border bg-card p-3">
               <div className="space-y-1">
                 {logs.map((log, i) => (
                   <p key={i} className="text-xs text-muted-foreground font-mono">{log}</p>
@@ -225,12 +276,12 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
             </ScrollArea>
           )}
 
-          <div className="text-center">
-            <Button variant="outline" size="sm" onClick={cancelTranslation}>
-              Cancel
+          <div className="mt-6">
+            <Button variant="destructive" size="sm" onClick={cancelTranslation}>
+              Cancel translation
             </Button>
           </div>
-        </div>
+        </section>
       )}
 
       {step === CsvTranslationStep.RESULT && (

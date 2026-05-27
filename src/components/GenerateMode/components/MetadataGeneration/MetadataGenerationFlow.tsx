@@ -1,24 +1,46 @@
 import React, { useRef, useMemo, useCallback } from 'react';
-import { Loader2, Upload, AlertCircle } from 'lucide-react';
+import { Upload, AlertCircle } from 'lucide-react';
 import { StepIndicator, type StepDef } from '@/components/ui/step-indicator';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import { useMetadataGeneration } from '../../hooks/useMetadataGeneration';
 import { MetadataGenerationStep, METADATA_GENERATION_MODEL } from '../../types';
 import { MetadataLanguageMultiSelect } from './MetadataLanguageMultiSelect';
 import { GenerationResult } from './GenerationResult';
 import { useApiKeys } from '@/contexts/ApiKeysContext';
 import { toast } from 'sonner';
+
+function SpecRow({
+  label,
+  value,
+  mono = false,
+  truncate = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  truncate?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-4 py-2.5">
+      <dt className="label-mono-sm shrink-0">{label}</dt>
+      <dd
+        className={cn(
+          'text-foreground text-right min-w-0',
+          mono && 'font-mono text-xs tabular-nums',
+          truncate && 'truncate',
+        )}
+        title={truncate ? value : undefined}
+      >
+        {value}
+      </dd>
+    </div>
+  );
+}
 
 interface MetadataGenerationFlowProps {
   onBack: () => void;
@@ -131,105 +153,98 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
       <StepIndicator steps={STEP_DEFS} currentStep={step} />
 
       {step === MetadataGenerationStep.UPLOAD && (
-        <Card className="max-w-xl mx-auto">
-          <CardHeader>
-            <CardTitle>Upload Product Metadata File</CardTitle>
-            <CardDescription>
+        <section className="max-w-xl mx-auto">
+          <div className="mb-4">
+            <p className="label-mono mb-1">Step 01 / Input</p>
+            <h2 className="text-base font-semibold tracking-tightest text-foreground">
+              Upload product metadata file
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
               Excel file with product metadata for new SKUs. AW26 compact and
               B2C standard formats supported; multi-sheet workbooks are read in
               full.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <input
-              type="file"
-              accept=".xlsx,.xls,.xlsm"
-              className="hidden"
-              ref={inputRef}
-              onChange={handleFileChange}
-            />
+            </p>
+          </div>
 
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label="Drag and drop product metadata file or click to browse"
-              onClick={openFilePicker}
-              onKeyDown={handleDropZoneKeyDown}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-              className="flex flex-col items-center justify-center gap-3 rounded-md border border-dashed p-10 cursor-pointer transition-colors border-muted-foreground/25 hover:border-muted-foreground/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          <input
+            type="file"
+            accept=".xlsx,.xls,.xlsm"
+            className="hidden"
+            ref={inputRef}
+            onChange={handleFileChange}
+          />
+
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="Drag and drop product metadata file or click to browse"
+            onClick={openFilePicker}
+            onKeyDown={handleDropZoneKeyDown}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+            className="flex flex-col items-center justify-center gap-3 border border-dashed border-border bg-card p-12 cursor-pointer transition-colors hover:border-foreground/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
+          >
+            <Upload className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+            <div className="text-center">
+              <p className="label-mono mb-1">Drop file or click to browse</p>
+              <p className="text-xs text-muted-foreground font-mono">
+                .xlsx · .xls · .xlsm
+              </p>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {error}
+            </div>
+          )}
+
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={onBack}
+              className="label-mono-sm hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
             >
-              <Upload className="h-8 w-8 text-muted-foreground" />
-              <div className="text-center">
-                <p className="text-sm font-medium text-foreground">
-                  Drag & drop or click to browse
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  .xlsx / .xls / .xlsm
-                </p>
-              </div>
-            </div>
-
-            {error && (
-              <div className="flex items-center gap-2 text-sm text-destructive">
-                <AlertCircle className="h-4 w-4" />
-                {error}
-              </div>
-            )}
-
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={onBack}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
-              >
-                ← Back to mode selection
-              </button>
-            </div>
-          </CardContent>
-        </Card>
+              ← Back to mode selection
+            </button>
+          </div>
+        </section>
       )}
 
       {step === MetadataGenerationStep.FORMAT_DETECT && format && (
-        <Card className="max-w-xl mx-auto">
-          <CardHeader>
-            <CardTitle>File Detected</CardTitle>
-            <CardDescription>
-              Format and products recognised from your file
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Format</span>
-                <span className="font-mono text-xs">{format.type}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Products</span>
-                <span className="font-mono">{products.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Sheets</span>
-                <span className="font-mono text-xs text-right truncate max-w-[200px]">
-                  {format.sheetNames.join(', ')}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">File</span>
-                <span className="text-xs truncate max-w-[200px]">
-                  {file?.name}
-                </span>
-              </div>
-            </div>
+        <section className="max-w-xl mx-auto">
+          <div className="mb-4">
+            <p className="label-mono mb-1">Step 02 / Detect</p>
+            <h2 className="text-base font-semibold tracking-tightest text-foreground">
+              File detected
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+              Confirm the format, scope the queue by brand, and exclude any SKUs
+              that should not enter the batch.
+            </p>
+          </div>
 
-            {brandBreakdown.length > 0 && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-sm text-muted-foreground">Brands</span>
-                  <span className="text-xs text-muted-foreground">
+          <dl className="border border-border divide-y divide-border bg-card text-sm">
+            <SpecRow label="Format" value={format.type} mono />
+            <SpecRow label="Products" value={String(products.length)} mono />
+            <SpecRow
+              label="Sheets"
+              value={format.sheetNames.join(', ')}
+              mono
+              truncate
+            />
+            <SpecRow label="File" value={file?.name ?? ''} truncate />
+          </dl>
+
+          {brandBreakdown.length > 0 && (
+            <div className="mt-6 space-y-5">
+              <div>
+                <div className="flex items-baseline justify-between mb-3">
+                  <p className="label-mono">Brand filter</p>
+                  <p className="label-mono-sm normal-case tracking-normal">
                     click to include / exclude
-                  </span>
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {brandBreakdown.map(([b, n]) => {
@@ -241,19 +256,19 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
                         aria-pressed={on}
                         aria-label={`${b}, ${n} products, ${on ? 'included' : 'excluded'}`}
                         onClick={() => toggleBrand(b)}
-                        className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-normal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                        className={cn(
+                          'inline-flex items-center border px-2.5 py-1 text-xs font-mono transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2',
                           on
-                            ? 'border-foreground bg-foreground text-background'
-                            : 'border-border bg-background text-muted-foreground hover:border-foreground/40 hover:text-foreground'
-                        }`}
+                            ? 'border-signal bg-signal/10 text-signal'
+                            : 'border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground',
+                        )}
                       >
-                        {b}
+                        <span className={cn(on && 'text-signal')}>{b}</span>
                         <span
-                          className={`ml-1.5 ${
-                            on
-                              ? 'text-background/70'
-                              : 'text-muted-foreground'
-                          }`}
+                          className={cn(
+                            'ml-1.5 tabular-nums',
+                            on ? 'text-signal/70' : 'text-muted-foreground/70',
+                          )}
                         >
                           × {n}
                         </span>
@@ -262,75 +277,71 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
                   })}
                 </div>
                 {selectedBrands.length === 0 && (
-                  <p className="text-xs text-destructive">
+                  <p className="mt-2 text-xs text-destructive">
                     Select at least one brand to proceed.
                   </p>
                 )}
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-baseline justify-between">
-                    <Label
-                      htmlFor="sku-exclusion"
-                      className="text-sm text-muted-foreground font-normal"
-                    >
-                      Exclude SKUs
-                    </Label>
-                    <span className="text-xs text-muted-foreground">
-                      {excludedSkus.length > 0
-                        ? `${excludedSkus.length} excluded`
-                        : 'optional'}
-                    </span>
-                  </div>
-                  <Textarea
-                    id="sku-exclusion"
-                    value={exclusionInput}
-                    onChange={(e) => setExclusionInput(e.target.value)}
-                    placeholder="e.g. 10228663, 10228693, 10228698 — separated by comma, space or newline"
-                    rows={2}
-                    className="font-mono text-xs"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Material Numbers listed here are dropped from the queue
-                    after the brand filter.
-                  </p>
-                </div>
               </div>
-            )}
 
-            {format.type === 'unknown' && (
-              <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
-                <AlertCircle className="h-4 w-4" />
-                Unknown format — make sure the file has either AW26 compact
-                headers or B2C standard headers.
-              </div>
-            )}
-
-            {error && (
-              <div className="flex items-center gap-2 text-sm text-destructive">
-                <AlertCircle className="h-4 w-4" />
-                {error}
-              </div>
-            )}
-
-            <div className="flex items-center justify-between pt-2">
-              <Button variant="ghost" onClick={() => reset()}>
-                Upload Different File
-              </Button>
-              <Button
-                onClick={() => setStep(MetadataGenerationStep.LANGUAGES)}
-                disabled={products.length === 0 || selectedBrands.length === 0}
-              >
-                Next: Select Languages
-                {selectedBrands.length > 0 && queuedProducts.length !== products.length ? (
-                  <span className="ml-2 font-mono text-xs opacity-70">
-                    ({queuedProducts.length}/{products.length})
+              <div>
+                <div className="flex items-baseline justify-between mb-3">
+                  <Label htmlFor="sku-exclusion" className="label-mono">
+                    Exclude SKUs
+                  </Label>
+                  <span className="label-mono-sm normal-case tracking-normal tabular-nums">
+                    {excludedSkus.length > 0
+                      ? `${excludedSkus.length} excluded`
+                      : 'optional'}
                   </span>
-                ) : null}
-              </Button>
+                </div>
+                <Textarea
+                  id="sku-exclusion"
+                  value={exclusionInput}
+                  onChange={(e) => setExclusionInput(e.target.value)}
+                  placeholder="e.g. 10228663, 10228693, 10228698 — separated by comma, space or newline"
+                  rows={2}
+                  className="font-mono text-xs"
+                />
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Material Numbers listed here are dropped from the queue after
+                  the brand filter.
+                </p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          )}
+
+          {format.type === 'unknown' && (
+            <div className="mt-4 flex items-center gap-2 border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Unknown format — make sure the file has either AW26 compact
+              headers or B2C standard headers.
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {error}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between pt-6 mt-6 border-t border-border">
+            <Button variant="ghost" onClick={() => reset()}>
+              Upload different file
+            </Button>
+            <Button
+              onClick={() => setStep(MetadataGenerationStep.LANGUAGES)}
+              disabled={products.length === 0 || selectedBrands.length === 0}
+            >
+              Next: Select languages
+              {selectedBrands.length > 0 && queuedProducts.length !== products.length ? (
+                <span className="ml-2 font-mono text-xs tabular-nums opacity-70">
+                  ({queuedProducts.length}/{products.length})
+                </span>
+              ) : null}
+            </Button>
+          </div>
+        </section>
       )}
 
       {step === MetadataGenerationStep.LANGUAGES && (
@@ -354,14 +365,24 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
       )}
 
       {step === MetadataGenerationStep.PROCESSING && (
-        <div className="max-w-xl mx-auto space-y-4">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-foreground">
-              Generating…
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              {progress.current} / {progress.total} operations completed
+        <section className="max-w-xl mx-auto">
+          <div className="mb-5">
+            <div className="flex items-baseline justify-between gap-4 mb-2">
+              <p className="label-mono">
+                <span className="status-dot animate-pulse mr-2 align-middle" />
+                Processing
+              </p>
+              <p className="font-mono text-xs tabular-nums text-muted-foreground">
+                {progress.current.toString().padStart(3, '0')} /{' '}
+                {progress.total.toString().padStart(3, '0')}
+              </p>
+            </div>
+            <h2 className="text-base font-semibold tracking-tightest text-foreground">
+              Generating descriptions
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Running {METADATA_GENERATION_MODEL} on the queued products. Do
+              not close the tab.
             </p>
           </div>
 
@@ -369,10 +390,11 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
             value={
               progress.total > 0 ? (progress.current / progress.total) * 100 : 0
             }
+            className="h-1"
           />
 
           {logs.length > 0 && (
-            <ScrollArea className="h-40 rounded-md border p-3">
+            <ScrollArea className="h-40 mt-5 border border-border bg-card p-3">
               <div className="space-y-1">
                 {logs.map((log, i) => (
                   <p
@@ -386,7 +408,7 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
             </ScrollArea>
           )}
 
-          <div className="flex flex-col items-center gap-1">
+          <div className="mt-6 flex flex-col items-start gap-1">
             <Button
               variant="destructive"
               size="sm"
@@ -399,7 +421,7 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
               Aborts all pending API calls immediately. Partial results are kept.
             </p>
           </div>
-        </div>
+        </section>
       )}
 
       {step === MetadataGenerationStep.RESULT && (
