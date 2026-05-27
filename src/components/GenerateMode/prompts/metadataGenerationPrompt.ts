@@ -210,6 +210,7 @@ Before returning, silently verify:
 - All technical claims trace back to <input_materials>.
 - Total length is between 200 and 300 words.
 - HTML structure is exactly: <p>intro</p><ul class="pd"><li>…</li></ul><p>closing</p> (plus the sustainability line if applicable).
+- If <input_materials> Style USP or Style Description contains a cup classification line ("Integrated fixed cups", "Removable cups", "Padded with removable cups", "Non-padded" / "non padded"), it appears verbatim (or with minimal rewording) as the FIRST bullet of the <li> list. It is not paraphrased into a generic "padded" / "non-padded" line and it is not dropped.
 
 Write the description now.
 </output_format>`;
@@ -264,6 +265,7 @@ ${getCompleteLocalizationContext(langCode, input.brand)}
 7. No mention of colours, sizes or variants.
 8. Use idiomatic, fluent ${langName}. The reader should not feel they are reading a translation.
 9. Avoid AI-style words in their ${langName} equivalents: no "delve / approfondire eccessivamente / sumergirse" filler, no "showcase / mettere in mostra" filler, no "realm / regno" metaphor.
+10. Preserve cup classification. If <source> contains a bullet about cup state ("integrated fixed cups", "removable cups", "padded with removable cups", "non-padded"), localise it with the locale-correct underwear industry term and KEEP it as a dedicated bullet in the same position. Do not merge it into another bullet, do not drop it, do not paraphrase it into a generic "padded" / "non-padded".
 </rules>
 
 <terminology>
@@ -279,6 +281,19 @@ Use correct fashion and underwear terminology in ${langName}:
 - Danish: "bh", "trusser"
 - Swedish: "bh", "trosor"
 - Dutch: "bh", "slip"
+
+Cup classification. Locale-correct equivalents to use when <source> mentions cup state:
+- Italian: "coppe fisse integrate" / "coppe rimovibili" / "non imbottito"
+- German: "fest integrierte Cups" / "herausnehmbare Cups" / "ungefüttert"
+- French: "coussinets fixes intégrés" / "coussinets amovibles" / "sans rembourrage"
+- Spanish: "copas fijas integradas" / "copas extraíbles" / "sin relleno"
+- Polish: "wbudowane miseczki" / "wyjmowane wkładki" / "bez wkładek"
+- Dutch: "vaste ingewerkte cups" / "uitneembare cups" / "niet gevoerd"
+- Portuguese (PT-PT): "copas fixas integradas" / "copas amovíveis" / "sem enchimento"
+- Czech: "pevné integrované košíčky" / "vyjímatelné košíčky" / "bez výplně"
+- Hungarian: "beépített rögzített kosarak" / "kivehető kosarak" / "béleletlen"
+- Danish: "faste integrerede skåle" / "udtagelige indlæg" / "upolstret"
+- Swedish: "fast integrerade kupor" / "uttagbara inlägg" / "opolstrad"
 
 Do not include product codes (WHP, W01, NDK, etc.) inside body copy. Use the product type name.
 </terminology>
