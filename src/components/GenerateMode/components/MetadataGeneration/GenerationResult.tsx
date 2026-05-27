@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -16,8 +8,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Download, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import type { GeneratedProduct } from '../../types';
 
 interface GenerationResultProps {
@@ -59,81 +52,63 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-primary" />
-            Generation Complete
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4 text-sm">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Products</span>
-              <span className="font-mono font-medium">{results.length}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Descriptions</span>
-              <span className="font-mono font-medium">{totalDescriptions}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Errors</span>
-              <Badge
-                variant="secondary"
-                className={`font-mono ${
-                  totalErrors > 0
-                    ? 'bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300'
-                    : 'bg-emerald-100 text-emerald-700'
-                }`}
-              >
-                {totalErrors}
-              </Badge>
-            </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <section>
+        <div className="mb-3">
+          <p className="label-mono">
+            <span
+              className="inline-block size-1.5 rounded-full bg-foreground mr-2 align-middle"
+              aria-hidden="true"
+            />
+            Complete
+          </p>
+          <h2 className="mt-1 text-base font-semibold tracking-tightest text-foreground">
+            Generation complete
+          </h2>
+        </div>
+
+        <div className="border border-border bg-card">
+          <div className="grid grid-cols-3 divide-x divide-border">
+            <StatCell label="Products" value={results.length} />
+            <StatCell label="Descriptions" value={totalDescriptions} />
+            <StatCell
+              label="Errors"
+              value={totalErrors}
+              tone={totalErrors > 0 ? 'destructive' : 'foreground'}
+            />
           </div>
-        </CardContent>
-        <CardFooter className="flex items-center justify-center gap-4 pt-4">
-          <Button onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            Export Excel
-          </Button>
-          <Button variant="outline" onClick={onReset}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Process Another File
-          </Button>
-        </CardFooter>
-      </Card>
+          <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-border">
+            <Button onClick={handleExport}>
+              <Download className="h-4 w-4 mr-2" />
+              Export Excel
+            </Button>
+            <Button variant="outline" onClick={onReset}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Process another file
+            </Button>
+          </div>
+        </div>
+      </section>
 
       {results.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-foreground">
-              Preview (first 10 rows)
-            </h4>
-            <span className="text-xs text-muted-foreground">
-              Showing {Math.min(10, results.length)} of {results.length} products
+        <section>
+          <div className="flex items-baseline justify-between mb-3">
+            <p className="label-mono">Preview — first 10 rows</p>
+            <span className="text-xs text-muted-foreground font-mono tabular-nums">
+              {Math.min(10, results.length)} / {results.length}
             </span>
           </div>
 
-          <div className="border border-border rounded-lg overflow-hidden">
+          <div className="border border-border overflow-hidden">
             <div className="max-h-[400px] overflow-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="font-medium text-foreground text-xs">
-                      Material No
-                    </TableHead>
-                    <TableHead className="font-medium text-foreground text-xs">
-                      Product
-                    </TableHead>
-                    <TableHead className="font-medium text-foreground text-xs">
-                      Brand
-                    </TableHead>
+                  <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border">
+                    <TableHead className="label-mono">Material No</TableHead>
+                    <TableHead className="label-mono">Product</TableHead>
+                    <TableHead className="label-mono">Brand</TableHead>
                     {selectedLanguages.slice(0, 3).map((lang) => (
-                      <TableHead
-                        key={lang}
-                        className="font-medium text-foreground text-xs"
-                      >
+                      <TableHead key={lang} className="label-mono">
                         {lang.toUpperCase()}
                       </TableHead>
                     ))}
@@ -141,8 +116,11 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
                 </TableHeader>
                 <TableBody>
                   {results.slice(0, 10).map((r, idx) => (
-                    <TableRow key={idx} className="hover:bg-muted/30">
-                      <TableCell className="font-mono text-xs text-muted-foreground">
+                    <TableRow
+                      key={idx}
+                      className="hover:bg-muted/20 border-b border-border last:border-b-0"
+                    >
+                      <TableCell className="font-mono text-xs text-muted-foreground tabular-nums">
                         {r.product.materialNumber}
                       </TableCell>
                       <TableCell className="text-xs text-foreground">
@@ -173,8 +151,32 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
               </Table>
             </div>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
 };
+
+function StatCell({
+  label,
+  value,
+  tone = 'foreground',
+}: {
+  label: string;
+  value: number;
+  tone?: 'foreground' | 'destructive';
+}) {
+  return (
+    <div className="p-5">
+      <p className="label-mono-sm">{label}</p>
+      <p
+        className={cn(
+          'mt-2 text-2xl font-mono tracking-tightest tabular-nums',
+          tone === 'destructive' ? 'text-destructive' : 'text-foreground',
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
