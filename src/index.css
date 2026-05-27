@@ -32,64 +32,77 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    /* Industrial Data Tool — light palette
+       Neutrals are pure HSL with 0% saturation so the single signal
+       accent (orange) reads as the only chromatic element. */
+    --background: 0 0% 99%;          /* #FCFCFC */
+    --foreground: 0 0% 6%;           /* #0F0F0F */
+    --card: 0 0% 100%;               /* #FFFFFF, contrasts with bg */
+    --card-foreground: 0 0% 6%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
+    --popover-foreground: 0 0% 6%;
+    --primary: 0 0% 6%;              /* near-black CTA */
+    --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 9%;
+    --secondary-foreground: 0 0% 6%;
     --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 40%;
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 0% 3.9%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --muted-foreground: 0 0% 42%;    /* 0x6B grey, slightly darker than shadcn default for hierarchy */
+    --accent: 0 0% 95%;
+    --accent-foreground: 0 0% 6%;
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 88%;              /* #E0E0E0 hairline */
+    --input: 0 0% 88%;
+    --ring: 17 89% 53%;              /* signal orange focus ring */
+    --radius: 0rem;                  /* squared, no rounded corners */
+
+    /* Signal accent — used sparingly: active state, status indicators, focus ring */
+    --signal: 17 89% 53%;            /* #F25C18 */
+    --signal-foreground: 0 0% 100%;
+
+    /* Sidebar: same bg as main, separated only by border-right */
+    --sidebar-background: 0 0% 99%;
+    --sidebar-foreground: 0 0% 6%;
+    --sidebar-primary: 17 89% 53%;   /* active nav item = signal */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 6%;
+    --sidebar-border: 0 0% 88%;
+    --sidebar-ring: 17 89% 53%;
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 0 0% 15%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 0 0% 83%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    /* Dark kept inverted for parity even though Light is the default mode.
+       Same industrial logic: neutrals 0% saturation + signal accent. */
+    --background: 0 0% 6%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 96%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 0 0% 96%;
+    --primary-foreground: 0 0% 6%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 17 89% 53%;
+    --signal: 17 89% 53%;
+    --signal-foreground: 0 0% 100%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 17 89% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 17 89% 53%;
   }
 
   * {
@@ -98,5 +111,29 @@
 
   body {
     @apply bg-background text-foreground antialiased font-sans font-normal leading-relaxed;
+    /* Geist looks tighter with a small negative tracking on body */
+    letter-spacing: -0.005em;
+  }
+}
+
+@layer components {
+  /* Section / page labels in JetBrains Mono uppercase — the signature of the
+     Industrial Data Tool look. Use on small text only (10-12px). */
+  .label-mono {
+    @apply font-display uppercase tracking-caps text-[11px] font-medium text-muted-foreground;
+  }
+
+  .label-mono-sm {
+    @apply font-display uppercase tracking-caps-sm text-[10px] font-medium text-muted-foreground;
+  }
+
+  /* Section index prefix: "01 / Generate", "02 / Optimize", etc. */
+  .index-prefix {
+    @apply font-display tabular-nums text-muted-foreground/70;
+  }
+
+  /* Status dot used next to a label, signal-coloured when "active". */
+  .status-dot {
+    @apply inline-block size-1.5 rounded-full bg-signal align-middle;
   }
 }

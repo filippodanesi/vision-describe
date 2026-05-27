@@ -53,6 +53,10 @@ export default {
     				DEFAULT: 'hsl(var(--card))',
     				foreground: 'hsl(var(--card-foreground))'
     			},
+    			signal: {
+    				DEFAULT: 'hsl(var(--signal))',
+    				foreground: 'hsl(var(--signal-foreground))'
+    			},
     			sidebar: {
     				DEFAULT: 'hsl(var(--sidebar-background))',
     				foreground: 'hsl(var(--sidebar-foreground))',
@@ -86,12 +90,33 @@ export default {
     				'Consolas',
     				'"Liberation Mono"',
     				'monospace'
+    			],
+    			display: [
+    				'"JetBrains Mono"',
+    				'"Geist Mono"',
+    				'ui-monospace',
+    				'SFMono-Regular',
+    				'"SF Mono"',
+    				'Menlo',
+    				'monospace'
     			]
     		},
     		borderRadius: {
-    			lg: 'var(--radius)',
-    			md: 'calc(var(--radius) - 2px)',
-    			sm: 'calc(var(--radius) - 4px)'
+    			none: '0',
+    			sm: '0',
+    			DEFAULT: '0',
+    			md: '0',
+    			lg: '0',
+    			xl: '0',
+    			'2xl': '0',
+    			'3xl': '0',
+    			full: '9999px'
+    		},
+    		letterSpacing: {
+    			tightest: '-0.04em',
+    			'caps-sm': '0.08em',
+    			'caps': '0.12em',
+    			'caps-wide': '0.16em'
     		},
     		keyframes: {
     			'accordion-down': {

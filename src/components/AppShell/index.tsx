@@ -13,7 +13,6 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from '../Logo';
 import { ThemeProvider } from '../OptimizeMode/ThemeProvider';
-import { ThemeToggle } from '../OptimizeMode/ThemeToggle';
 import CorsProxy from '../OptimizeMode/components/CorsProxy';
 import { OptimizeMode } from '../OptimizeMode';
 import { GenerateMode } from '../GenerateMode';
@@ -185,17 +184,27 @@ export const AppShell: React.FC = () => {
       <SidebarProvider defaultOpen={true}>
         <Sidebar collapsible="icon" side="left">
           <SidebarHeader className="p-4">
-            <Logo
-              size="sm"
-              showName={true}
-              className="gap-2 overflow-hidden [&>span]:whitespace-nowrap group-data-[collapsible=icon]:[&>span]:hidden"
-            />
+            <div className="flex items-center gap-2 overflow-hidden">
+              <Logo
+                size="sm"
+                showName={true}
+                className="gap-2 overflow-hidden [&>span]:whitespace-nowrap group-data-[collapsible=icon]:[&>span]:hidden"
+              />
+              <span className="ml-auto font-display text-[10px] uppercase tracking-caps-sm text-muted-foreground group-data-[collapsible=icon]:hidden">
+                v3.0.0
+              </span>
+            </div>
           </SidebarHeader>
 
           <SidebarContent>
-            {NAV_GROUPS.map((group) => (
+            {NAV_GROUPS.map((group, groupIdx) => (
               <SidebarGroup key={group.title}>
-                <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
+                <SidebarGroupLabel className="label-mono">
+                  <span className="index-prefix mr-2">
+                    {String(groupIdx + 1).padStart(2, '0')}
+                  </span>
+                  {group.title}
+                </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {group.items.map((item) => {
@@ -219,7 +228,12 @@ export const AppShell: React.FC = () => {
             ))}
 
             <SidebarGroup>
-              <SidebarGroupLabel>Support</SidebarGroupLabel>
+              <SidebarGroupLabel className="label-mono">
+                <span className="index-prefix mr-2">
+                  {String(NAV_GROUPS.length + 1).padStart(2, '0')}
+                </span>
+                Support
+              </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {FOOTER_ITEMS.map((item) => {
@@ -254,30 +268,38 @@ export const AppShell: React.FC = () => {
         </Sidebar>
 
         <SidebarInset>
-          <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur px-4">
+          <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
               orientation="vertical"
               className="mr-2 data-[orientation=vertical]:h-4"
             />
             <Breadcrumb>
-              <BreadcrumbList>
+              <BreadcrumbList className="font-display uppercase tracking-caps text-[11px] font-medium gap-1.5 sm:gap-2">
                 {activeGroup && (
                   <>
                     <BreadcrumbItem className="hidden md:block">
                       <span className="text-muted-foreground">{activeGroup.title}</span>
                     </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
+                    <BreadcrumbSeparator className="hidden md:block [&>svg]:size-2.5 text-border" />
                   </>
                 )}
                 <BreadcrumbItem>
-                  <BreadcrumbPage>{activeLabel}</BreadcrumbPage>
+                  <BreadcrumbPage className="text-foreground font-medium">
+                    {activeLabel}
+                  </BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
-            <div className="ml-auto flex items-center gap-1">
+            <div className="ml-auto flex items-center gap-3">
+              <span
+                className="hidden sm:inline-flex items-center gap-1.5 font-display uppercase tracking-caps-sm text-[10px] font-medium text-muted-foreground"
+                aria-label="System status: ready"
+              >
+                <span className="status-dot" aria-hidden="true" />
+                Ready
+              </span>
               <CorsProxy />
-              <ThemeToggle />
             </div>
           </header>
 
