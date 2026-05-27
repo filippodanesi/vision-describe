@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Upload, X, ImageIcon } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { ImageFile } from '../../types';
 
 interface ImageUploadZoneProps {
@@ -95,79 +95,94 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
   };
 
   return (
-    <Card className="max-w-xl mx-auto">
-      <CardHeader>
-        <CardTitle>Upload Product Images</CardTitle>
-        <CardDescription>
-          Drag & drop or click to upload up to {MAX_IMAGES} images (JPEG, PNG, WebP — max {MAX_SIZE_MB}MB each)
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <input
-          type="file"
-          accept=".jpg,.jpeg,.png,.webp"
-          multiple
-          className="hidden"
-          ref={inputRef}
-          onChange={handleFileChange}
-        />
+    <section className="max-w-3xl mx-auto">
+      <div className="mb-4">
+        <p className="label-mono mb-1">Step 02 / Images</p>
+        <h2 className="text-base font-semibold tracking-tightest text-foreground">
+          Upload product images
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+          Drag &amp; drop or click to upload up to {MAX_IMAGES} images. JPEG / PNG / WebP, max {MAX_SIZE_MB}MB each.
+        </p>
+      </div>
 
-        <div
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={handleDrop}
-          className={`flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-10 cursor-pointer transition-colors ${
-            isDragging
-              ? 'border-primary bg-primary/5'
-              : 'border-muted-foreground/25 hover:border-muted-foreground/40'
-          }`}
-        >
-          <Upload className="h-8 w-8 text-muted-foreground" />
-          <div className="text-center">
-            <p className="text-sm font-medium text-foreground">
-              Drag & drop or click to browse
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {images.length}/{MAX_IMAGES} images uploaded
-            </p>
-          </div>
-        </div>
+      <input
+        type="file"
+        accept=".jpg,.jpeg,.png,.webp"
+        multiple
+        className="hidden"
+        ref={inputRef}
+        onChange={handleFileChange}
+      />
 
-        {error && (
-          <p className="text-xs text-destructive">{error}</p>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="Drag and drop images or click to browse"
+        onClick={() => inputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={handleDrop}
+        className={cn(
+          'flex flex-col items-center justify-center gap-3 border border-dashed p-12 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2',
+          isDragging
+            ? 'border-signal bg-signal/[0.04]'
+            : 'border-border bg-card hover:border-foreground/40 hover:bg-muted/30',
         )}
-
-        {images.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-            {images.map((img, idx) => (
-              <div key={idx} className="relative group">
-                <img
-                  src={img.preview}
-                  alt={img.name}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full aspect-square object-cover rounded-md border"
-                />
-                <button
-                  onClick={(e) => { e.stopPropagation(); onRemoveImage(idx); }}
-                  className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-                <p className="text-[9px] text-muted-foreground truncate mt-0.5">{img.name}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-center justify-between pt-2">
-          <Button variant="ghost" onClick={onBack}>Back</Button>
-          <Button onClick={onNext} disabled={images.length === 0}>
-            Next: Select Model
-          </Button>
+      >
+        <Upload className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+        <div className="text-center">
+          <p className="label-mono mb-1">Drop images or click to browse</p>
+          <p className="font-mono text-xs text-muted-foreground tabular-nums">
+            {images.length} / {MAX_IMAGES} uploaded
+          </p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {error && (
+        <p className="mt-3 text-xs text-destructive">{error}</p>
+      )}
+
+      {images.length > 0 && (
+        <div className="mt-5 grid grid-cols-4 sm:grid-cols-5 gap-3">
+          {images.map((img, idx) => (
+            <div key={idx} className="relative group">
+              <img
+                src={img.preview}
+                alt={img.name}
+                loading="lazy"
+                decoding="async"
+                className="w-full aspect-square object-cover border border-border"
+              />
+              <button
+                onClick={(e) => { e.stopPropagation(); onRemoveImage(idx); }}
+                aria-label={`Remove ${img.name}`}
+                className="absolute -top-2 -right-2 h-5 w-5 bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
+              >
+                <X className="h-3 w-3" aria-hidden="true" />
+              </button>
+              <p className="mt-1 font-mono text-[10px] text-muted-foreground truncate" title={img.name}>
+                {img.name}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between pt-6 mt-6 border-t border-border">
+        <Button variant="ghost" onClick={onBack}>
+          Back
+        </Button>
+        <Button onClick={onNext} disabled={images.length === 0}>
+          Next: Select model
+        </Button>
+      </div>
+    </section>
   );
 };

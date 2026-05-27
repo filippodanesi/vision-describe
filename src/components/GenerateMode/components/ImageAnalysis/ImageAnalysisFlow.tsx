@@ -103,7 +103,7 @@ export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) 
       )}
 
       {step === ImageAnalysisStep.PROCESSING && (
-        <section className="max-w-xl mx-auto">
+        <section className="max-w-3xl mx-auto">
           <div className="mb-2">
             <p className="label-mono">
               <span className="status-dot animate-pulse mr-2 align-middle" />

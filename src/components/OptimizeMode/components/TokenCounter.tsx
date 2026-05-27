@@ -1,264 +1,183 @@
 /**
  * Token Counter Component
- * 
- * @author Filippo Danesi
- * @created 2025
- * @description Real-time token usage and cost tracking component.
- *              Displays comprehensive cost analysis, token statistics,
- *              and ROI calculations for AI processing operations.
- * 
- * Key Features:
- * - Real-time token counting (input/output)
- * - Cost breakdown by provider (OpenAI/Anthropic)
- * - Session statistics and projections
- * - ROI comparison vs manual work
- * - Budget tracking and remaining balance
- * - Recent operations history
+ *
+ * Real-time token usage and cost tracking. Renders session statistics,
+ * per-provider cost breakdown, recent operations and a 100-product
+ * projection as a single industrial-spec block — no rainbow palette.
  */
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { useCostTracker } from '../hooks/useCostTracker';
-import { DollarSign, Zap, FileText, TrendingUp } from 'lucide-react';
+import { SectionHeader } from '@/components/ui/section-header';
+import { cn } from '@/lib/utils';
 
 interface TokenCounterProps {
   className?: string;
 }
 
+const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  }).format(amount);
+
+const formatNumber = (num: number) => new Intl.NumberFormat('en-US').format(num);
+
 export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
   const { costHistory, totalCost, remainingBudget, getSessionStats } = useCostTracker();
   const stats = getSessionStats();
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 4,
-      maximumFractionDigits: 4
-    }).format(amount);
-  };
-
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat('en-US').format(num);
-  };
-
-  const getProviderColor = (provider: 'openai' | 'anthropic') => {
-    return provider === 'openai' ? 'bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-300' : 'bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300';
-  };
-
-  const getProviderIcon = (provider: 'openai' | 'anthropic') => {
-    return provider === 'openai' ? '🤖' : '🧠';
-  };
+  const avgCost = stats.totalOperations > 0 ? stats.totalActualCost / stats.totalOperations : 0;
+  const avgTokens =
+    stats.totalOperations > 0 ? Math.round(stats.totalTokens / stats.totalOperations) : 0;
+  const projection100 = avgCost * 100;
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      {/* Session Stats */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Session Statistics
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-medium text-blue-600 dark:text-blue-400">{stats.totalOperations}</div>
-              <div className="text-sm text-muted-foreground">Products Processed</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-medium text-green-600 dark:text-green-400">{formatNumber(stats.totalTokens)}</div>
-              <div className="text-sm text-muted-foreground">Total Tokens</div>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-medium text-purple-600 dark:text-purple-400">{formatNumber(stats.totalTokensInput)}</div>
-              <div className="text-sm text-muted-foreground">Input Tokens</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-medium text-orange-600 dark:text-orange-400">{formatNumber(stats.totalTokensOutput)}</div>
-              <div className="text-sm text-muted-foreground">Output Tokens</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className={cn('space-y-10', className)}>
+      <section>
+        <SectionHeader index={1} title="Session statistics" />
+        <div className="border border-border bg-card grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border">
+          <StatCell label="Products" value={formatNumber(stats.totalOperations)} />
+          <StatCell label="Total tokens" value={formatNumber(stats.totalTokens)} />
+          <StatCell label="Input tokens" value={formatNumber(stats.totalTokensInput)} />
+          <StatCell label="Output tokens" value={formatNumber(stats.totalTokensOutput)} />
+        </div>
+      </section>
 
-      {/* Cost Breakdown */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Cost Breakdown
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* OpenAI */}
-          <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{getProviderIcon('openai')}</span>
-              <div>
-                <div className="font-medium">OpenAI</div>
-                <div className="text-sm text-muted-foreground">
-                  {formatCurrency(remainingBudget.openai)} remaining
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-medium text-green-600 dark:text-green-400">
-                {formatCurrency(totalCost.openai)}
-              </div>
-              <div className="text-sm text-muted-foreground">Total Spent</div>
-            </div>
+      <section>
+        <SectionHeader index={2} title="Cost breakdown" />
+        <div className="border border-border bg-card divide-y divide-border">
+          <ProviderRow
+            label="OpenAI"
+            spent={formatCurrency(totalCost.openai)}
+            remaining={formatCurrency(remainingBudget.openai)}
+          />
+          <ProviderRow
+            label="Anthropic"
+            spent={formatCurrency(totalCost.anthropic)}
+            remaining={formatCurrency(remainingBudget.anthropic)}
+          />
+          <div className="flex items-center justify-between px-5 py-4 bg-muted/30">
+            <span className="label-mono">Total session cost</span>
+            <span className="font-mono text-base font-semibold tabular-nums text-foreground">
+              {formatCurrency(stats.totalActualCost)}
+            </span>
           </div>
+        </div>
+      </section>
 
-          {/* Anthropic */}
-          <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{getProviderIcon('anthropic')}</span>
-              <div>
-                <div className="font-medium">Anthropic</div>
-                <div className="text-sm text-muted-foreground">
-                  {formatCurrency(remainingBudget.anthropic)} remaining
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-medium text-orange-600 dark:text-orange-400">
-                {formatCurrency(totalCost.anthropic)}
-              </div>
-              <div className="text-sm text-muted-foreground">Total Spent</div>
-            </div>
-          </div>
-
-          {/* Total Cost */}
-          <div className="border-t pt-3">
-            <div className="flex items-center justify-between">
-              <div className="font-medium">Total Session Cost</div>
-              <div className="text-xl font-medium text-blue-600 dark:text-blue-400">
-                {formatCurrency(stats.totalActualCost)}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Operations */}
       {costHistory.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Recent Operations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {costHistory.slice(-5).reverse().map((record, index) => {
+        <section>
+          <SectionHeader index={3} title="Recent operations" />
+          <div className="border border-border bg-card divide-y divide-border max-h-56 overflow-y-auto">
+            {costHistory
+              .slice(-5)
+              .reverse()
+              .map((record, index) => {
                 const provider = record.model.startsWith('claude') ? 'anthropic' : 'openai';
-                const cost = record.actualCost !== undefined ? record.actualCost : record.estimatedCost;
+                const cost =
+                  record.actualCost !== undefined ? record.actualCost : record.estimatedCost;
                 const inputTokens = record.actualInputTokens || record.estimatedInputTokens;
                 const outputTokens = record.actualOutputTokens || record.estimatedOutputTokens;
-                
+
                 return (
-                  <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                    <div className="flex items-center gap-2">
-                      <Badge className={getProviderColor(provider)}>
-                        {getProviderIcon(provider)}
-                      </Badge>
-                      <div className="text-sm">
-                        <div className="font-medium">{record.model}</div>
-                        <div className="text-muted-foreground">
-                          {formatNumber(inputTokens)} → {formatNumber(outputTokens)} tokens
-                        </div>
+                  <div
+                    key={index}
+                    className="flex items-baseline justify-between gap-4 px-5 py-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-3">
+                        <span className="label-mono-sm shrink-0">{provider}</span>
+                        <span className="font-mono text-sm text-foreground truncate">
+                          {record.model}
+                        </span>
                       </div>
+                      <p className="mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">
+                        {formatNumber(inputTokens)} → {formatNumber(outputTokens)} tokens
+                      </p>
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium">{formatCurrency(cost)}</div>
-                      <div className="text-xs text-muted-foreground">
+                    <div className="text-right shrink-0">
+                      <div className="font-mono text-sm font-semibold tabular-nums text-foreground">
+                        {formatCurrency(cost)}
+                      </div>
+                      <div className="font-mono text-[10px] text-muted-foreground">
                         {new Date(record.timestamp).toLocaleTimeString()}
                       </div>
                     </div>
                   </div>
                 );
               })}
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
 
-      {/* Cost Per Product Estimate */}
-      {(
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Zap className="h-5 w-5" />
-              Cost Analysis
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-xl font-medium text-blue-600 dark:text-blue-400">
-                  {formatCurrency(stats.totalActualCost / stats.totalOperations)}
-                </div>
-                <div className="text-sm text-muted-foreground">Avg Cost per Product</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xl font-medium text-green-600 dark:text-green-400">
-                  {formatNumber(Math.round(stats.totalTokens / stats.totalOperations))}
-                </div>
-                <div className="text-sm text-muted-foreground">Avg Tokens per Product</div>
-              </div>
+      {stats.totalOperations > 0 && (
+        <section>
+          <SectionHeader index={4} title="Cost analysis" />
+          <div className="border border-border bg-card">
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
+              <StatCell label="Avg cost / product" value={formatCurrency(avgCost)} small />
+              <StatCell label="Avg tokens / product" value={formatNumber(avgTokens)} small />
+              <StatCell label="Projection (100 prod.)" value={formatCurrency(projection100)} small />
             </div>
-            
-            {/* Projection for 100 products */}
-            <div className="border-t pt-3">
-              <div className="text-center">
-                <div className="text-lg font-medium text-purple-600 dark:text-purple-400">
-                  {formatCurrency((stats.totalActualCost / stats.totalOperations) * 100)}
-                </div>
-                <div className="text-sm text-muted-foreground">Estimated cost for 100 products</div>
-              </div>
-            </div>
-            
-            {/* Cost Comparison */}
-            <div className="border-t pt-3">
-              <div className="text-center">
-                <div className="text-sm text-muted-foreground mb-2">Cost Comparison</div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-green-50 dark:bg-green-950/50 p-2 rounded">
-                    <div className="font-medium text-green-700 dark:text-green-300">Manual Work</div>
-                    <div className="text-green-600 dark:text-green-400">$2,500</div>
-                    <div className="text-muted-foreground">(100 products)</div>
-                  </div>
-                  <div className="bg-blue-50 dark:bg-blue-950/50 p-2 rounded">
-                    <div className="font-medium text-blue-700 dark:text-blue-300">AI Processing</div>
-                    <div className="text-blue-600 dark:text-blue-400">
-                      {stats.totalOperations > 0 
-                        ? formatCurrency((stats.totalActualCost / stats.totalOperations) * 100)
-                        : formatCurrency(0)
-                      }
-                    </div>
-                    <div className="text-muted-foreground">(100 products)</div>
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  {stats.totalOperations > 0 ? (
-                    <>Savings: {formatCurrency(2500 - ((stats.totalActualCost / stats.totalOperations) * 100))}</>
-                  ) : (
-                    <>Savings: {formatCurrency(2500)}</>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
     </div>
   );
 };
+
+function StatCell({
+  label,
+  value,
+  small = false,
+}: {
+  label: string;
+  value: string;
+  small?: boolean;
+}) {
+  return (
+    <div className="p-5">
+      <p className="label-mono-sm">{label}</p>
+      <p
+        className={cn(
+          'mt-2 font-mono tabular-nums text-foreground tracking-tightest',
+          small ? 'text-lg' : 'text-2xl',
+        )}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function ProviderRow({
+  label,
+  spent,
+  remaining,
+}: {
+  label: string;
+  spent: string;
+  remaining: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-5 py-4">
+      <div>
+        <p className="font-semibold text-sm text-foreground">{label}</p>
+        <p className="mt-0.5 font-mono text-xs text-muted-foreground tabular-nums">
+          {remaining} remaining
+        </p>
+      </div>
+      <div className="text-right">
+        <p className="font-mono text-base font-semibold tabular-nums text-foreground">
+          {spent}
+        </p>
+        <p className="label-mono-sm normal-case tracking-normal mt-0.5">Total spent</p>
+      </div>
+    </div>
+  );
+}
 
 export default TokenCounter;

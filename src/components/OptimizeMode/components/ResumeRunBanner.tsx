@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Cloud, Play, X, Square, Eye } from 'lucide-react';
 import { cancelServerRun } from '@/lib/api/serverRun';
@@ -10,6 +9,22 @@ interface ResumeRunBannerProps {
   onResume: (run: RunRecord) => void;
   onDismiss: (run: RunRecord) => void;
   onReconnect?: (run: RunRecord) => void;
+}
+
+interface RunMetaLineProps {
+  label: string;
+  value: React.ReactNode;
+}
+
+function RunMetaLine({ label, value }: RunMetaLineProps) {
+  return (
+    <span className="inline-flex items-baseline gap-1.5">
+      <span className="label-mono-sm normal-case tracking-normal text-muted-foreground/70">
+        {label}
+      </span>
+      <span className="font-mono text-xs text-foreground/90">{value}</span>
+    </span>
+  );
 }
 
 const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDismiss, onReconnect }) => {
@@ -26,141 +41,77 @@ const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDis
         // Server-side run still running
         if (isServer && isRunning) {
           return (
-            <Card key={run.id} className="border-border bg-muted/40">
-              <CardContent className="py-4 px-5">
-                <div className="flex items-start gap-3">
-                  <Cloud className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">
-                      Processing in progress on server
-                    </p>
-                    <div className="mt-1.5 text-xs text-muted-foreground space-y-0.5">
-                      <p>
-                        <span className="font-medium">Use case:</span> {run.use_case}
-                        {' '}&middot;{' '}
-                        <span className="font-medium">Model:</span> {run.model_id}
-                      </p>
-                      {run.file_name && (
-                        <p>
-                          <span className="font-medium">File:</span> {run.file_name}
-                        </p>
-                      )}
-                      <p>
-                        <span className="font-medium">Progress:</span> {run.processed_count || 0}/{run.total_rows} rows
-                        {' '}&middot;{' '}
-                        <span className="font-medium">Started:</span> {date}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 mt-3">
-                      {onReconnect && (
-                        <Button size="sm" variant="outline" onClick={() => onReconnect(run)}>
-                          <Eye className="h-3.5 w-3.5 mr-1.5" />
-                          View Progress
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={async () => {
-                          try {
-                            await cancelServerRun(run.id);
-                          } catch {
-                            // If cancel API fails, just dismiss locally
-                          }
-                          onDismiss(run);
-                        }}
-                      >
-                        <Square className="h-3.5 w-3.5 mr-1.5" />
-                        Cancel
+            <div key={run.id} className="border border-border bg-muted/30 px-5 py-4">
+              <div className="flex items-start gap-3">
+                <Cloud className="h-4 w-4 text-signal mt-0.5 shrink-0" aria-hidden="true" />
+                <div className="flex-1 min-w-0">
+                  <p className="label-mono">
+                    <span className="status-dot animate-pulse mr-2 align-middle" />
+                    Server run in progress
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1">
+                    <RunMetaLine label="Use case" value={run.use_case} />
+                    <RunMetaLine label="Model" value={run.model_id} />
+                    {run.file_name && <RunMetaLine label="File" value={run.file_name} />}
+                    <RunMetaLine
+                      label="Progress"
+                      value={`${run.processed_count || 0} / ${run.total_rows}`}
+                    />
+                    <RunMetaLine label="Started" value={date} />
+                  </div>
+                  <div className="flex items-center gap-2 mt-4">
+                    {onReconnect && (
+                      <Button size="sm" variant="outline" onClick={() => onReconnect(run)}>
+                        <Eye className="h-3.5 w-3.5 mr-1.5" />
+                        View progress
                       </Button>
-                    </div>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={async () => {
+                        try {
+                          await cancelServerRun(run.id);
+                        } catch {
+                          // If cancel API fails, just dismiss locally
+                        }
+                        onDismiss(run);
+                      }}
+                    >
+                      <Square className="h-3.5 w-3.5 mr-1.5" />
+                      Cancel
+                    </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         }
 
         // Server-side run interrupted
         if (isServer && isInterrupted) {
           return (
-            <Card key={run.id} className="border-border bg-muted/40">
-              <CardContent className="py-4 px-5">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">
-                      Server run interrupted
-                    </p>
-                    <div className="mt-1.5 text-xs text-muted-foreground space-y-0.5">
-                      <p>
-                        <span className="font-medium">Use case:</span> {run.use_case}
-                        {' '}&middot;{' '}
-                        <span className="font-medium">Model:</span> {run.model_id}
-                      </p>
-                      {run.file_name && (
-                        <p>
-                          <span className="font-medium">File:</span> {run.file_name}
-                        </p>
-                      )}
-                      <p>
-                        <span className="font-medium">Progress:</span> {run.processed_count || 0}/{run.total_rows} rows
-                        {run.error_message && (
-                          <>
-                            {' '}&middot;{' '}
-                            <span className="font-medium">Error:</span> {run.error_message}
-                          </>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 mt-3">
-                      <Button size="sm" variant="outline" onClick={() => onResume(run)}>
-                        <Play className="h-3.5 w-3.5 mr-1.5" />
-                        Retry on server
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => onDismiss(run)}>
-                        <X className="h-3.5 w-3.5 mr-1.5" />
-                        Dismiss
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        }
-
-        // Client-side interrupted run
-        return (
-          <Card key={run.id} className="border-border bg-muted/40">
-            <CardContent className="py-4 px-5">
+            <div key={run.id} className="border border-border bg-muted/30 px-5 py-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                <AlertTriangle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" aria-hidden="true" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">
-                    Interrupted run detected
-                  </p>
-                  <div className="mt-1.5 text-xs text-muted-foreground space-y-0.5">
-                    <p>
-                      <span className="font-medium">Use case:</span> {run.use_case}
-                      {' '}&middot;{' '}
-                      <span className="font-medium">Model:</span> {run.model_id}
-                    </p>
-                    {run.file_name && (
-                      <p>
-                        <span className="font-medium">File:</span> {run.file_name}
-                      </p>
+                  <p className="label-mono">Server run interrupted</p>
+                  <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1">
+                    <RunMetaLine label="Use case" value={run.use_case} />
+                    <RunMetaLine label="Model" value={run.model_id} />
+                    {run.file_name && <RunMetaLine label="File" value={run.file_name} />}
+                    <RunMetaLine
+                      label="Progress"
+                      value={`${run.processed_count || 0} / ${run.total_rows}`}
+                    />
+                    {run.error_message && (
+                      <RunMetaLine label="Error" value={run.error_message} />
                     )}
-                    <p>
-                      <span className="font-medium">Rows:</span> {run.total_rows}
-                      {' '}&middot;{' '}
-                      <span className="font-medium">Started:</span> {date}
-                    </p>
                   </div>
-                  <div className="flex items-center gap-2 mt-3">
+                  <div className="flex items-center gap-2 mt-4">
                     <Button size="sm" variant="outline" onClick={() => onResume(run)}>
                       <Play className="h-3.5 w-3.5 mr-1.5" />
-                      Resume
+                      Retry on server
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => onDismiss(run)}>
                       <X className="h-3.5 w-3.5 mr-1.5" />
@@ -169,8 +120,37 @@ const ResumeRunBanner: React.FC<ResumeRunBannerProps> = ({ runs, onResume, onDis
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          );
+        }
+
+        // Client-side interrupted run
+        return (
+          <div key={run.id} className="border border-border bg-muted/30 px-5 py-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" aria-hidden="true" />
+              <div className="flex-1 min-w-0">
+                <p className="label-mono">Interrupted run detected</p>
+                <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1">
+                  <RunMetaLine label="Use case" value={run.use_case} />
+                  <RunMetaLine label="Model" value={run.model_id} />
+                  {run.file_name && <RunMetaLine label="File" value={run.file_name} />}
+                  <RunMetaLine label="Rows" value={run.total_rows} />
+                  <RunMetaLine label="Started" value={date} />
+                </div>
+                <div className="flex items-center gap-2 mt-4">
+                  <Button size="sm" variant="outline" onClick={() => onResume(run)}>
+                    <Play className="h-3.5 w-3.5 mr-1.5" />
+                    Resume
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => onDismiss(run)}>
+                    <X className="h-3.5 w-3.5 mr-1.5" />
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         );
       })}
     </div>

@@ -1,7 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Copy, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -38,42 +36,50 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
       toast('Copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Failed to copy', {
-      });
+      toast.error('Failed to copy');
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-base">Generated Description</CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-[10px] font-mono">
-              {tokens.input.toLocaleString()} in / {tokens.output.toLocaleString()} out
-            </Badge>
-            <Button variant="outline" size="sm" onClick={handleCopy}>
-              {copied ? <Check className="h-3.5 w-3.5 mr-1" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
-              {copied ? 'Copied' : 'Copy'}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div
-            className="prose prose-sm max-w-none text-foreground"
-            dangerouslySetInnerHTML={{ __html: displayHtml }}
+    <section className="max-w-3xl mx-auto space-y-6">
+      <div>
+        <p className="label-mono">
+          <span
+            className="inline-block size-1.5 rounded-full bg-foreground mr-2 align-middle"
+            aria-hidden="true"
           />
-        </CardContent>
-        <CardFooter className="flex items-center gap-3 pt-4">
-          <Button variant="outline" onClick={onGenerateAgain}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Generate Again
+          Complete
+        </p>
+        <h2 className="mt-1 text-base font-semibold tracking-tightest text-foreground">
+          Generated description
+        </h2>
+      </div>
+
+      <div className="border border-border bg-card">
+        <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-border">
+          <span className="font-mono text-xs text-muted-foreground tabular-nums">
+            {tokens.input.toLocaleString()} in · {tokens.output.toLocaleString()} out
+          </span>
+          <Button variant="outline" size="sm" onClick={handleCopy}>
+            {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
+            {copied ? 'Copied' : 'Copy'}
           </Button>
-          <Button variant="ghost" onClick={onReset}>
-            Start Over
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+        </div>
+        <div
+          className="prose prose-sm max-w-none text-foreground p-5"
+          dangerouslySetInnerHTML={{ __html: displayHtml }}
+        />
+      </div>
+
+      <div className="flex items-center gap-3 pt-2">
+        <Button variant="outline" onClick={onGenerateAgain}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Generate again
+        </Button>
+        <Button variant="ghost" onClick={onReset}>
+          Start over
+        </Button>
+      </div>
+    </section>
   );
 };

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,70 +34,80 @@ export const ProductSettingsForm: React.FC<ProductSettingsFormProps> = ({
     : [];
 
   return (
-    <Card className="max-w-xl mx-auto">
-      <CardHeader>
-        <CardTitle>Product Settings</CardTitle>
-        <CardDescription>Configure the language, category, and certifications for the description</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label>Target Language</Label>
-          <Select
-            value={settings.language}
-            onValueChange={(v) => onSettingsChange({ ...settings, language: v })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select language" />
-            </SelectTrigger>
-            <SelectContent>
-              {AVAILABLE_LANGUAGES.map((lang) => (
-                <SelectItem key={lang.code} value={lang.code}>
-                  {lang.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <section className="max-w-3xl mx-auto">
+      <div className="mb-4">
+        <p className="label-mono mb-1">Step 01 / Settings</p>
+        <h2 className="text-base font-semibold tracking-tightest text-foreground">
+          Product settings
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+          Configure the language, category, and certifications for the description.
+        </p>
+      </div>
+
+      <div className="border border-border bg-card p-6 space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="space-y-2">
+            <Label htmlFor="target-language" className="label-mono">Target language</Label>
+            <Select
+              value={settings.language}
+              onValueChange={(v) => onSettingsChange({ ...settings, language: v })}
+            >
+              <SelectTrigger id="target-language" className="w-full">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                {AVAILABLE_LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.code} value={lang.code}>
+                    {lang.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="product-category" className="label-mono">Product category</Label>
+            <Input
+              id="product-category"
+              placeholder="e.g. wired bra, nightdress, bikini top"
+              value={settings.category}
+              onChange={(e) => onSettingsChange({ ...settings, category: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">
+              The exact product type — used as the grammatical starting point.
+            </p>
+          </div>
         </div>
 
         <div className="space-y-2">
-          <Label>Product Category</Label>
-          <Input
-            placeholder="e.g., wired bra, nightdress, bikini top"
-            value={settings.category}
-            onChange={(e) => onSettingsChange({ ...settings, category: e.target.value })}
-          />
-          <p className="text-xs text-muted-foreground">
-            The exact product type — used as the grammatical starting point
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Certifications (optional)</Label>
-          <div className="grid grid-cols-1 gap-2">
+          <Label className="label-mono">Certifications (optional)</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
             {CERTIFICATION_OPTIONS.map((cert) => (
-              <div key={cert} className="flex items-center space-x-2">
+              <div key={cert} className="flex items-center gap-2.5">
                 <Checkbox
                   id={cert}
                   checked={selectedCerts.includes(cert)}
                   onCheckedChange={() => toggleCertification(cert)}
                 />
-                <label htmlFor={cert} className="text-sm cursor-pointer">
+                <label htmlFor={cert} className="text-sm cursor-pointer text-foreground">
                   {cert}
                 </label>
               </div>
             ))}
           </div>
         </div>
+      </div>
 
+      <div className="pt-6 mt-6 border-t border-border flex justify-end">
         <Button
           onClick={onNext}
           disabled={!settings.category.trim()}
-          className="w-full"
         >
-          Next: Upload Images
+          Next: Upload images
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 };

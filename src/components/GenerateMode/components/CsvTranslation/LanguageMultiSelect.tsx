@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { LANGUAGE_MAPPING } from '../../types';
@@ -38,29 +37,33 @@ export const LanguageMultiSelect: React.FC<LanguageMultiSelectProps> = ({
   };
 
   return (
-    <Card className="max-w-xl mx-auto">
-      <CardHeader>
-        <CardTitle>Select Target Languages</CardTitle>
-        <CardDescription>
-          Choose which languages to translate the product descriptions into
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={selectAll}>
-            Select All
-          </Button>
-          <Button variant="outline" size="sm" onClick={deselectAll}>
-            Deselect All
-          </Button>
-          <span className="text-xs text-muted-foreground ml-auto">
-            {selectedLanguages.length} selected
-          </span>
-        </div>
+    <section className="max-w-3xl mx-auto">
+      <div className="mb-4">
+        <p className="label-mono mb-1">Step 03 / Languages</p>
+        <h2 className="text-base font-semibold tracking-tightest text-foreground">
+          Select target languages
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
+          Choose which languages the product descriptions will be translated into.
+        </p>
+      </div>
 
-        <div className="grid grid-cols-2 gap-2">
+      <div className="flex items-center gap-2 flex-wrap mb-5">
+        <Button variant="outline" size="sm" onClick={selectAll}>
+          Select all
+        </Button>
+        <Button variant="outline" size="sm" onClick={deselectAll}>
+          Deselect all
+        </Button>
+        <span className="label-mono-sm ml-auto tabular-nums">
+          {selectedLanguages.length} / {TRANSLATION_LANGUAGES.length} selected
+        </span>
+      </div>
+
+      <div className="border border-border bg-card p-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2.5">
           {TRANSLATION_LANGUAGES.map(([code, name]) => (
-            <div key={code} className="flex items-center space-x-2">
+            <div key={code} className="flex items-center gap-2.5">
               <Checkbox
                 id={`lang-${code}`}
                 checked={selectedLanguages.includes(code)}
@@ -68,21 +71,26 @@ export const LanguageMultiSelect: React.FC<LanguageMultiSelectProps> = ({
               />
               <label
                 htmlFor={`lang-${code}`}
-                className="text-sm cursor-pointer"
+                className="text-sm cursor-pointer flex-1 flex items-baseline justify-between gap-2"
               >
-                {name}
+                <span className="text-foreground truncate">{name}</span>
+                <span className="font-mono text-[10px] uppercase tracking-caps-sm text-muted-foreground/70 shrink-0">
+                  {code}
+                </span>
               </label>
             </div>
           ))}
         </div>
+      </div>
 
-        <div className="flex items-center justify-between pt-2">
-          <Button variant="ghost" onClick={onBack}>Back</Button>
-          <Button onClick={onNext} disabled={selectedLanguages.length === 0}>
-            Next: Select Model
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="flex items-center justify-between pt-6 mt-6 border-t border-border">
+        <Button variant="ghost" onClick={onBack}>
+          Back
+        </Button>
+        <Button onClick={onNext} disabled={selectedLanguages.length === 0}>
+          Next: Select model
+        </Button>
+      </div>
+    </section>
   );
 };
