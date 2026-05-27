@@ -50,7 +50,7 @@ export function SectionHeader({
         <div className="flex items-baseline gap-3 min-w-0">
           {index !== undefined && (
             <span
-              className="font-display tabular-nums text-muted-foreground/70 text-[11px] font-medium shrink-0"
+              className="font-mono tabular-nums text-muted-foreground/70 text-[11px] font-medium shrink-0"
               aria-hidden="true"
             >
               {formatIndex(index)}

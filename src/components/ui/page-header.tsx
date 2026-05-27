@@ -56,7 +56,7 @@ export function PageHeader({
         <div className="flex items-baseline gap-3 min-w-0">
           {index && (
             <span
-              className="font-display uppercase tracking-caps text-[11px] font-medium text-muted-foreground tabular-nums shrink-0"
+              className="font-mono uppercase tracking-caps text-[11px] font-medium text-muted-foreground tabular-nums shrink-0"
               aria-hidden="true"
             >
               {index}
@@ -71,7 +71,7 @@ export function PageHeader({
           <div className="flex items-center gap-4 shrink-0">
             {status && (
               <span
-                className="inline-flex items-center gap-1.5 font-display uppercase tracking-caps-sm text-[10px] font-medium text-muted-foreground"
+                className="inline-flex items-center gap-1.5 font-mono uppercase tracking-caps-sm text-[10px] font-medium text-muted-foreground"
                 aria-label={`Status: ${status.label}`}
               >
                 <span
@@ -85,7 +85,7 @@ export function PageHeader({
               </span>
             )}
             {meta && (
-              <div className="font-display uppercase tracking-caps-sm text-[10px] font-medium text-muted-foreground">
+              <div className="font-mono uppercase tracking-caps-sm text-[10px] font-medium text-muted-foreground">
                 {meta}
               </div>
             )}

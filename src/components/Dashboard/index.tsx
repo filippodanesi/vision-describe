@@ -252,7 +252,7 @@ function StatusIndicator({ status }: { status: string }) {
   return (
     <span className="inline-flex items-center gap-1.5">
       <span className={cn('inline-block size-1.5 rounded-full', dotClass)} aria-hidden="true" />
-      <span className="font-display uppercase tracking-caps-sm text-[10px] font-medium text-muted-foreground">
+      <span className="font-mono uppercase tracking-caps-sm text-[10px] font-medium text-muted-foreground">
         {statusLabel(status)}
       </span>
     </span>

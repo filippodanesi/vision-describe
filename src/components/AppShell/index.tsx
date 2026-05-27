@@ -190,7 +190,7 @@ export const AppShell: React.FC = () => {
                 showName={true}
                 className="gap-2 overflow-hidden [&>span]:whitespace-nowrap group-data-[collapsible=icon]:[&>span]:hidden"
               />
-              <span className="ml-auto font-display text-[10px] uppercase tracking-caps-sm text-muted-foreground group-data-[collapsible=icon]:hidden">
+              <span className="ml-auto font-mono text-[10px] uppercase tracking-caps-sm text-muted-foreground group-data-[collapsible=icon]:hidden">
                 v3.0.0
               </span>
             </div>
@@ -275,7 +275,7 @@ export const AppShell: React.FC = () => {
               className="mr-2 data-[orientation=vertical]:h-4"
             />
             <Breadcrumb>
-              <BreadcrumbList className="font-display uppercase tracking-caps text-[11px] font-medium gap-1.5 sm:gap-2">
+              <BreadcrumbList className="font-mono uppercase tracking-caps text-[11px] font-medium gap-1.5 sm:gap-2">
                 {activeGroup && (
                   <>
                     <BreadcrumbItem className="hidden md:block">
@@ -293,7 +293,7 @@ export const AppShell: React.FC = () => {
             </Breadcrumb>
             <div className="ml-auto flex items-center gap-3">
               <span
-                className="hidden sm:inline-flex items-center gap-1.5 font-display uppercase tracking-caps-sm text-[10px] font-medium text-muted-foreground"
+                className="hidden sm:inline-flex items-center gap-1.5 font-mono uppercase tracking-caps-sm text-[10px] font-medium text-muted-foreground"
                 aria-label="System status: ready"
               >
                 <span className="status-dot" aria-hidden="true" />

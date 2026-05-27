@@ -120,16 +120,16 @@
   /* Section / page labels in JetBrains Mono uppercase — the signature of the
      Industrial Data Tool look. Use on small text only (10-12px). */
   .label-mono {
-    @apply font-display uppercase tracking-caps text-[11px] font-medium text-muted-foreground;
+    @apply font-mono uppercase tracking-caps text-[11px] font-medium text-muted-foreground;
   }
 
   .label-mono-sm {
-    @apply font-display uppercase tracking-caps-sm text-[10px] font-medium text-muted-foreground;
+    @apply font-mono uppercase tracking-caps-sm text-[10px] font-medium text-muted-foreground;
   }
 
   /* Section index prefix: "01 / Generate", "02 / Optimize", etc. */
   .index-prefix {
-    @apply font-display tabular-nums text-muted-foreground/70;
+    @apply font-mono tabular-nums text-muted-foreground/70;
   }
 
   /* Status dot used next to a label, signal-coloured when "active". */

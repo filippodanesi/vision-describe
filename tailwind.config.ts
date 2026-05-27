@@ -90,15 +90,6 @@ export default {
     				'Consolas',
     				'"Liberation Mono"',
     				'monospace'
-    			],
-    			display: [
-    				'"JetBrains Mono"',
-    				'"Geist Mono"',
-    				'ui-monospace',
-    				'SFMono-Regular',
-    				'"SF Mono"',
-    				'Menlo',
-    				'monospace'
     			]
     		},
     		borderRadius: {
