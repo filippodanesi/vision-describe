@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PageHeader } from '@/components/ui/page-header';
 
 export const Settings: React.FC = () => {
   const { openaiKey, anthropicKey, loading, saveKeys } = useApiKeys();
@@ -47,12 +48,11 @@ export const Settings: React.FC = () => {
 
   return (
     <div className="max-w-xl mx-auto animate-in fade-in-0 duration-300">
-      <div className="mb-6">
-        <h1 className="text-xl font-medium tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Manage your API keys. Keys are stored securely in your account.
-        </p>
-      </div>
+      <PageHeader
+        index="CFG"
+        title="Settings"
+        description="Manage your API keys. Keys are stored securely in your account."
+      />
 
       <Card>
         <CardHeader>

@@ -10,9 +10,9 @@ import {
 } from '@/lib/projectPersistence';
 import { type RunRecord } from '@/lib/runPersistence';
 import { getModelById } from '@/lib/models';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
 import {
   Table,
   TableBody,
@@ -100,23 +100,40 @@ export const Projects: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-12 text-sm text-muted-foreground">Loading projects...</div>
+      <div className="animate-in fade-in-0 duration-300">
+        <PageHeader
+          index="PRJ"
+          title="Projects"
+          description="Manage and track your processing projects."
+          status={{ label: 'Loading', tone: 'muted' }}
+        />
+        <p className="label-mono py-12 text-center">Loading projects…</p>
+      </div>
     );
   }
 
   if (projects.length === 0) {
     return (
       <div className="animate-in fade-in-0 duration-300">
-        <div className="text-center py-16">
-          <FolderOpen className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-          <h2 className="text-lg font-medium tracking-tight">No projects yet</h2>
-          <p className="text-sm text-muted-foreground mt-1 mb-6">
-            Create a project to organize your processing runs.
+        <PageHeader
+          index="PRJ"
+          title="Projects"
+          description="Manage and track your processing projects."
+          status={{ label: 'No projects', tone: 'muted' }}
+          actions={
+            <Button onClick={() => setDialogOpen(true)} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              New Project
+            </Button>
+          }
+        />
+        <div className="border border-border bg-muted/30 py-20 px-6 text-center">
+          <FolderOpen className="h-8 w-8 text-muted-foreground/40 mx-auto mb-4" />
+          <p className="label-mono mb-2">No projects yet</p>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+            Create a project to organize your processing runs into focused
+            batches.
           </p>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Project
-          </Button>
         </div>
         <NewProjectDialog open={dialogOpen} onOpenChange={setDialogOpen} onCreate={handleCreate} />
       </div>
@@ -124,21 +141,25 @@ export const Projects: React.FC = () => {
   }
 
   return (
-    <div className="animate-in fade-in-0 duration-300 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-medium tracking-tight">Projects</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage and track your processing projects</p>
-        </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Project
-        </Button>
-      </div>
+    <div className="animate-in fade-in-0 duration-300">
+      <PageHeader
+        index="PRJ"
+        title="Projects"
+        description="Manage and track your processing projects."
+        meta={
+          <span className="tabular-nums">{projects.length} active</span>
+        }
+        actions={
+          <Button onClick={() => setDialogOpen(true)} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            New Project
+          </Button>
+        }
+      />
 
-      <div className="space-y-3">
+      <div className="border border-border divide-y divide-border">
         {projects.map((project) => (
-          <Card key={project.id} className="overflow-hidden">
+          <div key={project.id} className="overflow-hidden bg-card">
             <div
               className="flex items-center gap-4 p-4 cursor-pointer hover:bg-muted/30 transition-colors"
               onClick={() => toggleExpand(project.id)}
@@ -243,7 +264,7 @@ export const Projects: React.FC = () => {
                 )}
               </div>
             )}
-          </Card>
+          </div>
         ))}
       </div>
 
