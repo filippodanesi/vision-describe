@@ -86,7 +86,7 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
       {results.length > 0 && (
         <section>
           <div className="flex items-baseline justify-between mb-3">
-            <p className="label-mono">Preview — first 10 rows</p>
+            <p className="label-mono">Preview · first 10 rows</p>
             <span className="text-xs text-muted-foreground font-mono tabular-nums">
               {Math.min(10, results.length)} / {results.length}
             </span>
@@ -120,12 +120,9 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
                       </TableCell>
                       {selectedLanguages.slice(0, 3).map(lang => (
                         <TableCell key={lang} className="text-xs text-muted-foreground max-w-[200px]">
-                          <div className="truncate">
+                          <div className="truncate" title={r.translations[lang] || undefined}>
                             {r.translations[lang]
-                              ? r.translations[lang].substring(0, 80) + '…'
-                              : r.errors?.find(e => e.startsWith(lang))
-                              ? '(error)'
-                              : '—'}
+                              || (r.errors?.find(e => e.startsWith(lang)) ? '(error)' : '-')}
                           </div>
                         </TableCell>
                       ))}

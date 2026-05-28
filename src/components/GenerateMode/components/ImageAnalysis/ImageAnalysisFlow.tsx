@@ -1,4 +1,5 @@
 import React from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { useImageAnalysis } from '../../hooks/useImageAnalysis';
 import { ImageAnalysisStep } from '../../types';
 import { ProductSettingsForm } from './ProductSettingsForm';
@@ -7,6 +8,7 @@ import { GenerationResult } from './GenerationResult';
 import ModelSelector from '@/components/OptimizeMode/components/ModelSelector';
 import { useApiKeys } from '@/contexts/ApiKeysContext';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import { StepIndicator, type StepDef } from '@/components/ui/step-indicator';
 
 interface ImageAnalysisFlowProps {
@@ -131,14 +133,12 @@ export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) 
 
       {step !== ImageAnalysisStep.PROCESSING && step !== ImageAnalysisStep.RESULT && (
         <div className="mt-6 flex items-center pt-4 border-t border-border">
-          <button
-            onClick={step === ImageAnalysisStep.SETTINGS ? onBack : undefined}
-            className={`text-sm text-muted-foreground hover:text-foreground transition-colors ${
-              step !== ImageAnalysisStep.SETTINGS ? 'invisible' : ''
-            }`}
-          >
-            ← Back to mode selection
-          </button>
+          {step === ImageAnalysisStep.SETTINGS && (
+            <Button variant="ghost" size="sm" onClick={onBack}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to mode selection
+            </Button>
+          )}
         </div>
       )}
     </div>

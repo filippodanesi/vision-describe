@@ -161,11 +161,12 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
                 className="w-full aspect-square object-cover border border-border"
               />
               <button
+                type="button"
                 onClick={(e) => { e.stopPropagation(); onRemoveImage(idx); }}
                 aria-label={`Remove ${img.name}`}
-                className="absolute -top-2 -right-2 h-5 w-5 bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
+                className="absolute -top-2 -right-2 h-7 w-7 bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
               >
-                <X className="h-3 w-3" aria-hidden="true" />
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
               <p className="mt-1 font-mono text-[10px] text-muted-foreground truncate" title={img.name}>
                 {img.name}

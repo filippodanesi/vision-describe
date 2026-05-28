@@ -788,7 +788,7 @@ export const OptimizeMode: React.FC = () => {
             {processedData && processedData.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-baseline justify-between">
-                  <p className="label-mono">Preview — first 10 rows</p>
+                  <p className="label-mono">Preview · first 10 rows</p>
                   <span className="text-xs text-muted-foreground font-mono tabular-nums">
                     {Math.min(10, processedData.length)} / {processedData.length}
                   </span>
@@ -858,19 +858,13 @@ export const OptimizeMode: React.FC = () => {
                                 <TableCell className="text-xs text-foreground">{name}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground">{city}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground max-w-[200px]">
-                                  <div className="truncate" title={shortDesc}>
-                                    {shortDesc ? shortDesc.substring(0, 60) + (shortDesc.length > 60 ? '...' : '') : '-'}
-                                  </div>
+                                  <div className="truncate" title={shortDesc || undefined}>{shortDesc || '-'}</div>
                                 </TableCell>
                                 <TableCell className="text-xs text-muted-foreground max-w-[300px]">
-                                  <div className="truncate" title={longDesc}>
-                                    {longDesc ? longDesc.substring(0, 100) + (longDesc.length > 100 ? '...' : '') : '-'}
-                                  </div>
+                                  <div className="truncate" title={longDesc || undefined}>{longDesc || '-'}</div>
                                 </TableCell>
                                 <TableCell className="text-xs text-muted-foreground max-w-[250px]">
-                                  <div className="truncate" title={aboutDesc}>
-                                    {aboutDesc ? aboutDesc.substring(0, 80) + (aboutDesc.length > 80 ? '...' : '') : '-'}
-                                  </div>
+                                  <div className="truncate" title={aboutDesc || undefined}>{aboutDesc || '-'}</div>
                                 </TableCell>
                               </TableRow>
                             );
@@ -885,9 +879,7 @@ export const OptimizeMode: React.FC = () => {
                                 <TableCell className="font-mono text-xs text-muted-foreground">{code}</TableCell>
                                 <TableCell className="text-xs text-foreground">{title}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground max-w-[300px]">
-                                  <div className="line-clamp-2" title={copy}>
-                                    {copy ? copy.substring(0, 120) + (copy.length > 120 ? '...' : '') : '-'}
-                                  </div>
+                                  <div className="line-clamp-2" title={copy || undefined}>{copy || '-'}</div>
                                 </TableCell>
                               </TableRow>
                             );
@@ -902,9 +894,7 @@ export const OptimizeMode: React.FC = () => {
                                 <TableCell className="font-mono text-xs text-muted-foreground">{styleNo}</TableCell>
                                 <TableCell className="text-xs text-foreground">{styleName}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground max-w-[300px]">
-                                  <div className="line-clamp-2" title={longDesc}>
-                                    {longDesc ? longDesc.substring(0, 120) + (longDesc.length > 120 ? '...' : '') : '-'}
-                                  </div>
+                                  <div className="line-clamp-2" title={longDesc || undefined}>{longDesc || '-'}</div>
                                 </TableCell>
                               </TableRow>
                             );
@@ -919,9 +909,7 @@ export const OptimizeMode: React.FC = () => {
                                 <TableCell className="font-mono text-xs text-muted-foreground">{sku}</TableCell>
                                 <TableCell className="text-xs text-foreground">{title}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground max-w-[300px]">
-                                  <div className="line-clamp-2" title={desc}>
-                                    {desc ? desc.substring(0, 120) + (desc.length > 120 ? '...' : '') : '-'}
-                                  </div>
+                                  <div className="line-clamp-2" title={desc || undefined}>{desc || '-'}</div>
                                 </TableCell>
                               </TableRow>
                             );
@@ -938,9 +926,7 @@ export const OptimizeMode: React.FC = () => {
                                 <TableCell className="font-mono text-xs text-muted-foreground">{sapNo}</TableCell>
                                 <TableCell className="text-xs text-foreground">{productName}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground max-w-[300px]">
-                                  <div className="line-clamp-2" title={desc}>
-                                    {desc ? desc.substring(0, 120) + (desc.length > 120 ? '...' : '') : '-'}
-                                  </div>
+                                  <div className="line-clamp-2" title={desc || undefined}>{desc || '-'}</div>
                                 </TableCell>
                               </TableRow>
                             );
@@ -990,8 +976,8 @@ export const OptimizeMode: React.FC = () => {
       {renderStep()}
 
       {currentStep !== ProcessingStep.COMPLETE && (
-        <div className="mt-8 flex items-center justify-between pt-5 border-t border-border/40">
-          <div className="flex items-center gap-2">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 pt-5 border-t border-border/40">
+          <div className="flex flex-wrap items-center gap-2">
             {canGoBack && (
               <Button variant="ghost" onClick={goBack}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -1006,7 +992,7 @@ export const OptimizeMode: React.FC = () => {
             )}
           </div>
           {canGoForward && (
-            <Button onClick={goForward}>
+            <Button onClick={goForward} className="ml-auto">
               Next
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>

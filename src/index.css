@@ -114,6 +114,20 @@
     /* Geist looks tighter with a small negative tracking on body */
     letter-spacing: -0.005em;
   }
+
+  /* Honor user motion preferences. Animations remain technically present
+     for state-change feedback (e.g. accordion expand) but their duration
+     collapses to a single frame. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {

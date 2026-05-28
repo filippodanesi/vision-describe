@@ -1,16 +1,42 @@
 import React, { useState, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
-/** Convert \n to <br> in plain-text portions while preserving HTML block elements */
+// Block tags the model is allowed to emit. Inline `<br>` is also kept so the
+// \n → <br> step below can preserve paragraph breaks in plain-text portions.
+const ALLOWED_TAGS = [
+  'p', 'br', 'hr', 'div', 'span', 'blockquote',
+  'ul', 'ol', 'li',
+  'table', 'thead', 'tbody', 'tr', 'td', 'th',
+  'strong', 'em', 'b', 'i', 'u', 'code',
+  'h1', 'h2', 'h3', 'h4',
+];
+
+// No attributes from model output are trusted. Forbidding everything also
+// kills `style`, event handlers, `href`, `src`, etc. in a single rule.
+const PURIFY_CONFIG = {
+  ALLOWED_TAGS,
+  ALLOWED_ATTR: [] as string[],
+  FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'a', 'img'],
+  KEEP_CONTENT: true,
+} as const;
+
+/**
+ * Convert \n to <br> in plain-text portions while preserving HTML block
+ * elements, then sanitize the whole string via DOMPurify with a strict
+ * allowlist. The model output is user-influenced (via prompts, image content)
+ * and must never reach the DOM unsanitized.
+ */
 function formatForDisplay(raw: string): string {
-  return raw
+  const withBreaks = raw
     .split(/(<(?:ul|ol|div|table|blockquote)[\s\S]*?<\/(?:ul|ol|div|table|blockquote)>)/gi)
     .map(part =>
-      part.match(/^<(?:ul|ol|div|table|blockquote)/i) ? part : part.replace(/\n/g, '<br>')
+      part.match(/^<(?:ul|ol|div|table|blockquote)/i) ? part : part.replace(/\n/g, '<br>'),
     )
     .join('');
+  return DOMPurify.sanitize(withBreaks, PURIFY_CONFIG);
 }
 
 interface GenerationResultProps {
