@@ -8,10 +8,15 @@ export enum GenerateSubMode {
 export enum ImageAnalysisStep {
   SETTINGS = 'settings',
   UPLOAD = 'upload',
-  MODEL = 'model',
   PROCESSING = 'processing',
   RESULT = 'result',
 }
+
+// Hardcoded model for the image analysis flow.
+// Claude Opus 4.7 — most capable Anthropic model, native vision, prompt
+// caching works the same way as the text-only flows. No user selector
+// exposed (the previous OpenAI gpt-5.2 path is removed).
+export const IMAGE_ANALYSIS_MODEL = 'claude-opus-4-7';
 
 export enum CsvTranslationStep {
   UPLOAD = 'upload',

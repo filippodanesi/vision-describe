@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import type { ImageFile, ProductSettings, VisionApiResponse } from '../types';
-import { ImageAnalysisStep } from '../types';
+import { ImageAnalysisStep, IMAGE_ANALYSIS_MODEL } from '../types';
 import { IMAGE_ANALYSIS_PROMPT } from '../prompts/imageAnalysisPrompt';
-import { analyzeWithClaude, analyzeWithOpenAI } from '../utils/visionApiUtils';
+import { analyzeWithClaude } from '../utils/visionApiUtils';
 
 export function useImageAnalysis() {
   const [step, setStep] = useState<ImageAnalysisStep>(ImageAnalysisStep.SETTINGS);
@@ -17,7 +17,7 @@ export function useImageAnalysis() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const analyze = useCallback(async (modelId: string, apiKey: string) => {
+  const analyze = useCallback(async (apiKey: string) => {
     if (images.length === 0) return;
     setIsProcessing(true);
     setError(null);
@@ -37,21 +37,21 @@ export function useImageAnalysis() {
             settings.certifications
           );
 
-      const isAnthropic = modelId.startsWith('claude');
-
-      let response: VisionApiResponse;
-      if (isAnthropic) {
-        response = await analyzeWithClaude(prompt, images, apiKey, modelId);
-      } else {
-        response = await analyzeWithOpenAI(prompt, images, apiKey, modelId);
-      }
+      const response: VisionApiResponse = await analyzeWithClaude(
+        prompt,
+        images,
+        apiKey,
+        IMAGE_ANALYSIS_MODEL,
+      );
 
       setResult(response.content);
       setTokens({ input: response.tokens.inputTokens, output: response.tokens.outputTokens });
       setStep(ImageAnalysisStep.RESULT);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during analysis');
-      setStep(ImageAnalysisStep.MODEL);
+      // Drop back to the upload step so the user can retry without losing
+      // the images already in memory.
+      setStep(ImageAnalysisStep.UPLOAD);
     } finally {
       setIsProcessing(false);
     }

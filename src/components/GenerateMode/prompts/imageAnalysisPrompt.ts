@@ -27,10 +27,9 @@ interface ImageAnalysisPromptInput {
 }
 
 /**
- * Builds the image analysis prompt. Returns a single string because the
- * vision helpers (analyzeWithClaude / analyzeWithOpenAI in visionApiUtils.ts)
- * still take a flat prompt; switching them to {system, user} is a separate
- * refactor that would touch both vision SDKs.
+ * Builds the image analysis prompt. Returns a single string because
+ * analyzeWithClaude in visionApiUtils.ts still takes a flat prompt;
+ * switching it to {system, user} is a separate refactor.
  *
  * The shape mirrors buildEnMasterGenerationPrompt: <role>, <task>,
  * <visual_analysis>, <truthfulness>, <style_rules>, <structure>,

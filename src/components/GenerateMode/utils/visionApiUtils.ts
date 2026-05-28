@@ -23,8 +23,9 @@ import type { VisionApiResponse, ImageFile, CachedPromptInput } from '../types';
 const DEFAULT_CLAUDE_MODEL = 'claude-opus-4-7';
 
 /**
- * Default model for the OpenAI vision path. Kept distinct from the Claude
- * default; the vision-only Image Analysis flow uses OpenAI today.
+ * Default model for the OpenAI text path (translateWithOpenAI). The
+ * vision-only Image Analysis flow no longer uses OpenAI — it runs on
+ * claude-opus-4-7 with native vision.
  */
 const DEFAULT_OPENAI_MODEL = 'gpt-5.2';
 
@@ -93,71 +94,6 @@ export async function analyzeWithClaude(
       outputTokens: response.usage?.output_tokens ?? 0,
       cacheCreationTokens: response.usage?.cache_creation_input_tokens ?? 0,
       cacheReadTokens: response.usage?.cache_read_input_tokens ?? 0,
-    },
-  };
-}
-
-/**
- * Call OpenAI with vision (images + text prompt).
- */
-export async function analyzeWithOpenAI(
-  prompt: string,
-  images: ImageFile[],
-  apiKey: string,
-  model: string = DEFAULT_OPENAI_MODEL,
-): Promise<VisionApiResponse> {
-  const imageContent = images.map((img) => ({
-    type: 'image_url' as const,
-    image_url: {
-      url: `data:${img.mimeType};base64,${img.base64}`,
-    },
-  }));
-
-  const isNewModel = model.includes('o3') || model.includes('o4') || model.includes('gpt-5') || model.startsWith('o-');
-
-  const body: Record<string, any> = {
-    model,
-    messages: [
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: prompt },
-          ...imageContent,
-        ],
-      },
-    ],
-  };
-
-  if (isNewModel) {
-    body.max_completion_tokens = 4096;
-  } else {
-    body.max_tokens = 4096;
-  }
-
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      `OpenAI API error: ${response.status} ${errorData?.error?.message || response.statusText}`
-    );
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || '';
-
-  return {
-    content: content.trim(),
-    tokens: {
-      inputTokens: data.usage?.prompt_tokens || 0,
-      outputTokens: data.usage?.completion_tokens || 0,
     },
   };
 }

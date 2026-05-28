@@ -181,7 +181,7 @@ export const ImageUploadZone: React.FC<ImageUploadZoneProps> = ({
           Back
         </Button>
         <Button onClick={onNext} disabled={images.length === 0}>
-          Next: Select model
+          Start analysis
         </Button>
       </div>
     </section>

@@ -1,11 +1,10 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useImageAnalysis } from '../../hooks/useImageAnalysis';
-import { ImageAnalysisStep } from '../../types';
+import { ImageAnalysisStep, IMAGE_ANALYSIS_MODEL } from '../../types';
 import { ProductSettingsForm } from './ProductSettingsForm';
 import { ImageUploadZone } from './ImageUploadZone';
 import { GenerationResult } from './GenerationResult';
-import ModelSelector from '@/components/OptimizeMode/components/ModelSelector';
 import { useApiKeys } from '@/contexts/ApiKeysContext';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -18,13 +17,12 @@ interface ImageAnalysisFlowProps {
 const STEP_DEFS: StepDef<ImageAnalysisStep>[] = [
   { key: ImageAnalysisStep.SETTINGS, label: 'Settings' },
   { key: ImageAnalysisStep.UPLOAD, label: 'Upload' },
-  { key: ImageAnalysisStep.MODEL, label: 'Model' },
   { key: ImageAnalysisStep.PROCESSING, label: 'Processing' },
   { key: ImageAnalysisStep.RESULT, label: 'Result' },
 ];
 
 export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) => {
-  const { openaiKey, anthropicKey } = useApiKeys();
+  const { anthropicKey } = useApiKeys();
 
   const {
     step,
@@ -42,18 +40,14 @@ export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) 
     reset,
   } = useImageAnalysis();
 
-  const handleModelSelected = (modelId: string) => {
-    const isAnthropic = modelId.startsWith('claude');
-    const apiKey = isAnthropic ? anthropicKey : openaiKey;
-
-    if (!apiKey) {
-      toast.error('API Key Missing', {
-        description: 'Configure your API keys in Settings before processing.'
+  const handleStart = () => {
+    if (!anthropicKey) {
+      toast.error('Anthropic API Key Missing', {
+        description: `This flow uses ${IMAGE_ANALYSIS_MODEL}. Configure your Anthropic key in Settings.`,
       });
       return;
     }
-
-    analyze(modelId, apiKey);
+    analyze(anthropicKey);
   };
 
   return (
@@ -76,30 +70,11 @@ export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) 
             images={images}
             onAddImages={addImages}
             onRemoveImage={removeImage}
-            onNext={() => setStep(ImageAnalysisStep.MODEL)}
+            onNext={handleStart}
             onBack={() => setStep(ImageAnalysisStep.SETTINGS)}
           />
-        </div>
-      )}
-
-      {step === ImageAnalysisStep.MODEL && (
-        <div className=" animate-fade-in">
-          <div className="mb-4">
-            <p className="label-mono mb-1">Step 03 / Model</p>
-            <h2 className="text-base font-semibold tracking-tightest text-foreground">
-              Choose AI model
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Select the vision-capable model for image analysis.
-            </p>
-          </div>
-          <ModelSelector
-            onModelSelected={(modelId) => handleModelSelected(modelId)}
-            useCase="ecommerce"
-            providerFilter="openai"
-          />
           {error && (
-            <p className="text-sm text-destructive mt-4">{error}</p>
+            <p className="mt-3 text-sm text-destructive">{error}</p>
           )}
         </div>
       )}
@@ -116,8 +91,8 @@ export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) 
             Analyzing images
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            This may take 30-60 seconds depending on the model. Do not close
-            the tab.
+            Running <span className="font-mono">{IMAGE_ANALYSIS_MODEL}</span> on{' '}
+            {images.length} {images.length === 1 ? 'image' : 'images'}. Do not close the tab.
           </p>
         </section>
       )}
@@ -126,7 +101,7 @@ export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) 
         <GenerationResult
           result={result}
           tokens={tokens}
-          onGenerateAgain={() => setStep(ImageAnalysisStep.MODEL)}
+          onGenerateAgain={handleStart}
           onReset={reset}
         />
       )}
