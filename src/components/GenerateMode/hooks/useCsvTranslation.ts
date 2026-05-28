@@ -354,7 +354,7 @@ export function useCsvTranslation() {
     } finally {
       abortRef.current = null;
       if (signal.aborted) {
-        addLog('Translation cancelled — no further API calls.');
+        addLog('Translation cancelled. No further API calls.');
       } else {
         addLog(`Translation complete: ${translatedProducts.length} products translated`);
       }
@@ -376,7 +376,7 @@ export function useCsvTranslation() {
     const ctrl = abortRef.current;
     if (ctrl && !ctrl.signal.aborted) {
       ctrl.abort();
-      addLog('Cancel requested — aborting in-flight API calls…');
+      addLog('Cancel requested. Aborting in-flight API calls…');
     }
   }, [addLog]);
 

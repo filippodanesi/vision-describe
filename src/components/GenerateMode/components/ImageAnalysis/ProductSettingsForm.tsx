@@ -75,7 +75,7 @@ export const ProductSettingsForm: React.FC<ProductSettingsFormProps> = ({
               onChange={(e) => onSettingsChange({ ...settings, category: e.target.value })}
             />
             <p className="text-xs text-muted-foreground">
-              The exact product type — used as the grammatical starting point.
+              The exact product type, used as the grammatical starting point.
             </p>
           </div>
         </div>

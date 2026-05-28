@@ -20,12 +20,12 @@ const entries: ChangelogEntry[] = [
     description:
       "Major platform evolution: API keys are now stored per-user in Supabase (no more shared env vars), and runs can be organized into projects with aggregated stats.",
     items: [
-      "Added per-user API key management — each user saves their own OpenAI/Anthropic keys in Settings",
+      "Added per-user API key management: each user saves their own OpenAI/Anthropic keys in Settings",
       "Added Projects to organize and group processing runs by campaign or initiative",
       "New Settings page with password-togglable inputs and save to Supabase",
       "New Projects page with expandable cards showing run history, status, and total cost",
       "New Project dialog with name, use case, and optional description",
-      "Project selector in Optimize flow — assign runs to a project before processing",
+      "Project selector in Optimize flow: assign runs to a project before processing",
       "Warning banner when no API keys are configured, guiding users to Settings",
       "Removed shared VITE_OPENAI_API_KEY and VITE_ANTHROPIC_API_KEY environment variables",
       "Added Supabase migration for projects, user_settings tables, and runs.project_id column",
@@ -44,7 +44,7 @@ const entries: ChangelogEntry[] = [
       "Added store type filter to process only specific store categories",
       "Replaced ExcelJS with SheetJS for significantly faster XLSX parsing and export",
       "Optimized Partoo prompts for AI discoverability and fuller, richer descriptions",
-      "Preserved original Partoo file structure on export — no more missing columns",
+      "Preserved original Partoo file structure on export, no more missing columns",
       "Added anti-AI-writing-tell instructions for more natural, human-sounding content",
       "Removed opening date from Partoo prompts to reduce noise",
       "Improved store type categorization to handle locator group names",
@@ -62,7 +62,7 @@ const entries: ChangelogEntry[] = [
     description:
       "Added password protection via HTTP Basic Auth, deduplicated the prompt system into shared modules, and bundled test files for every use case.",
     items: [
-      "Added HTTP Basic Auth via Vercel Edge Middleware — the app is now password-protected",
+      "Added HTTP Basic Auth via Vercel Edge Middleware; the app is now password-protected",
       "Deduplicated prompt architecture with shared modules across all use cases",
       "Updated NEXT size translations with the complete Zeynep Arman list",
       "Added test files for all use cases and HTML rendering in image analysis preview",
@@ -72,12 +72,12 @@ const entries: ChangelogEntry[] = [
   {
     version: "v2.3.0",
     date: "February 9, 2026",
-    title: "Visual Refinement — Calm Precision Aesthetic",
+    title: "Visual Refinement: Calm Precision Aesthetic",
     description:
       "Full UI restyling inspired by Vercel, Linear, and Cursor: softer contrasts, cool-gray tinting, lighter font weights, more whitespace, and barely-visible borders. Zero functional changes.",
     items: [
       "Cool-gray (220 hue) tinted design tokens across all light and dark mode CSS variables",
-      "Softer foreground/background: no pure black or white — reduced eye strain in both themes",
+      "Softer foreground/background: no pure black or white, reduced eye strain in both themes",
       "Lighter font weights throughout: semibold/bold replaced with medium across all components",
       "Increased whitespace: larger card padding (p-7), main content area (px-8 py-10), drop zones (p-10)",
       "Subtler borders: border-border/30 on cards, border-border/60 on inputs, border-border/40 on header",
@@ -97,7 +97,7 @@ const entries: ChangelogEntry[] = [
     items: [
       "Complete UI redesign: step wizard, card-based layout, clean shadcn tokens",
       "Added GPT-5.2 (OpenAI flagship, $1.75/MTok) and Claude Opus 4.6 (Anthropic flagship)",
-      "Implemented Anthropic prompt caching — ~90% savings on cached input tokens",
+      "Implemented Anthropic prompt caching: ~90% savings on cached input tokens",
       "Card-based model selector with speed, cost, and quality badges",
       "Modern activity log panel with color-coded entries and auto-scroll",
       "Full-width drag & drop file upload zone",
@@ -113,7 +113,7 @@ const entries: ChangelogEntry[] = [
     description:
       "Critical localization improvements separating European Portuguese from Brazilian Portuguese, plus brand tone-of-voice guidelines.",
     items: [
-      "Separated PT-PT (Portugal) from PT-BR (Brazil) — no more Brazilian terms in European Portuguese",
+      "Separated PT-PT (Portugal) from PT-BR (Brazil): no more Brazilian terms in European Portuguese",
       "Implemented intelligent localization system (cultural adaptation, not just translation)",
       "Added language-specific instructions for natural, fluent output",
       "Spanish translations now natural and idiomatic",
@@ -158,7 +158,7 @@ const entries: ChangelogEntry[] = [
     date: "May 14, 2025",
     title: "Initial Release",
     description:
-      "First release of VisionDescribe — a tool for generating optimized product content from Inriver exports using AI.",
+      "First release of VisionDescribe: a tool for generating optimized product content from Inriver exports using AI.",
     items: [
       "Multi-format file support (Excel, CSV) with web worker parsing",
       "Automatic column detection and mapping",

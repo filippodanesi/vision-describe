@@ -456,7 +456,7 @@ export function useMetadataGeneration() {
       } finally {
         abortRef.current = null;
         if (signal.aborted) {
-          addLog('Generation cancelled — no further API calls.');
+          addLog('Generation cancelled. No further API calls.');
         } else {
           addLog(`Generation complete: ${accumulated.length} product(s) processed`);
         }
@@ -480,7 +480,7 @@ export function useMetadataGeneration() {
     const ctrl = abortRef.current;
     if (ctrl && !ctrl.signal.aborted) {
       ctrl.abort();
-      addLog('Cancel requested — aborting in-flight API calls…');
+      addLog('Cancel requested. Aborting in-flight API calls…');
     }
   }, [addLog]);
 

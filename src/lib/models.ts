@@ -13,7 +13,7 @@ export const models: Model[] = [
   {
     id: 'gpt-5.2',
     name: 'GPT-5.2',
-    description: 'Flagship OpenAI model — best intelligence, reasoning, and 400K context',
+    description: 'Flagship OpenAI model: best intelligence, reasoning, and 400K context',
     provider: 'openai',
     speed: 'Fast',
     cost: 'Low',
@@ -22,7 +22,7 @@ export const models: Model[] = [
   {
     id: 'claude-opus-4-7',
     name: 'Claude Opus 4.7',
-    description: 'Most capable Anthropic model — 1M context, adaptive thinking, top text quality',
+    description: 'Most capable Anthropic model: 1M context, adaptive thinking, top text quality',
     provider: 'anthropic',
     speed: 'Medium',
     cost: 'High',
@@ -31,7 +31,7 @@ export const models: Model[] = [
   {
     id: 'claude-opus-4-6',
     name: 'Claude Opus 4.6',
-    description: 'Previous Anthropic flagship — top-tier text quality (200K context)',
+    description: 'Previous Anthropic flagship: top-tier text quality (200K context)',
     provider: 'anthropic',
     speed: 'Medium',
     cost: 'Medium',
@@ -50,7 +50,7 @@ export const models: Model[] = [
   {
     id: 'claude-haiku-4-5-20251001',
     name: 'Claude Haiku 4.5',
-    description: 'Fastest Anthropic model — ideal for high-volume batch processing (200K context)',
+    description: 'Fastest Anthropic model: ideal for high-volume batch processing (200K context)',
     provider: 'anthropic',
     costEffective: true,
     speed: 'Fast',

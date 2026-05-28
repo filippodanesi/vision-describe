@@ -183,8 +183,8 @@ export const Dashboard: React.FC = () => {
                       <TableCell className="text-muted-foreground whitespace-nowrap font-mono text-xs">{timeAgo(ts)}</TableCell>
                       <TableCell>{useCaseLabel(run.use_case)}</TableCell>
                       <TableCell>{displayName}</TableCell>
-                      <TableCell className="max-w-[140px] truncate text-muted-foreground" title={run.file_name || ''}>
-                        {run.file_name || '—'}
+                      <TableCell className="max-w-[140px] truncate text-muted-foreground" title={run.file_name || undefined}>
+                        {run.file_name || '-'}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums">
                         {run.processed_count}/{run.total_rows}

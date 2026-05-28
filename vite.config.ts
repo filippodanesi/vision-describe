@@ -43,6 +43,13 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+    esbuild: {
+      // Strip debug logs from prod bundles. console.error / console.warn stay
+      // because they back our toast-based error reporting.
+      pure: mode === 'production'
+        ? ['console.log', 'console.info', 'console.debug', 'console.trace']
+        : [],
+    },
     build: {
       target: 'es2020',
       sourcemap: false,
