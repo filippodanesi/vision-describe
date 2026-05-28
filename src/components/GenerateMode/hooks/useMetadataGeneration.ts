@@ -305,112 +305,146 @@ export function useMetadataGeneration() {
       const callApi = isAnthropic ? translateWithClaude : translateWithOpenAI;
       const accumulated: GeneratedProduct[] = [];
       let completed = 0;
+      let cacheReadTokens = 0;
+      let cacheCreationTokens = 0;
 
-      try {
-        for (let i = 0; i < queue.length; i += BATCH_SIZE) {
-          if (signal.aborted) break;
+      /**
+       * Process a single product end-to-end: generate EN master then localise
+       * into each non-EN target. Returns a GeneratedProduct shaped record.
+       * Extracted from the batch loop so the warmup call can reuse it.
+       */
+      const processOneProduct = async (
+        product: MetadataProduct,
+      ): Promise<GeneratedProduct> => {
+        const translations: Record<string, string> = {};
+        const errors: string[] = [];
+        let enMaster: string | undefined;
 
-          const batch = queue.slice(i, i + BATCH_SIZE);
-          const batchPromises = batch.map(async (product) => {
-            const translations: Record<string, string> = {};
-            const errors: string[] = [];
-            let enMaster: string | undefined;
+        if (signal.aborted) {
+          return {
+            product,
+            enMaster: undefined,
+            translations: {},
+            errors: undefined,
+          } as GeneratedProduct;
+        }
 
-            if (signal.aborted) {
-              return {
-                product,
-                enMaster: undefined,
-                translations: {},
-                errors: undefined,
-              } as GeneratedProduct;
-            }
+        // Step 1 — generate EN master
+        try {
+          const enPrompt = buildEnMasterGenerationPrompt({
+            materialNumber: product.materialNumber,
+            productName: product.productName,
+            brand: product.brand,
+            productLine: product.productLine,
+            shortDescription: product.shortDescription,
+            seriesUsp: product.seriesUsp,
+            styleUsp: product.styleUsp,
+            styleDescription: product.styleDescription,
+          });
+          const enResponse = await callApi(enPrompt, apiKey, modelId, signal);
+          enMaster = cleanMarkdownFormatting(enResponse.content);
+          enMaster = processTextWithTerminology(enMaster, 'en');
+          if (includesEn) translations['en'] = enMaster;
+          cacheReadTokens += enResponse.tokens.cacheReadTokens ?? 0;
+          cacheCreationTokens += enResponse.tokens.cacheCreationTokens ?? 0;
+        } catch (err) {
+          if (isAbortError(err) || signal.aborted) {
+            return {
+              product,
+              enMaster: undefined,
+              translations: {},
+              errors: undefined,
+            } as GeneratedProduct;
+          }
+          const msg = err instanceof Error ? err.message : 'EN generation failed';
+          errors.push(`en: ${msg}`);
+          addLog(`Error generating EN for ${product.materialNumber}: ${msg}`);
+        }
+        completed++;
+        setProgress({ current: completed, total: totalOps });
 
-            // Step 1 — generate EN master
+        // Step 2 — localise into non-EN locales
+        if (enMaster && !signal.aborted) {
+          for (const langCode of nonEnLangs) {
+            if (signal.aborted) break;
+            const langDef = INRIVER_LANGUAGES.find((l) => l.code === langCode);
+            const langName = langDef?.name || langCode;
+
             try {
-              const enPrompt = buildEnMasterGenerationPrompt({
-                materialNumber: product.materialNumber,
-                productName: product.productName,
-                brand: product.brand,
-                productLine: product.productLine,
-                shortDescription: product.shortDescription,
-                seriesUsp: product.seriesUsp,
-                styleUsp: product.styleUsp,
-                styleDescription: product.styleDescription,
-              });
-              const enResponse = await callApi(enPrompt, apiKey, modelId, signal);
-              enMaster = cleanMarkdownFormatting(enResponse.content);
-              enMaster = processTextWithTerminology(enMaster, 'en');
-              if (includesEn) translations['en'] = enMaster;
+              const locPrompt = buildLocalisationPrompt(
+                enMaster,
+                langCode,
+                langName,
+                {
+                  materialNumber: product.materialNumber,
+                  productName: product.productName,
+                  brand: product.brand,
+                  productLine: product.productLine,
+                }
+              );
+              const locResponse = await callApi(
+                locPrompt,
+                apiKey,
+                modelId,
+                signal
+              );
+              let localised = cleanMarkdownFormatting(locResponse.content);
+              localised = processTextWithTerminology(localised, langCode);
+              translations[langCode] = localised;
+              cacheReadTokens += locResponse.tokens.cacheReadTokens ?? 0;
+              cacheCreationTokens += locResponse.tokens.cacheCreationTokens ?? 0;
             } catch (err) {
-              if (isAbortError(err) || signal.aborted) {
-                return {
-                  product,
-                  enMaster: undefined,
-                  translations: {},
-                  errors: undefined,
-                } as GeneratedProduct;
-              }
-              const msg = err instanceof Error ? err.message : 'EN generation failed';
-              errors.push(`en: ${msg}`);
-              addLog(`Error generating EN for ${product.materialNumber}: ${msg}`);
+              if (isAbortError(err) || signal.aborted) break;
+              const msg =
+                err instanceof Error ? err.message : 'Localisation failed';
+              errors.push(`${langCode}: ${msg}`);
+              addLog(
+                `Error localising ${product.materialNumber} to ${langCode}: ${msg}`
+              );
             }
             completed++;
             setProgress({ current: completed, total: totalOps });
+          }
+        } else if (!enMaster) {
+          completed += nonEnLangs.length;
+          setProgress({ current: completed, total: totalOps });
+        }
 
-            // Step 2 — localise into non-EN locales
-            if (enMaster && !signal.aborted) {
-              for (const langCode of nonEnLangs) {
-                if (signal.aborted) break;
-                const langDef = INRIVER_LANGUAGES.find((l) => l.code === langCode);
-                const langName = langDef?.name || langCode;
+        return {
+          product,
+          enMaster,
+          translations,
+          errors: errors.length > 0 ? errors : undefined,
+        } as GeneratedProduct;
+      };
 
-                try {
-                  const locPrompt = buildLocalisationPrompt(
-                    enMaster,
-                    langCode,
-                    langName,
-                    {
-                      materialNumber: product.materialNumber,
-                      productName: product.productName,
-                      brand: product.brand,
-                      productLine: product.productLine,
-                    }
-                  );
-                  const locResponse = await callApi(
-                    locPrompt,
-                    apiKey,
-                    modelId,
-                    signal
-                  );
-                  let localised = cleanMarkdownFormatting(locResponse.content);
-                  localised = processTextWithTerminology(localised, langCode);
-                  translations[langCode] = localised;
-                } catch (err) {
-                  if (isAbortError(err) || signal.aborted) break;
-                  const msg =
-                    err instanceof Error ? err.message : 'Localisation failed';
-                  errors.push(`${langCode}: ${msg}`);
-                  addLog(
-                    `Error localising ${product.materialNumber} to ${langCode}: ${msg}`
-                  );
-                }
-                completed++;
-                setProgress({ current: completed, total: totalOps });
-              }
-            } else if (!enMaster) {
-              completed += nonEnLangs.length;
-              setProgress({ current: completed, total: totalOps });
-            }
+      try {
+        // Warmup — for Claude with ≥ 2 products, process the first SKU on its
+        // own so the prompt cache is written before the parallel batch fires.
+        // Without this, the first BATCH_SIZE concurrent requests all pay the
+        // cache-write premium (none can read what the others are still
+        // writing). See shared/prompt-caching.md → Concurrent-request timing.
+        let startIndex = 0;
+        if (isAnthropic && queue.length >= 2) {
+          const warm = queue[0];
+          const warmResult = await processOneProduct(warm);
+          accumulated.push(warmResult);
+          setResults([...accumulated]);
+          addLog(
+            `Cache primed on first SKU (${warm.materialNumber}); running remaining ${queue.length - 1} in parallel batches of ${BATCH_SIZE}.`
+          );
+          startIndex = 1;
+          if (signal.aborted) {
+            // Skip the batch loop entirely if cancelled during warmup
+            return;
+          }
+        }
 
-            return {
-              product,
-              enMaster,
-              translations,
-              errors: errors.length > 0 ? errors : undefined,
-            } as GeneratedProduct;
-          });
+        for (let i = startIndex; i < queue.length; i += BATCH_SIZE) {
+          if (signal.aborted) break;
 
-          const batchResults = await Promise.all(batchPromises);
+          const batch = queue.slice(i, i + BATCH_SIZE);
+          const batchResults = await Promise.all(batch.map(processOneProduct));
           accumulated.push(...batchResults);
           setResults([...accumulated]);
           addLog(
@@ -425,6 +459,15 @@ export function useMetadataGeneration() {
           addLog('Generation cancelled — no further API calls.');
         } else {
           addLog(`Generation complete: ${accumulated.length} product(s) processed`);
+        }
+        if (isAnthropic && (cacheReadTokens > 0 || cacheCreationTokens > 0)) {
+          const totalCached = cacheReadTokens + cacheCreationTokens;
+          const hitRate = totalCached > 0
+            ? Math.round((cacheReadTokens / totalCached) * 100)
+            : 0;
+          addLog(
+            `Prompt cache: ${cacheReadTokens.toLocaleString()} read + ${cacheCreationTokens.toLocaleString()} written tokens (${hitRate}% hit rate)`
+          );
         }
         setIsProcessing(false);
         setStep(MetadataGenerationStep.RESULT);

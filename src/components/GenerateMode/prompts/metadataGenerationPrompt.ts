@@ -5,6 +5,10 @@
 // Tuned for Claude Opus 4.7 with adaptive thinking. The prompt mixes XML
 // structure, brand TOV (from sloggiBrandExpressions / triumphBrandExpressions,
 // unchanged), explicit positive-statement style rules and few-shot examples.
+//
+// Both builders return a CachedPromptInput ({system, user}) so the API caller
+// can mark the system block with cache_control. The system block is stable per
+// brand — caching saves ~75% of input tokens on batches of 20+ SKUs.
 
 import {
   sloggiBrandExpressions,
@@ -15,6 +19,7 @@ import {
   wiringAndPaddingRules,
 } from '@/lib/prompts/rules';
 import { getCompleteLocalizationContext } from './languageInstructions';
+import type { CachedPromptInput } from '../types';
 
 export interface MetadataInput {
   materialNumber: string;
@@ -115,17 +120,21 @@ function fewShotsFor(brand: string): string {
 
 /**
  * Builds the EN master generation prompt for a single product.
+ *
+ * Returns {system, user} — the system part is stable per brand and gets
+ * cache_control in visionApiUtils.ts. The user part contains only
+ * <input_materials> + the write instruction (varies per SKU).
  */
-export function buildEnMasterGenerationPrompt(input: MetadataInput): string {
+export function buildEnMasterGenerationPrompt(input: MetadataInput): CachedPromptInput {
   const sloggi = isSloggi(input.brand);
   const brandLabel = sloggi ? 'sloggi' : 'Triumph';
 
-  return `<role>
+  const system = `<role>
 You are a senior e-commerce copywriter specialised in fashion and underwear, writing exclusively for ${brandLabel}. You know the ${brandLabel} Brand Book by heart and write to its tone of voice without exception.
 </role>
 
 <task>
-Write ONE new long product description in English for the SKU described in <input_materials>. There is no existing description — write from scratch using the Marketing Team's inputs as the source of truth.
+Write ONE new long product description in English for the SKU described in the user turn's <input_materials> block. There is no existing description — write from scratch using the Marketing Team's inputs as the source of truth.
 </task>
 
 <brand_voice>
@@ -137,10 +146,6 @@ ${
     : `Write with Triumph's refined, intentional voice. Elegant, considered, never stiff. Address the wearer directly where it adds clarity.`
 }
 </brand_voice>
-
-<input_materials>
-${formatMetadataBlock(input)}
-</input_materials>
 
 <truthfulness>
 Treat every line in <input_materials> as factual marketing input from the brand team. Do not contradict it. Do not invent fabrics, technologies, certifications, sizes or features that are not stated or strongly implied.
@@ -211,49 +216,50 @@ Before returning, silently verify:
 - Total length is between 200 and 300 words.
 - HTML structure is exactly: <p>intro</p><ul class="pd"><li>…</li></ul><p>closing</p> (plus the sustainability line if applicable).
 - If <input_materials> Style USP or Style Description contains a cup classification line ("Integrated fixed cups", "Removable cups", "Padded with removable cups", "Non-padded" / "non padded"), it appears verbatim (or with minimal rewording) as the FIRST bullet of the <li> list. It is not paraphrased into a generic "padded" / "non-padded" line and it is not dropped.
-
-Write the description now.
 </output_format>`;
+
+  const user = `<input_materials>
+${formatMetadataBlock(input)}
+</input_materials>
+
+Write the description now.`;
+
+  return { system, user };
 }
 
 /**
  * Builds the localisation prompt that renders the freshly generated EN master
  * into the target Inriver locale. Brand-aware.
+ *
+ * Returns {system, user}. The system part holds the role, task, brand voice,
+ * rules and terminology — stable across every locale and every SKU (per
+ * brand + lang combo). The user part holds <product_context>, <source> and
+ * <localisation_context>, which vary per call.
+ *
+ * Caching trade-off: localisation_context varies per langCode, so we put it
+ * in the user block. The system is shared across ALL locales for the same
+ * brand, maximising cache hits when running a multi-locale fan-out.
  */
 export function buildLocalisationPrompt(
   enMaster: string,
   langCode: string,
   langName: string,
   input: MetadataInput
-): string {
+): CachedPromptInput {
   const sloggi = isSloggi(input.brand);
   const brandLabel = sloggi ? 'sloggi' : 'Triumph';
 
-  return `<role>
-You are a senior copywriter and localiser, native in ${langName}, writing for ${brandLabel} and faithful to the ${brandLabel} Brand Book.
+  const system = `<role>
+You are a senior copywriter and localiser writing for ${brandLabel} and faithful to the ${brandLabel} Brand Book. Each request specifies a target language; respond as a native copywriter in that language.
 </role>
 
 <task>
-Localise the English master in <source> into ${langName}. Localise, do not translate word-for-word: write as a native ${langName} ${brandLabel} copywriter would.
+Localise the English master provided in the user turn's <source> block into the target language given in <localisation_context>. Localise, do not translate word-for-word: write as a native copywriter for that locale would.
 </task>
 
 <brand_voice>
 ${brandRulesBlock(input.brand)}
 </brand_voice>
-
-<product_context>
-- Material Number: ${input.materialNumber}
-- Product Name: ${input.productName}
-- Brand: ${input.brand}
-${input.productLine ? `- Product Line: ${input.productLine}\n` : ''}</product_context>
-
-<source>
-${enMaster}
-</source>
-
-<localisation_context>
-${getCompleteLocalizationContext(langCode, input.brand)}
-</localisation_context>
 
 <rules>
 1. Preserve the structure exactly: same paragraph count, same number of bullets, same HTML tags as <source>.
@@ -263,13 +269,13 @@ ${getCompleteLocalizationContext(langCode, input.brand)}
 5. Never use gendered group address. No "hey ladies", "ragazze", "señoras", "mesdames", "Damen" or any equivalent, regardless of source-language defaults.
 6. No humour, puns or culture-specific idioms.
 7. No mention of colours, sizes or variants.
-8. Use idiomatic, fluent ${langName}. The reader should not feel they are reading a translation.
-9. Avoid AI-style words in their ${langName} equivalents: no "delve / approfondire eccessivamente / sumergirse" filler, no "showcase / mettere in mostra" filler, no "realm / regno" metaphor.
+8. Use idiomatic, fluent language for the target locale. The reader should not feel they are reading a translation.
+9. Avoid AI-style words in their target-language equivalents: no "delve / approfondire eccessivamente / sumergirse" filler, no "showcase / mettere in mostra" filler, no "realm / regno" metaphor.
 10. Preserve cup classification. If <source> contains a bullet about cup state ("integrated fixed cups", "removable cups", "padded with removable cups", "non-padded"), localise it with the locale-correct underwear industry term and KEEP it as a dedicated bullet in the same position. Do not merge it into another bullet, do not drop it, do not paraphrase it into a generic "padded" / "non-padded".
 </rules>
 
 <terminology>
-Use correct fashion and underwear terminology in ${langName}:
+Use correct fashion and underwear terminology in the target language:
 - Portuguese (PT-PT): "soutien" (not "sutiã"), "cuecas"
 - Spanish: "sujetador" (not "bra"), "braguita"
 - Italian: "reggiseno", "mutandine" or "slip"
@@ -302,7 +308,25 @@ Do not include product codes (WHP, W01, NDK, etc.) inside body copy. Use the pro
 Return only the localised HTML. Start directly with <p>. No markdown code blocks, no commentary.
 
 Use the same tags as <source>: <p> and <ul class="pd"><li>…</li></ul>. No <strong>, <b>, <em>, <i> or any other formatting.
-
-Write the localised description now.
 </output_format>`;
+
+  const user = `<product_context>
+- Material Number: ${input.materialNumber}
+- Product Name: ${input.productName}
+- Brand: ${input.brand}
+${input.productLine ? `- Product Line: ${input.productLine}\n` : ''}</product_context>
+
+<source>
+${enMaster}
+</source>
+
+<localisation_context>
+Target language: ${langName} (code: ${langCode})
+
+${getCompleteLocalizationContext(langCode, input.brand)}
+</localisation_context>
+
+Write the localised description in ${langName} now.`;
+
+  return { system, user };
 }

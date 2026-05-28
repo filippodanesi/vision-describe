@@ -142,7 +142,7 @@ export function useCsvTranslation() {
   const [logs, setLogs] = useState<string[]>([]);
   const [results, setResults] = useState<TranslatedProduct[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const cancelRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   const addLog = useCallback((msg: string) => {
     setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
@@ -234,7 +234,10 @@ export function useCsvTranslation() {
   const startTranslation = useCallback(async (modelId: string, apiKey: string) => {
     if (products.length === 0 || selectedLanguages.length === 0) return;
 
-    cancelRef.current = false;
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const { signal } = controller;
+
     setIsProcessing(true);
     setError(null);
     setResults([]);
@@ -248,74 +251,134 @@ export function useCsvTranslation() {
     const translateFn = isAnthropic ? translateWithClaude : translateWithOpenAI;
     const translatedProducts: TranslatedProduct[] = [];
     let completed = 0;
+    let cacheReadTokens = 0;
+    let cacheCreationTokens = 0;
 
     // Process in batches of 3
     const BATCH_SIZE = 3;
 
-    for (let i = 0; i < products.length; i += BATCH_SIZE) {
-      if (cancelRef.current) {
-        addLog('Translation cancelled by user');
-        break;
+    const isAbortError = (err: unknown): boolean => {
+      if (!err) return false;
+      if (err instanceof DOMException && err.name === 'AbortError') return true;
+      if (typeof err === 'object' && err !== null) {
+        const e = err as { name?: string; message?: string };
+        if (e.name === 'AbortError') return true;
+        if (typeof e.message === 'string' && /aborted|abort/i.test(e.message)) return true;
       }
+      return false;
+    };
 
-      const batch = products.slice(i, i + BATCH_SIZE);
-      const batchPromises = batch.map(async (product) => {
-        const translations: Record<string, string> = {};
-        const errors: string[] = [];
+    /**
+     * Translate one product into every selected locale. Extracted from the
+     * batch loop so the warmup call can prime the prompt cache on a single
+     * product before the parallel batch fires.
+     */
+    const processOneProduct = async (
+      product: CSVProduct,
+    ): Promise<TranslatedProduct> => {
+      const translations: Record<string, string> = {};
+      const errors: string[] = [];
 
-        for (const langCode of selectedLanguages) {
-          if (cancelRef.current) break;
+      for (const langCode of selectedLanguages) {
+        if (signal.aborted) break;
 
-          const langName = LANGUAGE_MAPPING[langCode] || langCode;
-          const isBeldona = format?.type === 'beldona';
+        const langName = LANGUAGE_MAPPING[langCode] || langCode;
+        const isBeldona = format?.type === 'beldona';
 
-          const prompt = isBeldona
-            ? BELDONA_TRANSLATION_PROMPT(langName, {
-                materialNumber: product.materialNumber,
-                productName: product.productName,
-                brand: product.brand,
-                subBrand: product.subBrand,
-              }, product.originalContent, langCode)
-            : CSV_TRANSLATION_PROMPT(langName, {
-                materialNumber: product.materialNumber,
-                productName: product.productName,
-                series: product.series,
-                brand: product.brand,
-                subBrand: product.subBrand,
-              }, product.originalContent, langCode);
+        const prompt = isBeldona
+          ? BELDONA_TRANSLATION_PROMPT(langName, {
+              materialNumber: product.materialNumber,
+              productName: product.productName,
+              brand: product.brand,
+              subBrand: product.subBrand,
+            }, product.originalContent, langCode)
+          : CSV_TRANSLATION_PROMPT(langName, {
+              materialNumber: product.materialNumber,
+              productName: product.productName,
+              series: product.series,
+              brand: product.brand,
+              subBrand: product.subBrand,
+            }, product.originalContent, langCode);
 
-          try {
-            const response = await translateFn(prompt, apiKey, modelId);
-            let translated = cleanMarkdownFormatting(response.content);
-            translated = processTextWithTerminology(translated, langCode);
-            translations[langCode] = translated;
-          } catch (err) {
-            const errMsg = err instanceof Error ? err.message : 'Translation failed';
-            errors.push(`${langCode}: ${errMsg}`);
-            addLog(`Error translating ${product.materialNumber} to ${langCode}: ${errMsg}`);
-          }
-
-          completed++;
-          setProgress({ current: completed, total: totalOps });
+        try {
+          const response = await translateFn(prompt, apiKey, modelId, signal);
+          let translated = cleanMarkdownFormatting(response.content);
+          translated = processTextWithTerminology(translated, langCode);
+          translations[langCode] = translated;
+          cacheReadTokens += response.tokens.cacheReadTokens ?? 0;
+          cacheCreationTokens += response.tokens.cacheCreationTokens ?? 0;
+        } catch (err) {
+          if (isAbortError(err) || signal.aborted) break;
+          const errMsg = err instanceof Error ? err.message : 'Translation failed';
+          errors.push(`${langCode}: ${errMsg}`);
+          addLog(`Error translating ${product.materialNumber} to ${langCode}: ${errMsg}`);
         }
 
-        return { product, translations, errors: errors.length > 0 ? errors : undefined };
-      });
+        completed++;
+        setProgress({ current: completed, total: totalOps });
+      }
 
-      const batchResults = await Promise.all(batchPromises);
-      translatedProducts.push(...batchResults);
-      setResults([...translatedProducts]);
-      addLog(`Batch completed: ${Math.min(i + BATCH_SIZE, products.length)}/${products.length} products`);
+      return { product, translations, errors: errors.length > 0 ? errors : undefined };
+    };
+
+    try {
+      // Warmup — for Claude with ≥ 2 products, process the first product on
+      // its own so the prompt cache is written before the parallel batch
+      // fires. Concurrent calls with identical system prefix would each pay
+      // the cache-write premium without reading. See
+      // shared/prompt-caching.md → Concurrent-request timing.
+      let startIndex = 0;
+      if (isAnthropic && products.length >= 2) {
+        const warm = products[0];
+        const warmResult = await processOneProduct(warm);
+        translatedProducts.push(warmResult);
+        setResults([...translatedProducts]);
+        addLog(
+          `Cache primed on first product (${warm.materialNumber}); running remaining ${products.length - 1} in parallel batches of ${BATCH_SIZE}.`
+        );
+        startIndex = 1;
+      }
+
+      for (let i = startIndex; i < products.length; i += BATCH_SIZE) {
+        if (signal.aborted) {
+          addLog('Translation cancelled by user');
+          break;
+        }
+
+        const batch = products.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.all(batch.map(processOneProduct));
+        translatedProducts.push(...batchResults);
+        setResults([...translatedProducts]);
+        addLog(`Batch completed: ${Math.min(i + BATCH_SIZE, products.length)}/${products.length} products`);
+      }
+    } finally {
+      abortRef.current = null;
+      if (signal.aborted) {
+        addLog('Translation cancelled — no further API calls.');
+      } else {
+        addLog(`Translation complete: ${translatedProducts.length} products translated`);
+      }
+      if (isAnthropic && (cacheReadTokens > 0 || cacheCreationTokens > 0)) {
+        const totalCached = cacheReadTokens + cacheCreationTokens;
+        const hitRate = totalCached > 0
+          ? Math.round((cacheReadTokens / totalCached) * 100)
+          : 0;
+        addLog(
+          `Prompt cache: ${cacheReadTokens.toLocaleString()} read + ${cacheCreationTokens.toLocaleString()} written tokens (${hitRate}% hit rate)`
+        );
+      }
+      setIsProcessing(false);
+      setStep(CsvTranslationStep.RESULT);
     }
-
-    addLog(`Translation complete: ${translatedProducts.length} products translated`);
-    setIsProcessing(false);
-    setStep(CsvTranslationStep.RESULT);
   }, [products, selectedLanguages, format, addLog]);
 
   const cancelTranslation = useCallback(() => {
-    cancelRef.current = true;
-  }, []);
+    const ctrl = abortRef.current;
+    if (ctrl && !ctrl.signal.aborted) {
+      ctrl.abort();
+      addLog('Cancel requested — aborting in-flight API calls…');
+    }
+  }, [addLog]);
 
   const exportResults = useCallback(async (): Promise<Blob> => {
     const workbook = new Workbook();
@@ -345,6 +408,10 @@ export function useCsvTranslation() {
   }, [results, selectedLanguages]);
 
   const reset = useCallback(() => {
+    if (abortRef.current && !abortRef.current.signal.aborted) {
+      abortRef.current.abort();
+    }
+    abortRef.current = null;
     setStep(CsvTranslationStep.UPLOAD);
     setFile(null);
     setProducts([]);
@@ -355,7 +422,6 @@ export function useCsvTranslation() {
     setLogs([]);
     setResults([]);
     setError(null);
-    cancelRef.current = false;
   }, []);
 
   return {

@@ -44,7 +44,21 @@ export interface VisionApiResponse {
   tokens: {
     inputTokens: number;
     outputTokens: number;
+    /** Tokens written to prompt cache on this request (~1.25x base cost on 5m TTL, ~2x on 1h TTL). */
+    cacheCreationTokens?: number;
+    /** Tokens served from prompt cache on this request (~0.1x base cost). */
+    cacheReadTokens?: number;
   };
+}
+
+/**
+ * Cached prompt input — system part is stable across requests (gets cache_control),
+ * user part varies per request. Use this shape when you want prompt caching to apply.
+ * Plain string is still accepted for backward compatibility (no caching).
+ */
+export interface CachedPromptInput {
+  system: string;
+  user: string;
 }
 
 // CSV Translation types
