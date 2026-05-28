@@ -30,7 +30,7 @@ export const TranslatorPanel: React.FC<TranslatorPanelProps> = ({
   const defaultTab = 'colors';
 
   return (
-    <section className="max-w-5xl mx-auto">
+    <section className="">
       <div className="mb-5">
         <p className="label-mono mb-1">Step 03 / Translations</p>
         <h2 className="text-base font-semibold tracking-tightest text-foreground">

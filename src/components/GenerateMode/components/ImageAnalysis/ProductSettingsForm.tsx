@@ -34,7 +34,7 @@ export const ProductSettingsForm: React.FC<ProductSettingsFormProps> = ({
     : [];
 
   return (
-    <section className="max-w-3xl mx-auto">
+    <section className="">
       <div className="mb-4">
         <p className="label-mono mb-1">Step 01 / Settings</p>
         <h2 className="text-base font-semibold tracking-tightest text-foreground">

@@ -55,7 +55,7 @@ export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) 
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="">
       <StepIndicator steps={STEP_DEFS} currentStep={step} />
 
       {step === ImageAnalysisStep.SETTINGS && (
@@ -81,7 +81,7 @@ export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) 
       )}
 
       {step === ImageAnalysisStep.MODEL && (
-        <div className="max-w-3xl mx-auto animate-fade-in">
+        <div className=" animate-fade-in">
           <div className="mb-4">
             <p className="label-mono mb-1">Step 03 / Model</p>
             <h2 className="text-base font-semibold tracking-tightest text-foreground">
@@ -103,7 +103,7 @@ export const ImageAnalysisFlow: React.FC<ImageAnalysisFlowProps> = ({ onBack }) 
       )}
 
       {step === ImageAnalysisStep.PROCESSING && (
-        <section className="max-w-3xl mx-auto">
+        <section className="">
           <div className="mb-2">
             <p className="label-mono">
               <span className="status-dot animate-pulse mr-2 align-middle" />

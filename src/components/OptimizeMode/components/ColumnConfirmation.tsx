@@ -148,7 +148,7 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
   const hasFailedMatches = mappings.some(mapping => !mapping.matchedShortDescColumn);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className=" space-y-6">
       <div>
         <p className="label-mono mb-1">Step 03 / Confirm</p>
         <h2 className="text-base font-semibold tracking-tightest text-foreground">

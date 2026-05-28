@@ -41,7 +41,7 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
   };
 
   return (
-    <section className="max-w-3xl mx-auto space-y-6">
+    <section className=" space-y-6">
       <div>
         <p className="label-mono">
           <span

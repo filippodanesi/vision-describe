@@ -52,7 +52,7 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className=" space-y-6">
       <section>
         <div className="mb-3">
           <p className="label-mono">

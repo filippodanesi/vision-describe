@@ -36,7 +36,7 @@ export const MetadataLanguageMultiSelect: React.FC<MetadataLanguageMultiSelectPr
   const enSelected = selectedLanguages.includes('en');
 
   return (
-    <section className="max-w-xl mx-auto">
+    <section>
       <div className="mb-4">
         <p className="label-mono mb-1">Step 03 / Languages</p>
         <h2 className="text-base font-semibold tracking-tightest text-foreground">

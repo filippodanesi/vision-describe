@@ -532,7 +532,7 @@ export const OptimizeMode: React.FC = () => {
     switch (currentStep) {
       case ProcessingStep.UPLOAD:
         return (
-          <div className="max-w-3xl mx-auto space-y-4 animate-fade-in">
+          <div className=" space-y-4 animate-fade-in">
             <ResumeRunBanner
               runs={interruptedRuns}
               onResume={handleResumeRun}
@@ -622,7 +622,7 @@ export const OptimizeMode: React.FC = () => {
 
       case ProcessingStep.SELECT_COLUMNS:
         return (
-          <div className="max-w-3xl mx-auto">
+          <div className="">
             <div className="mb-4">
               <p className="label-mono mb-1">Step 02 / Columns</p>
               {useCase === 'amazon' ? (
@@ -662,7 +662,7 @@ export const OptimizeMode: React.FC = () => {
       case ProcessingStep.CONFIRM_COLUMNS:
         if (useCase === 'next' || useCase === 'aboutyou') {
           return (
-            <div className="max-w-3xl mx-auto">
+            <div className="">
               <TranslatorPanel
                 useCase={useCase}
                 colorMappings={colorMappings}
@@ -693,7 +693,7 @@ export const OptimizeMode: React.FC = () => {
         const modelDisplayName = modelConfig ? modelConfig.name : selectedModel;
 
         return (
-          <div className="max-w-3xl mx-auto">
+          <div className="">
             <div className="mb-5">
               <p className="label-mono mb-1">
                 <span className="status-dot animate-pulse mr-2 align-middle" />
@@ -977,7 +977,7 @@ export const OptimizeMode: React.FC = () => {
   const steps = getStepsForUseCase(useCase);
 
   return (
-    <div className="animate-in fade-in-0 duration-300 max-w-4xl mx-auto">
+    <div className="animate-in fade-in-0 duration-300 ">
       <div className="mb-6">
         <h1 className="text-xl font-medium tracking-tight">Optimize</h1>
         <p className="text-sm text-muted-foreground mt-1">

@@ -99,11 +99,11 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="">
       <StepIndicator steps={STEP_DEFS} currentStep={step} />
 
       {step === CsvTranslationStep.UPLOAD && (
-        <section className="max-w-3xl mx-auto">
+        <section className="">
           <div className="mb-4">
             <p className="label-mono mb-1">Step 01 / Input</p>
             <h2 className="text-base font-semibold tracking-tightest text-foreground">
@@ -167,7 +167,7 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
       )}
 
       {step === CsvTranslationStep.FORMAT_DETECT && format && (
-        <section className="max-w-3xl mx-auto">
+        <section className="">
           <div className="mb-4">
             <p className="label-mono mb-1">Step 02 / Detect</p>
             <h2 className="text-base font-semibold tracking-tightest text-foreground">
@@ -223,7 +223,7 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
       )}
 
       {step === CsvTranslationStep.PROCESSING && (
-        <section className="max-w-3xl mx-auto">
+        <section className="">
           <div className="mb-5">
             <div className="flex items-baseline justify-between gap-4 mb-2">
               <p className="label-mono">
