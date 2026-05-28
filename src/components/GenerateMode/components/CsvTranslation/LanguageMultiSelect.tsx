@@ -8,6 +8,8 @@ interface LanguageMultiSelectProps {
   onSelectionChange: (languages: string[]) => void;
   onNext: () => void;
   onBack: () => void;
+  summary?: React.ReactNode;
+  nextLabel?: string;
 }
 
 const TRANSLATION_LANGUAGES = Object.entries(LANGUAGE_MAPPING).filter(
@@ -19,6 +21,8 @@ export const LanguageMultiSelect: React.FC<LanguageMultiSelectProps> = ({
   onSelectionChange,
   onNext,
   onBack,
+  summary,
+  nextLabel = 'Next: Select model',
 }) => {
   const toggleLanguage = (code: string) => {
     onSelectionChange(
@@ -83,12 +87,14 @@ export const LanguageMultiSelect: React.FC<LanguageMultiSelectProps> = ({
         </div>
       </div>
 
+      {summary && <div className="mt-4">{summary}</div>}
+
       <div className="flex items-center justify-between pt-6 mt-6 border-t border-border">
         <Button variant="ghost" onClick={onBack}>
           Back
         </Button>
         <Button onClick={onNext} disabled={selectedLanguages.length === 0}>
-          Next: Select model
+          {nextLabel}
         </Button>
       </div>
     </section>

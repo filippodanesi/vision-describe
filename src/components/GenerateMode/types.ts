@@ -17,10 +17,13 @@ export enum CsvTranslationStep {
   UPLOAD = 'upload',
   FORMAT_DETECT = 'format_detect',
   LANGUAGES = 'languages',
-  MODEL = 'model',
   PROCESSING = 'processing',
   RESULT = 'result',
 }
+
+// Hardcoded model for the CSV translation flow.
+// Claude Opus 4.7 — most capable Anthropic model. No user selector exposed.
+export const CSV_TRANSLATION_MODEL = 'claude-opus-4-7';
 
 export interface ImageFile {
   base64: string;

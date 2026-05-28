@@ -6,10 +6,9 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useCsvTranslation } from '../../hooks/useCsvTranslation';
-import { CsvTranslationStep } from '../../types';
+import { CsvTranslationStep, CSV_TRANSLATION_MODEL } from '../../types';
 import { LanguageMultiSelect } from './LanguageMultiSelect';
 import { TranslationResult } from './TranslationResult';
-import ModelSelector from '@/components/OptimizeMode/components/ModelSelector';
 import { useApiKeys } from '@/contexts/ApiKeysContext';
 import { toast } from 'sonner';
 
@@ -49,13 +48,12 @@ const STEP_DEFS: StepDef<CsvTranslationStep>[] = [
   { key: CsvTranslationStep.UPLOAD, label: 'Upload' },
   { key: CsvTranslationStep.FORMAT_DETECT, label: 'Format' },
   { key: CsvTranslationStep.LANGUAGES, label: 'Languages' },
-  { key: CsvTranslationStep.MODEL, label: 'Model' },
   { key: CsvTranslationStep.PROCESSING, label: 'Processing' },
   { key: CsvTranslationStep.RESULT, label: 'Result' },
 ];
 
 export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }) => {
-  const { openaiKey, anthropicKey } = useApiKeys();
+  const { anthropicKey } = useApiKeys();
 
   const {
     step,
@@ -90,18 +88,14 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
     if (f) await parseFile(f);
   };
 
-  const handleModelSelected = (modelId: string) => {
-    const isAnthropic = modelId.startsWith('claude');
-    const apiKey = isAnthropic ? anthropicKey : openaiKey;
-
-    if (!apiKey) {
-      toast.error('API Key Missing', {
-        description: 'Configure your API keys in Settings before processing.'
+  const handleStart = () => {
+    if (!anthropicKey) {
+      toast.error('Anthropic API Key Missing', {
+        description: `This flow uses ${CSV_TRANSLATION_MODEL}. Configure your Anthropic key in Settings.`,
       });
       return;
     }
-
-    startTranslation(modelId, apiKey);
+    startTranslation(CSV_TRANSLATION_MODEL, anthropicKey);
   };
 
   return (
@@ -212,32 +206,20 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
         <LanguageMultiSelect
           selectedLanguages={selectedLanguages}
           onSelectionChange={setSelectedLanguages}
-          onNext={() => setStep(CsvTranslationStep.MODEL)}
+          onNext={handleStart}
           onBack={() => setStep(CsvTranslationStep.FORMAT_DETECT)}
-        />
-      )}
-
-      {step === CsvTranslationStep.MODEL && (
-        <div className="max-w-3xl mx-auto">
-          <div className="mb-4">
-            <p className="label-mono mb-1">Step 04 / Model</p>
-            <h2 className="text-base font-semibold tracking-tightest text-foreground">
-              Choose AI model
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              <span className="tabular-nums">{products.length}</span> products ×{' '}
-              <span className="tabular-nums">{selectedLanguages.length}</span> languages ={' '}
-              <span className="font-mono tabular-nums">
+          nextLabel="Start translation"
+          summary={
+            <p className="label-mono-sm normal-case tracking-normal text-center tabular-nums">
+              {products.length} products × {selectedLanguages.length} languages ={' '}
+              <span className="font-mono text-foreground">
                 {products.length * selectedLanguages.length}
               </span>{' '}
-              translations
+              translations on{' '}
+              <span className="font-mono text-foreground">{CSV_TRANSLATION_MODEL}</span>
             </p>
-          </div>
-          <ModelSelector
-            onModelSelected={(modelId) => handleModelSelected(modelId)}
-            useCase="ecommerce"
-          />
-        </div>
+          }
+        />
       )}
 
       {step === CsvTranslationStep.PROCESSING && (

@@ -29,7 +29,6 @@ import ResumeRunBanner from './components/ResumeRunBanner';
 import TokenCounter from './components/TokenCounter';
 import ColumnSelector from './components/ColumnSelector';
 import ColumnConfirmation from './components/ColumnConfirmation';
-import ModelSelector from './components/ModelSelector';
 import ProcessingView from './components/ProcessingView';
 import ExportResults from './components/ExportResults';
 import BusinessIdFilterUpload from './components/BusinessIdFilterUpload';
@@ -51,12 +50,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 // ─── Step Definitions ─────────────────────────────────────────────────────────
 
+// Hardcoded model for the Optimize flow.
+// Claude Opus 4.7 — most capable Anthropic model. No user selector exposed.
+const OPTIMIZE_MODEL = 'claude-opus-4-7';
+
 const getStepsForUseCase = (useCase: UseCase | ''): StepDef<ProcessingStep>[] => {
   switch (useCase) {
     case 'partoo':
       return [
         { key: ProcessingStep.UPLOAD, label: 'Upload' },
-        { key: ProcessingStep.SELECT_MODEL, label: 'Model' },
         { key: ProcessingStep.PROCESSING, label: 'Processing' },
         { key: ProcessingStep.COMPLETE, label: 'Complete' },
       ];
@@ -65,7 +67,6 @@ const getStepsForUseCase = (useCase: UseCase | ''): StepDef<ProcessingStep>[] =>
       return [
         { key: ProcessingStep.UPLOAD, label: 'Upload' },
         { key: ProcessingStep.CONFIRM_COLUMNS, label: 'Translations' },
-        { key: ProcessingStep.SELECT_MODEL, label: 'Model' },
         { key: ProcessingStep.PROCESSING, label: 'Processing' },
         { key: ProcessingStep.COMPLETE, label: 'Complete' },
       ];
@@ -74,7 +75,6 @@ const getStepsForUseCase = (useCase: UseCase | ''): StepDef<ProcessingStep>[] =>
         { key: ProcessingStep.UPLOAD, label: 'Upload' },
         { key: ProcessingStep.SELECT_COLUMNS, label: 'Columns' },
         { key: ProcessingStep.CONFIRM_COLUMNS, label: 'Confirm' },
-        { key: ProcessingStep.SELECT_MODEL, label: 'Model' },
         { key: ProcessingStep.PROCESSING, label: 'Processing' },
         { key: ProcessingStep.COMPLETE, label: 'Complete' },
       ];
@@ -355,23 +355,27 @@ export const OptimizeMode: React.FC = () => {
 
   const handleColumnConfirmation = (mappings: any) => {
     setColumnMappings(mappings);
-    setCurrentStep(ProcessingStep.SELECT_MODEL);
+    void handleStartProcessing(mappings);
   };
 
   const handleBackToColumnSelection = () => {
     setCurrentStep(ProcessingStep.SELECT_COLUMNS);
   };
 
-  const handleModelSelected = async (model: string, options?: { dryRun?: boolean; targetLanguage?: string }) => {
-    const isAnthropic = model.startsWith('claude');
-    const apiKey = isAnthropic ? anthropicKey : openaiKey;
-
-    if (!apiKey) {
-      toast.error('API Key Missing', {
-        description: 'Configure your API keys in Settings before processing.'
+  const handleStartProcessing = async (
+    mappingsOverride?: any,
+    options?: { dryRun?: boolean; targetLanguage?: string },
+  ) => {
+    const model = OPTIMIZE_MODEL;
+    if (!anthropicKey) {
+      toast.error('Anthropic API Key Missing', {
+        description: `This flow uses ${model}. Configure your Anthropic key in Settings.`,
       });
       return;
     }
+
+    const effectiveMappings = mappingsOverride ?? columnMappings;
+    const apiKey = anthropicKey;
 
     setSelectedModel(model);
     setCurrentStep(ProcessingStep.PROCESSING);
@@ -392,10 +396,10 @@ export const OptimizeMode: React.FC = () => {
         apiKey as string,
         {
           useCase: useCase || 'ecommerce',
-          mappings: columnMappings,
+          mappings: effectiveMappings,
           dryRun: options?.dryRun,
           lang: options?.targetLanguage,
-          langs: columnMappings?.workLangs,
+          langs: effectiveMappings?.workLangs,
           businessIdsFilter: businessIdsFilter,
           storeTypeFilter: storeTypeFilter,
           colorMappings,
@@ -417,7 +421,7 @@ export const OptimizeMode: React.FC = () => {
       toast.error('Error processing file', {
         description: error instanceof Error ? error.message : 'Please try again.'
       });
-      setCurrentStep(ProcessingStep.SELECT_MODEL);
+      setCurrentStep(ProcessingStep.CONFIRM_COLUMNS);
     }
   };
 
@@ -476,11 +480,6 @@ export const OptimizeMode: React.FC = () => {
         setCurrentStep(ProcessingStep.SELECT_COLUMNS);
         setColumnMappings([]);
         break;
-      case ProcessingStep.SELECT_MODEL:
-        // Partoo goes back to UPLOAD (filters), others to CONFIRM_COLUMNS
-        setCurrentStep(useCase === 'partoo' ? ProcessingStep.UPLOAD : ProcessingStep.CONFIRM_COLUMNS);
-        setSelectedModel('');
-        break;
       case ProcessingStep.PROCESSING:
         break;
       case ProcessingStep.COMPLETE:
@@ -493,8 +492,12 @@ export const OptimizeMode: React.FC = () => {
     switch (currentStep) {
       case ProcessingStep.UPLOAD:
         if (fileData) {
-          // Partoo skips column selection — go straight to model
-          setCurrentStep(useCase === 'partoo' ? ProcessingStep.SELECT_MODEL : ProcessingStep.SELECT_COLUMNS);
+          // Partoo skips column selection — go straight to processing
+          if (useCase === 'partoo') {
+            void handleStartProcessing();
+          } else {
+            setCurrentStep(ProcessingStep.SELECT_COLUMNS);
+          }
         }
         break;
       case ProcessingStep.SELECT_COLUMNS:
@@ -504,12 +507,7 @@ export const OptimizeMode: React.FC = () => {
         break;
       case ProcessingStep.CONFIRM_COLUMNS:
         if (columnMappings.length > 0) {
-          setCurrentStep(ProcessingStep.SELECT_MODEL);
-        }
-        break;
-      case ProcessingStep.SELECT_MODEL:
-        if (selectedModel) {
-          // Handled by onModelSelected callback
+          void handleStartProcessing();
         }
         break;
     }
@@ -671,7 +669,7 @@ export const OptimizeMode: React.FC = () => {
                 onColorMappingsChange={setColorMappings}
                 sizeMappings={useCase === 'next' ? sizeMappings : undefined}
                 onSizeMappingsChange={useCase === 'next' ? setSizeMappings : undefined}
-                onConfirm={() => setCurrentStep(ProcessingStep.SELECT_MODEL)}
+                onConfirm={() => void handleStartProcessing()}
                 onBack={() => {
                   setCurrentStep(ProcessingStep.UPLOAD);
                   setFileData(null);
@@ -688,21 +686,6 @@ export const OptimizeMode: React.FC = () => {
             onConfirm={handleColumnConfirmation}
             onBack={handleBackToColumnSelection}
           />
-        );
-
-      case ProcessingStep.SELECT_MODEL:
-        return (
-          <div className="max-w-3xl mx-auto">
-            <div className="mb-4">
-              <p className="label-mono mb-1">Step 04 / Model</p>
-              <h2 className="text-base font-semibold tracking-tightest text-foreground">Choose AI model</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Select the model for content optimization.
-              </p>
-            </div>
-
-            <ModelSelector onModelSelected={handleModelSelected} useCase={useCase} />
-          </div>
         );
 
       case ProcessingStep.PROCESSING:
@@ -989,8 +972,7 @@ export const OptimizeMode: React.FC = () => {
   const canGoBack = currentStep !== ProcessingStep.UPLOAD && !isProcessing;
   const canGoForward =
     (currentStep === ProcessingStep.UPLOAD && fileData) ||
-    (currentStep === ProcessingStep.SELECT_COLUMNS && selectedColumns.length > 0) ||
-    (currentStep === ProcessingStep.SELECT_MODEL && selectedModel);
+    (currentStep === ProcessingStep.SELECT_COLUMNS && selectedColumns.length > 0);
 
   const steps = getStepsForUseCase(useCase);
 
