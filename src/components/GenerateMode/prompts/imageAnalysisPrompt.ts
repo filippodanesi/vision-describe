@@ -1,220 +1,149 @@
-// Image Analysis Prompts — Ported from vision-describe/server/services/prompts/image-analysis.ts
+// Image Analysis Prompt — Generates an e-commerce long description from
+// product photos. Vision-only flow: no metadata, no brand context. The model
+// must derive everything it claims from what it can see.
+//
+// Tuned for parity with the Metadata Generation prompt (commit 8b85664d):
+// XML structure, the shared aiBannedPhrases() / truthfulnessRules() /
+// wiringAndPaddingRules() rule blocks, 200-300 word target, no
+// rule-of-three / promotional-AI vocabulary in the instruction text itself.
+//
+// SINGLE_IMAGE and MULTIPLE_IMAGES were near-duplicates of each other (only
+// the noun "this image" vs "the images" differed) plus a 220-line repeated
+// language code table. Both collapsed into one builder that branches on the
+// number of images and pulls the locale brief from getCompleteLocalizationContext.
 
 import { getCompleteLocalizationContext } from './languageInstructions';
+import {
+  aiBannedPhrases,
+  truthfulnessRules,
+  wiringAndPaddingRules,
+} from '@/lib/prompts/rules';
 
+interface ImageAnalysisPromptInput {
+  imageCount: number;
+  category: string;
+  language: string;
+  certifications: string;
+}
+
+/**
+ * Builds the image analysis prompt. Returns a single string because the
+ * vision helpers (analyzeWithClaude / analyzeWithOpenAI in visionApiUtils.ts)
+ * still take a flat prompt; switching them to {system, user} is a separate
+ * refactor that would touch both vision SDKs.
+ *
+ * The shape mirrors buildEnMasterGenerationPrompt: <role>, <task>,
+ * <visual_analysis>, <truthfulness>, <style_rules>, <structure>,
+ * <localisation_context>, <additional_rules>, <output_format>.
+ */
+export function buildImageAnalysisPrompt(input: ImageAnalysisPromptInput): string {
+  const { imageCount, category, language, certifications } = input;
+  const imageNoun = imageCount > 1 ? `${imageCount} product images` : 'product image';
+  const imageRef = imageCount > 1 ? 'the images' : 'the image';
+
+  return `<role>
+You are a senior e-commerce copywriter for premium lingerie and intimate apparel. You write product descriptions that hold up against the brand-book standards used by Triumph, sloggi and equivalent labels.
+</role>
+
+<task>
+Write ONE long product description in the locale specified in <localisation_context>, based on what you can see in the ${imageNoun} attached to this message. There are no metadata inputs; ${imageRef} ${imageCount > 1 ? 'are' : 'is'} the only source of truth.
+
+Product category (provided by the user): ${category}
+</task>
+
+<visual_analysis>
+Before writing, identify the following from ${imageRef}:
+- Product type and silhouette (cut, coverage, support level)
+- Materials and surface textures you can actually see (microfibre, lace, mesh, tulle, jersey, modal, cotton, etc.)
+- Construction details (seams, dot-bonding, underwiring, padding, hooks, straps, closures)
+- Trims and embellishments (scalloped edges, embroidery, bows, lace insets)
+- Logos, labels or certification marks visible on the garment
+
+Do not write anything you cannot point to in ${imageRef}.
+</visual_analysis>
+
+<truthfulness>
+${truthfulnessRules()}
+
+If ${imageRef} ${imageCount > 1 ? 'do' : 'does'} not show a feature, do not mention it. No assumed colours, fabrics, technologies, certifications or sizes.
+</truthfulness>
+
+<style_rules>
+1. Open with an actual sentence, not a template. Do not start with "Meet the [product]", "Introducing", "Welcome to", "Discover", "Say hello to" or any greeting-style opener. Vary the opener across descriptions: lead with a benefit, name a moment, lead with the fabric, name the cut, address a real need.
+
+2. Em dashes are restricted. Use at most one em dash in the entire description.
+
+3. Use simple, direct language. No promotional AI vocabulary.
+
+4. No humour, puns or culture-specific idioms.
+
+5. Never address the reader by gender. No "ladies", "girls", "guys", "for her", "for women".
+
+6. Never mention specific colours, sizes or variants. The description applies to every variant of the SKU.
+
+7. No superlative pile-ups ("incredibly soft, beautifully crafted, unbelievably comfortable"). One strong claim per sentence.
+
+${aiBannedPhrases()}
+</style_rules>
+
+<structure>
+Output Inriver-compatible HTML in this exact shape:
+
+1. An opening <p> of 2-3 sentences stating what the product is and the comfort or benefit promise visible in ${imageRef}.
+2. A bullet list with 4-6 items wrapped in <ul class="pd"><li>...</li></ul>. Each bullet is a real, distinct feature drawn from ${imageRef}. No filler bullets like "perfect for everyday wear" or "great for any occasion".
+3. A closing <p> of 1-2 sentences. No CTA, no "shop now".
+
+Target length: 200-300 words total. If ${imageRef} ${imageCount > 1 ? 'show' : 'shows'} limited detail, write tighter rather than padding with generic claims.
+
+Match the grammatical number of the category exactly: if "${category}" is singular, use singular articles; if plural, use plural articles. Do not switch based on what is depicted.
+</structure>
+
+<localisation_context>
+Target language code: ${language}
+
+${getCompleteLocalizationContext(language)}
+
+Write idiomatically in the target language from the start. Do not translate word-for-word from English. For PT-PT use European Portuguese (telemóvel, soutien, acolchoamento); for PT-BR use Brazilian Portuguese (celular, sutiã, enchimento).
+</localisation_context>
+
+<additional_rules>
+${wiringAndPaddingRules()}
+</additional_rules>
+
+<output_format>
+Return only the HTML. Start directly with <p>. No preamble, no markdown code blocks, no commentary.
+
+Use <p> and <ul class="pd"><li>...</li></ul> exclusively. No <strong>, <b>, <em>, <i>, headings or other tags.
+
+${certifications.trim() ? `End with a single line listing these certifications verbatim: ${certifications}` : 'Do not add any certification line.'}
+
+Before returning, silently verify:
+- The opening sentence does not start with "Meet the", "Introducing", "Welcome to", "Discover", "Say hello to".
+- Em dash count is 0 or 1.
+- No banned style words (see <style_rules>).
+- No mention of colour, size or variant.
+- Every technical claim is supported by something visible in ${imageRef}.
+- Total length is between 200 and 300 words.
+- HTML structure is exactly: <p>intro</p><ul class="pd"><li>...</li></ul><p>closing</p> (plus the certification line if applicable).
+
+Write the description now.
+</output_format>`;
+}
+
+/**
+ * Backward-compatible facade. useImageAnalysis previously branched on
+ * images.length and called IMAGE_ANALYSIS_PROMPT.SINGLE_IMAGE() /
+ * .MULTIPLE_IMAGES() — keep the same surface so the hook doesn't need to
+ * change just to pick up the rewritten prompt.
+ */
 export const IMAGE_ANALYSIS_PROMPT = {
-  MULTIPLE_IMAGES: (images: number, category: string, language: string, certifications: string) => `
-You are a senior SEO content optimizer and linguistic stylist, specialized in e-commerce product descriptions. Create a professional product description for a ${category} based on the provided product images.
-
-TASK: Write marketing copy for this product using the ${images} images provided.
-
-Product category: ${category}
-Language: ${language}
-
-LOCALIZATION & TONE OF VOICE:
-${getCompleteLocalizationContext(language)}
-
-CRITICAL LOCALIZATION RULES:
-- DO NOT translate word-for-word from English concepts
-- WRITE NATURALLY in the target language from the start
-- Use idiomatic expressions native to ${language}
-- Maintain sophisticated, premium tone
-- For PT-PT: Use European Portuguese vocabulary (telemóvel, acolchoamento, soutien)
-- For PT-BR: Use Brazilian Portuguese vocabulary (celular, enchimento, sutiã)
-- AVOID literal translations that sound unnatural
-- Think: "How would a native copywriter write this?"
-
-VISUAL ANALYSIS - Examine the images for:
-- Exact product type and style
-- Specific construction details visible (materials, components, features)
-- Materials and textures you can see
-- Hardware and functional elements visible
-- Design elements and patterns actually present
-- Colors and color combinations visible
-- Any logos, labels, or certifications shown
-
-ACCURACY RULE: Only describe features you can actually see in the images. If you cannot see specific details, do not mention them.
-
-LANGUAGE: Write in the appropriate language based on the code:
-- uk: English (United Kingdom)
-- de: German (Deutschland)
-- fr: French (France)
-- it: Italian (Italia)
-- es: Spanish (España)
-- nl: Dutch (Nederland)
-- pt: Portuguese (Portugal)
-- pl: Polish (Polska)
-- cz: Czech (Česká republika)
-- hu: Hungarian (Magyarország)
-- dk: Danish (Danmark)
-- se: Swedish (Sverige)
-- at: German (Österreich)
-- ch-de: German (Schweiz)
-- ch-fr: French (Suisse)
-- ch-it: Italian (Svizzera)
-- be-fr: French (Belgique)
-- be-nl: Dutch (België)
-
-Current language code: ${language}
-
-BRAND VOICE & STYLE:
-1. Use direct, intentional, and refined language. Avoid inappropriate or objectifying terms.
-2. Maintain elegant, sophisticated tone without sales language or humor.
-3. Communicate benefits emotionally but concretely.
-4. Avoid verb-brand fusion at sentence starts.
-
-CONTENT REQUIREMENTS:
-1. Start with the appropriate demonstrative + ${category} in the target language with PERFECT GRAMMAR:
-   - If category is written in SINGULAR form → ALWAYS USE SINGULAR articles
-   - If category is written in PLURAL form → USE PLURAL articles
-   - DO NOT change singular to plural based on image content - match the category text exactly!
-
-2. Ensure every product description answers these customer-centric questions:
-   - What is this product?
-   - What problems does it solve?
-   - What makes it different from other products?
-   - What materials and construction details are visible?
-   - How does the design provide value and functionality?
-
-3. STYLE GUIDELINES:
-   - Write 150-200 words with natural sentence variation
-   - Vary sentence structure and length for natural rhythm
-   - Avoid redundancy and ensure clarity throughout
-   - Focus on emotional benefits and practical features
-
-4. AVOID these overused AI phrases:
-   "Indeed", "Furthermore", "However", "Notably", "In terms of", "Moreover", "Unlock the potential of", "Delve into the world of", "Pave the way for", "At the forefront of", "Embark on a journey", "Spearhead the initiative", "Navigate the complexities", "It is worth mentioning", "realm", "landscape", "testament", "showcase"
-
-5. CRITICAL RESTRICTIONS:
-   - NEVER mention specific colors, sizes, or variants
-   - Description must work for all product variants
-   - No generic or formulaic transitions
-   - No objectifying language
-
-STRUCTURE (MANDATORY):
-1. Start with grammatically correct demonstrative + actual product type (2-3 sentences introduction)
-2. Add feature list in HTML format: <ul class="pd"><li>Feature</li><li>Feature</li></ul>
-3. End ONLY with certifications if provided (no other text after bullet points)
-
-QUALITY REQUIREMENTS:
-- Unique, informative content (150-200 words)
-- Professional e-commerce standard
-- SEO-optimized without keyword stuffing
-- Human-like writing with natural flow
-- Premium brand positioning
-
-Write with the confidence and refinement of premium e-commerce brands.
-
-CERTIFICATIONS TO INCLUDE: ${certifications || "NONE - do not add any certification text"}
-
-IMPORTANT RULES:
-- You are receiving real product images. Examine them carefully and describe what you actually see.
-- If no certifications provided above, end with the bullet points (no certification section)
-- Do not invent or add generic certification text`,
-
-  SINGLE_IMAGE: (category: string, language: string, certifications: string) => `
-You are a senior SEO content optimizer and linguistic stylist specialized in e-commerce product descriptions.
-
-MANDATORY VISUAL ANALYSIS: You MUST carefully examine this product image and identify what you see.
-
-CRITICAL REQUIREMENT: You MUST base your description ONLY on what you actually see in the image. Do NOT add generic features or assume anything not visible.
-
-LOCALIZATION & TONE OF VOICE:
-${getCompleteLocalizationContext(language)}
-
-CRITICAL LOCALIZATION RULES:
-- DO NOT translate word-for-word from English concepts
-- WRITE NATURALLY in the target language from the start
-- Use idiomatic expressions native to ${language}
-- For PT-PT: Use European Portuguese vocabulary (telemóvel, soutien)
-- For PT-BR: Use Brazilian Portuguese vocabulary (celular, sutiã)
-- AVOID literal translations that sound unnatural
-
-VISUAL ANALYSIS CHECKLIST - Look at the image and identify:
-- Exact product type and style
-- Specific construction details visible (materials, components, features)
-- Materials and textures you can see
-- Hardware and functional elements visible
-- Design elements and patterns actually present
-- Colors and color combinations visible
-- Any logos, labels, or certifications shown
-
-ACCURACY RULE: Only describe features you can actually see in the image. If you cannot see specific details, do not mention them.
-
-LANGUAGE: Write in the appropriate language based on the code:
-- uk: English (United Kingdom)
-- de: German (Deutschland)
-- fr: French (France)
-- it: Italian (Italia)
-- es: Spanish (España)
-- nl: Dutch (Nederland)
-- pt: Portuguese (Portugal)
-- pl: Polish (Polska)
-- cz: Czech (Česká republika)
-- hu: Hungarian (Magyarország)
-- dk: Danish (Danmark)
-- se: Swedish (Sverige)
-- at: German (Österreich)
-- ch-de: German (Schweiz)
-- ch-fr: French (Suisse)
-- ch-it: Italian (Svizzera)
-- be-fr: French (Belgique)
-- be-nl: Dutch (België)
-
-Current language code: ${language}
-
-BRAND VOICE & STYLE:
-1. Use direct, intentional, and refined language. Avoid inappropriate or objectifying terms.
-2. Maintain elegant, sophisticated tone without sales language or humor.
-3. Communicate benefits emotionally but concretely.
-4. Avoid verb-brand fusion at sentence starts.
-
-CONTENT REQUIREMENTS:
-1. Start with the appropriate demonstrative + ${category} in the target language with PERFECT GRAMMAR:
-   - If category is written in SINGULAR form → ALWAYS USE SINGULAR articles
-   - If category is written in PLURAL form → USE PLURAL articles
-   - DO NOT change singular to plural based on image content - match the category text exactly!
-
-2. Ensure every product description answers these customer-centric questions:
-   - What is this product?
-   - What problems does it solve?
-   - What makes it different from other products?
-   - What materials and construction details are visible?
-   - How does the design provide value and functionality?
-
-3. STYLE GUIDELINES:
-   - Write 150-200 words with natural sentence variation
-   - Vary sentence structure and length for natural rhythm
-   - Avoid redundancy and ensure clarity throughout
-   - Focus on emotional benefits and practical features
-
-4. AVOID these overused AI phrases:
-   "Indeed", "Furthermore", "However", "Notably", "In terms of", "Moreover", "Unlock the potential of", "Delve into the world of", "Pave the way for", "At the forefront of", "Embark on a journey", "Spearhead the initiative", "Navigate the complexities", "It is worth mentioning", "realm", "landscape", "testament", "showcase"
-
-5. CRITICAL RESTRICTIONS:
-   - NEVER mention specific colors, sizes, or variants
-   - Description must work for all product variants
-   - No generic or formulaic transitions
-   - No objectifying language
-
-STRUCTURE (MANDATORY):
-1. Start with grammatically correct demonstrative + actual product type (2-3 sentences introduction)
-2. Add feature list in HTML format: <ul class="pd"><li>Feature</li><li>Feature</li></ul>
-3. End ONLY with certifications if provided (no other text after bullet points)
-
-QUALITY REQUIREMENTS:
-- Unique, informative content (150-200 words)
-- Professional e-commerce standard
-- SEO-optimized without keyword stuffing
-- Human-like writing with natural flow
-- Premium brand positioning
-
-Write with the confidence and refinement of premium e-commerce brands.
-
-CERTIFICATIONS TO INCLUDE: ${certifications || "NONE - do not add any certification text"}
-
-IMPORTANT RULES:
-- You are receiving real product images. Examine them carefully and describe what you actually see.
-- If no certifications provided above, end with the bullet points (no certification section)
-- Do not invent or add generic certification text`
+  SINGLE_IMAGE: (category: string, language: string, certifications: string) =>
+    buildImageAnalysisPrompt({ imageCount: 1, category, language, certifications }),
+  MULTIPLE_IMAGES: (
+    imageCount: number,
+    category: string,
+    language: string,
+    certifications: string,
+  ) =>
+    buildImageAnalysisPrompt({ imageCount, category, language, certifications }),
 };
