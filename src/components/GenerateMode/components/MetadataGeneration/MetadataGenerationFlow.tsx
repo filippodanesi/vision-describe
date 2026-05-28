@@ -107,7 +107,7 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
       });
       return;
     }
-    startGeneration(METADATA_GENERATION_MODEL, anthropicKey);
+    startGeneration(anthropicKey);
   };
 
   const brandBreakdown = useMemo(() => {

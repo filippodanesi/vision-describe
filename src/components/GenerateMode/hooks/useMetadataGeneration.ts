@@ -7,12 +7,12 @@ import type {
   GeneratedProduct,
   GenerationProgress,
 } from '../types';
-import { MetadataGenerationStep, INRIVER_LANGUAGES } from '../types';
+import { MetadataGenerationStep, INRIVER_LANGUAGES, METADATA_GENERATION_MODEL } from '../types';
 import {
   buildEnMasterGenerationPrompt,
   buildLocalisationPrompt,
 } from '../prompts/metadataGenerationPrompt';
-import { translateWithClaude, translateWithOpenAI } from '../utils/visionApiUtils';
+import { translateWithClaude } from '../utils/visionApiUtils';
 import { processTextWithTerminology } from '../utils/terminology';
 
 const BATCH_SIZE = 3;
@@ -277,7 +277,8 @@ export function useMetadataGeneration() {
   );
 
   const startGeneration = useCallback(
-    async (modelId: string, apiKey: string) => {
+    async (apiKey: string) => {
+      const modelId = METADATA_GENERATION_MODEL;
       const queue = products.filter((p) =>
         selectedBrands.includes((p.brand || 'unknown').trim())
       );
@@ -301,8 +302,6 @@ export function useMetadataGeneration() {
         `Starting: ${queue.length} product(s) × (1 EN master + ${nonEnLangs.length} localisations) = ${totalOps} operations`
       );
 
-      const isAnthropic = modelId.startsWith('claude');
-      const callApi = isAnthropic ? translateWithClaude : translateWithOpenAI;
       const accumulated: GeneratedProduct[] = [];
       let completed = 0;
       let cacheReadTokens = 0;
@@ -341,7 +340,7 @@ export function useMetadataGeneration() {
             styleUsp: product.styleUsp,
             styleDescription: product.styleDescription,
           });
-          const enResponse = await callApi(enPrompt, apiKey, modelId, signal);
+          const enResponse = await translateWithClaude(enPrompt, apiKey, modelId, signal);
           enMaster = cleanMarkdownFormatting(enResponse.content);
           enMaster = processTextWithTerminology(enMaster, 'en');
           if (includesEn) translations['en'] = enMaster;
@@ -382,7 +381,7 @@ export function useMetadataGeneration() {
                   productLine: product.productLine,
                 }
               );
-              const locResponse = await callApi(
+              const locResponse = await translateWithClaude(
                 locPrompt,
                 apiKey,
                 modelId,
@@ -419,13 +418,13 @@ export function useMetadataGeneration() {
       };
 
       try {
-        // Warmup — for Claude with ≥ 2 products, process the first SKU on its
-        // own so the prompt cache is written before the parallel batch fires.
-        // Without this, the first BATCH_SIZE concurrent requests all pay the
+        // Warmup — with ≥ 2 products, process the first SKU on its own so the
+        // prompt cache is written before the parallel batch fires. Without
+        // this, the first BATCH_SIZE concurrent requests all pay the
         // cache-write premium (none can read what the others are still
         // writing). See shared/prompt-caching.md → Concurrent-request timing.
         let startIndex = 0;
-        if (isAnthropic && queue.length >= 2) {
+        if (queue.length >= 2) {
           const warm = queue[0];
           const warmResult = await processOneProduct(warm);
           accumulated.push(warmResult);
@@ -460,7 +459,7 @@ export function useMetadataGeneration() {
         } else {
           addLog(`Generation complete: ${accumulated.length} product(s) processed`);
         }
-        if (isAnthropic && (cacheReadTokens > 0 || cacheCreationTokens > 0)) {
+        if (cacheReadTokens > 0 || cacheCreationTokens > 0) {
           const totalCached = cacheReadTokens + cacheCreationTokens;
           const hitRate = totalCached > 0
             ? Math.round((cacheReadTokens / totalCached) * 100)

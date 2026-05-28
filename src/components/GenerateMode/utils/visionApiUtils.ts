@@ -1,33 +1,27 @@
 /**
- * Vision API utilities — Client-side vision API calls for Claude and OpenAI.
+ * Vision API utilities — Client-side Claude calls (text + vision).
  *
- * Both translateWithClaude and translateWithOpenAI accept either a plain
- * string prompt (legacy path, no caching) OR a CachedPromptInput
- * ({system, user}) which gets prompt caching via cache_control on the
- * system block. The Claude path uses ephemeral cache with 1h TTL — chosen
- * because batch runs (21 SKU × 12 locales = 252 calls) routinely take more
- * than 5 minutes, the default ephemeral TTL.
+ * translateWithClaude accepts either a plain string prompt OR a
+ * CachedPromptInput ({system, user}) which gets prompt caching via
+ * cache_control on the system block. The ephemeral cache uses 1h TTL,
+ * chosen because batch runs (21 SKU × 12 locales = 252 calls) routinely
+ * take more than 5 minutes, the default ephemeral TTL.
  *
- * Reuses existing SDK patterns from claudeUtils.ts and openAiUtils.ts.
+ * All four flows (Image Analysis, Metadata Generation, CSV Translation,
+ * Optimize) are hardcoded to claude-opus-4-7. The OpenAI text and vision
+ * paths were removed once the user-facing model selector was dropped.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
 import type { VisionApiResponse, ImageFile, CachedPromptInput } from '../types';
 
 /**
- * Default model for the Claude text-only path. Aligned with the hardcoded
- * choice used by all current flows (Metadata Generation, CSV Translation,
- * Optimize) — keeps a single source of truth even though callers always
- * pass an explicit model.
+ * Default model for the Claude path. Aligned with the hardcoded constants
+ * exported from types.ts (IMAGE_ANALYSIS_MODEL, CSV_TRANSLATION_MODEL,
+ * METADATA_GENERATION_MODEL) — single source of truth even though callers
+ * always pass an explicit model.
  */
 const DEFAULT_CLAUDE_MODEL = 'claude-opus-4-7';
-
-/**
- * Default model for the OpenAI text path (translateWithOpenAI). The
- * vision-only Image Analysis flow no longer uses OpenAI — it runs on
- * claude-opus-4-7 with native vision.
- */
-const DEFAULT_OPENAI_MODEL = 'gpt-5.2';
 
 /**
  * Type guard — narrows the union returned by prompt builders. Old builders
@@ -168,64 +162,3 @@ export async function translateWithClaude(
   };
 }
 
-/**
- * Call OpenAI for text-only generation/translation.
- *
- * Same shape as translateWithClaude: accepts string OR {system, user}.
- * No explicit cache_control — OpenAI handles prompt caching automatically
- * for the responses API when the same prefix is detected.
- */
-export async function translateWithOpenAI(
-  prompt: string | CachedPromptInput,
-  apiKey: string,
-  model: string = DEFAULT_OPENAI_MODEL,
-  signal?: AbortSignal,
-): Promise<VisionApiResponse> {
-  const isNewModel = model.includes('o3') || model.includes('o4') || model.includes('gpt-5') || model.startsWith('o-');
-
-  const messages = isCachedPrompt(prompt)
-    ? [
-        { role: 'system' as const, content: prompt.system },
-        { role: 'user' as const, content: prompt.user },
-      ]
-    : [{ role: 'user' as const, content: prompt }];
-
-  const body: Record<string, any> = {
-    model,
-    messages,
-  };
-
-  if (isNewModel) {
-    body.max_completion_tokens = 4096;
-  } else {
-    body.max_tokens = 4096;
-  }
-
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(body),
-    signal,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      `OpenAI API error: ${response.status} ${errorData?.error?.message || response.statusText}`
-    );
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || '';
-
-  return {
-    content: content.trim(),
-    tokens: {
-      inputTokens: data.usage?.prompt_tokens || 0,
-      outputTokens: data.usage?.completion_tokens || 0,
-    },
-  };
-}

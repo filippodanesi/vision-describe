@@ -95,7 +95,7 @@ export const CsvTranslationFlow: React.FC<CsvTranslationFlowProps> = ({ onBack }
       });
       return;
     }
-    startTranslation(CSV_TRANSLATION_MODEL, anthropicKey);
+    startTranslation(anthropicKey);
   };
 
   return (

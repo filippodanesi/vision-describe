@@ -2,9 +2,9 @@ import { useState, useCallback, useRef } from 'react';
 import Papa from 'papaparse';
 import { Workbook } from 'exceljs';
 import type { CSVFormat, CSVProduct, TranslatedProduct, TranslationProgress } from '../types';
-import { CsvTranslationStep, LANGUAGE_MAPPING } from '../types';
+import { CsvTranslationStep, LANGUAGE_MAPPING, CSV_TRANSLATION_MODEL } from '../types';
 import { CSV_TRANSLATION_PROMPT, BELDONA_TRANSLATION_PROMPT } from '../prompts/csvTranslationPrompt';
-import { translateWithClaude, translateWithOpenAI } from '../utils/visionApiUtils';
+import { translateWithClaude } from '../utils/visionApiUtils';
 import { processTextWithTerminology } from '../utils/terminology';
 
 function cleanMarkdownFormatting(text: string): string {
@@ -231,8 +231,9 @@ export function useCsvTranslation() {
     }
   }, [addLog]);
 
-  const startTranslation = useCallback(async (modelId: string, apiKey: string) => {
+  const startTranslation = useCallback(async (apiKey: string) => {
     if (products.length === 0 || selectedLanguages.length === 0) return;
+    const modelId = CSV_TRANSLATION_MODEL;
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -247,8 +248,6 @@ export function useCsvTranslation() {
     setProgress({ current: 0, total: totalOps });
     addLog(`Starting translation: ${products.length} products × ${selectedLanguages.length} languages = ${totalOps} operations`);
 
-    const isAnthropic = modelId.startsWith('claude');
-    const translateFn = isAnthropic ? translateWithClaude : translateWithOpenAI;
     const translatedProducts: TranslatedProduct[] = [];
     let completed = 0;
     let cacheReadTokens = 0;
@@ -301,7 +300,7 @@ export function useCsvTranslation() {
             }, product.originalContent, langCode);
 
         try {
-          const response = await translateFn(prompt, apiKey, modelId, signal);
+          const response = await translateWithClaude(prompt, apiKey, modelId, signal);
           let translated = cleanMarkdownFormatting(response.content);
           translated = processTextWithTerminology(translated, langCode);
           translations[langCode] = translated;
@@ -322,13 +321,13 @@ export function useCsvTranslation() {
     };
 
     try {
-      // Warmup — for Claude with ≥ 2 products, process the first product on
-      // its own so the prompt cache is written before the parallel batch
-      // fires. Concurrent calls with identical system prefix would each pay
-      // the cache-write premium without reading. See
+      // Warmup — with ≥ 2 products, process the first product on its own so
+      // the prompt cache is written before the parallel batch fires.
+      // Concurrent calls with identical system prefix would each pay the
+      // cache-write premium without reading. See
       // shared/prompt-caching.md → Concurrent-request timing.
       let startIndex = 0;
-      if (isAnthropic && products.length >= 2) {
+      if (products.length >= 2) {
         const warm = products[0];
         const warmResult = await processOneProduct(warm);
         translatedProducts.push(warmResult);
@@ -358,7 +357,7 @@ export function useCsvTranslation() {
       } else {
         addLog(`Translation complete: ${translatedProducts.length} products translated`);
       }
-      if (isAnthropic && (cacheReadTokens > 0 || cacheCreationTokens > 0)) {
+      if (cacheReadTokens > 0 || cacheCreationTokens > 0) {
         const totalCached = cacheReadTokens + cacheCreationTokens;
         const hitRate = totalCached > 0
           ? Math.round((cacheReadTokens / totalCached) * 100)
