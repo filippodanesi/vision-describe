@@ -8,7 +8,7 @@ import type { RunRecord } from '@/lib/runPersistence';
 export interface ModelStats {
   modelId: string;
   modelName: string;
-  provider: 'openai' | 'anthropic';
+  provider: 'anthropic';
   runs: number;
   totalRows: number;
   totalTokens: number;
@@ -25,7 +25,7 @@ export interface DashboardData {
     totalTokens: number;
     totalCost: number;
   };
-  costByProvider: { openai: number; anthropic: number };
+  costByProvider: { anthropic: number };
   modelStats: ModelStats[];
   recentRuns: RunRecord[];
   refresh: () => void;
@@ -33,8 +33,8 @@ export interface DashboardData {
 
 /* ── Helpers ───────────────────────────────────────────────────── */
 
-function getProvider(modelId: string): 'openai' | 'anthropic' {
-  return modelId.startsWith('claude') ? 'anthropic' : 'openai';
+function getProvider(_modelId: string): 'anthropic' {
+  return 'anthropic';
 }
 
 function getDisplayName(modelId: string): string {
@@ -122,11 +122,10 @@ export function useDashboardData(): DashboardData {
   }, [runs]);
 
   const costByProvider = useMemo(() => {
-    const result = { openai: 0, anthropic: 0 };
+    const result = { anthropic: 0 };
     for (const r of runs) {
       if (r.status !== 'completed') continue;
-      const p = getProvider(r.model_id);
-      result[p] += r.total_cost || 0;
+      result.anthropic += r.total_cost || 0;
     }
     return result;
   }, [runs]);

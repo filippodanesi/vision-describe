@@ -9,8 +9,6 @@ interface EnvVariables {
   NATURAL_LANGUAGE_UNDERSTANDING_APIKEY?: string;
   NATURAL_LANGUAGE_UNDERSTANDING_URL?: string;
   NATURAL_LANGUAGE_UNDERSTANDING_AUTH_TYPE?: string;
-  OPENAI_API_KEY?: string;
-  VITE_OPENAI_API_KEY?: string;
   [key: string]: string | undefined;
 }
 
@@ -69,7 +67,7 @@ export default defineConfig(({ mode }) => {
               '@radix-ui/react-tooltip',
             ],
             'vendor-sheets': ['xlsx', 'exceljs', 'papaparse'],
-            'vendor-ai': ['@anthropic-ai/sdk', 'openai'],
+            'vendor-ai': ['@anthropic-ai/sdk'],
           },
         },
       },
@@ -79,12 +77,10 @@ export default defineConfig(({ mode }) => {
       'import.meta.env.NATURAL_LANGUAGE_UNDERSTANDING_APIKEY': JSON.stringify(finalEnv.NATURAL_LANGUAGE_UNDERSTANDING_APIKEY),
       'import.meta.env.NATURAL_LANGUAGE_UNDERSTANDING_URL': JSON.stringify(finalEnv.NATURAL_LANGUAGE_UNDERSTANDING_URL),
       'import.meta.env.NATURAL_LANGUAGE_UNDERSTANDING_AUTH_TYPE': JSON.stringify(finalEnv.NATURAL_LANGUAGE_UNDERSTANDING_AUTH_TYPE || 'iam'),
-      'import.meta.env.OPENAI_API_KEY': JSON.stringify(finalEnv.OPENAI_API_KEY || finalEnv.VITE_OPENAI_API_KEY),
       // VITE_ prefixed versions
       'import.meta.env.VITE_NATURAL_LANGUAGE_UNDERSTANDING_APIKEY': JSON.stringify(finalEnv.NATURAL_LANGUAGE_UNDERSTANDING_APIKEY),
       'import.meta.env.VITE_NATURAL_LANGUAGE_UNDERSTANDING_URL': JSON.stringify(finalEnv.NATURAL_LANGUAGE_UNDERSTANDING_URL),
       'import.meta.env.VITE_NATURAL_LANGUAGE_UNDERSTANDING_AUTH_TYPE': JSON.stringify(finalEnv.NATURAL_LANGUAGE_UNDERSTANDING_AUTH_TYPE || 'iam'),
-      'import.meta.env.VITE_OPENAI_API_KEY': JSON.stringify(finalEnv.VITE_OPENAI_API_KEY || finalEnv.OPENAI_API_KEY),
     },
   };
 });

@@ -375,7 +375,6 @@ export const useFileProcessing = (): UseFileProcessingReturn => {
       } else {
         // Calculate session statistics for final summary
         const sessionStats = costTracker.getSessionStats();
-        const provider = model.provider === 'openai' ? 'openai' : 'anthropic';
         
         toast('Processing complete', {
           description: `${updatedRows.length} rows processed | $${sessionStats.totalActualCost.toFixed(5)} total | ${sessionStats.totalTokens.toLocaleString()} tokens`,

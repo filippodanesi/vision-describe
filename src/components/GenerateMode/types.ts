@@ -13,10 +13,10 @@ export enum ImageAnalysisStep {
 }
 
 // Hardcoded model for the image analysis flow.
-// Claude Opus 4.7 — most capable Anthropic model, native vision, prompt
+// Claude Opus 4.8 — most capable Anthropic model, native vision, prompt
 // caching works the same way as the text-only flows. No user selector
 // exposed (the previous OpenAI gpt-5.2 path is removed).
-export const IMAGE_ANALYSIS_MODEL = 'claude-opus-4-7';
+export const IMAGE_ANALYSIS_MODEL = 'claude-opus-4-8';
 
 export enum CsvTranslationStep {
   UPLOAD = 'upload',
@@ -27,8 +27,8 @@ export enum CsvTranslationStep {
 }
 
 // Hardcoded model for the CSV translation flow.
-// Claude Opus 4.7 — most capable Anthropic model. No user selector exposed.
-export const CSV_TRANSLATION_MODEL = 'claude-opus-4-7';
+// Claude Opus 4.8 — most capable Anthropic model. No user selector exposed.
+export const CSV_TRANSLATION_MODEL = 'claude-opus-4-8';
 
 export interface ImageFile {
   base64: string;
@@ -136,9 +136,9 @@ export enum MetadataGenerationStep {
 }
 
 // Hardcoded model for the metadata generation flow.
-// Claude Opus 4.7 — most capable Anthropic model, adaptive thinking on by
+// Claude Opus 4.8 — most capable Anthropic model, adaptive thinking on by
 // default in this flow, no temperature/top_p/top_k allowed.
-export const METADATA_GENERATION_MODEL = 'claude-opus-4-7';
+export const METADATA_GENERATION_MODEL = 'claude-opus-4-8';
 
 export type MetadataFormatType = 'aw26-compact' | 'sloggi-b2c' | 'triumph-b2c' | 'unknown';
 

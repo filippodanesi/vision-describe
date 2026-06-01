@@ -66,13 +66,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // 3. Load user API keys
     const keys = await getUserApiKeys(runRecord.user_id);
     const runConfig = runRecord.config as unknown as RunConfig;
-    const provider = runConfig.modelId.includes('claude') || runConfig.modelId.includes('anthropic')
-      ? 'anthropic'
-      : 'openai';
-    const apiKey = provider === 'openai' ? keys.openai_key : keys.anthropic_key;
+    // The app is Anthropic-only; always use the Anthropic key.
+    const apiKey = keys.anthropic_key;
 
     if (!apiKey) {
-      await markError(runId, `No ${provider} API key configured for user`);
+      await markError(runId, 'No Anthropic API key configured for user');
       return res.status(400).json({ error: 'No API key' });
     }
 

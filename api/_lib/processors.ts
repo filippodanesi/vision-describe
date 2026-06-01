@@ -15,15 +15,8 @@ import {
   buildEcommerceUserPrompt,
 } from './ecommercePrompts';
 
-/** Helper to determine provider from model id */
-function getProvider(modelId: string): 'openai' | 'anthropic' {
-  if (modelId.includes('claude') || modelId.includes('anthropic')) return 'anthropic';
-  return 'openai';
-}
-
 interface ModelLike {
   id: string;
-  provider: 'openai' | 'anthropic';
 }
 
 async function serverOptimize(
@@ -32,7 +25,7 @@ async function serverOptimize(
   apiKey: string,
   systemPrompt: string
 ): Promise<AiResponse> {
-  return callAI(apiKey, model.id, model.provider, systemPrompt, userPrompt);
+  return callAI(apiKey, model.id, systemPrompt, userPrompt);
 }
 
 // ---------------------------------------------------------------------------
@@ -44,7 +37,7 @@ export async function processRow(
   apiKey: string,
   config: RunConfig
 ): Promise<{ result: Record<string, unknown>; cost: number; tokensIn: number; tokensOut: number }> {
-  const model: ModelLike = { id: config.modelId, provider: getProvider(config.modelId) };
+  const model: ModelLike = { id: config.modelId };
 
   // The client-side processors build a prompt per row and call the AI.
   // On the server, we replicate that: extract the relevant text from the row,

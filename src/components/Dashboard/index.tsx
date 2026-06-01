@@ -149,7 +149,6 @@ export const Dashboard: React.FC = () => {
         <section>
           <SectionHeader index={2} title="Spend by Provider" />
           <div className="border border-border divide-y divide-border">
-            <BudgetRow label="OpenAI" used={costByProvider.openai} budget={DEFAULT_BUDGET} />
             <BudgetRow label="Anthropic" used={costByProvider.anthropic} budget={DEFAULT_BUDGET} />
           </div>
         </section>

@@ -3,7 +3,6 @@
  */
 import { Model } from '@/lib/models';
 import { franc } from 'franc-min';
-import { optimizeWithOpenAI, OpenAIResponse } from './openAiUtils';
 import { optimizeWithClaude, ClaudeResponse } from './claudeUtils';
 
 // Re-export keyword utilities for backward compatibility
@@ -188,46 +187,23 @@ IMPORTANT SUSTAINABILITY NOTE:
     console.log('Provider:', model.provider);
     console.log('Model:', model.id);
 
-    let response: OpenAIResponse | ClaudeResponse;
-    if (model.provider === 'openai') {
-      if (!apiKey) {
-        console.error('%cERROR: OpenAI API Key missing', 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;');
-        throw new Error('OpenAI API key is required. Please enter your API key.');
-      }
-      console.log('%cCalling OpenAI API...', 'background: #2196F3; color: white; padding: 2px 5px; border-radius: 3px;');
-      try {
-        response = await optimizeWithOpenAI(finalUserPrompt, apiKey, model.id, systemPrompt);
-        console.log('%cOpenAI API call successful', 'background: #4CAF50; color: white; padding: 2px 5px; border-radius: 3px;');
-      } catch (apiError: any) {
-        console.error('%cOpenAI API ERROR:', 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;', {
-          error: apiError,
-          message: apiError.message,
-          status: apiError.status,
-          type: apiError.type
-        });
-        throw apiError;
-      }
-    } else if (model.provider === 'anthropic') {
-      if (!apiKey) {
-        console.error('%cERROR: Anthropic API Key missing', 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;');
-        throw new Error('Anthropic API key is required. Please enter your API key.');
-      }
-      console.log('%cCalling Claude API...', 'background: #2196F3; color: white; padding: 2px 5px; border-radius: 3px;');
-      try {
-        response = await optimizeWithClaude(finalUserPrompt, apiKey, model.id, systemPrompt);
-        console.log('%cClaude API call successful', 'background: #4CAF50; color: white; padding: 2px 5px; border-radius: 3px;');
-      } catch (apiError: any) {
-        console.error('%cClaude API ERROR:', 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;', {
-          error: apiError,
-          message: apiError.message,
-          status: apiError.status,
-          type: apiError.type
-        });
-        throw apiError;
-      }
-    } else {
-      console.error('%cERROR: Unsupported provider', 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;');
-      throw new Error('Unsupported model provider');
+    if (!apiKey) {
+      console.error('%cERROR: Anthropic API Key missing', 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;');
+      throw new Error('Anthropic API key is required. Please enter your API key.');
+    }
+    console.log('%cCalling Claude API...', 'background: #2196F3; color: white; padding: 2px 5px; border-radius: 3px;');
+    let response: ClaudeResponse;
+    try {
+      response = await optimizeWithClaude(finalUserPrompt, apiKey, model.id, systemPrompt);
+      console.log('%cClaude API call successful', 'background: #4CAF50; color: white; padding: 2px 5px; border-radius: 3px;');
+    } catch (apiError: any) {
+      console.error('%cClaude API ERROR:', 'background: #f44336; color: white; padding: 2px 5px; border-radius: 3px;', {
+        error: apiError,
+        message: apiError.message,
+        status: apiError.status,
+        type: apiError.type
+      });
+      throw apiError;
     }
 
     console.log('%c=== OPTIMIZATION COMPLETE ===', 'background: #4CAF50; color: white; padding: 2px 5px; border-radius: 3px;');

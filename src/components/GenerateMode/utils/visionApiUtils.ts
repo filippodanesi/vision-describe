@@ -8,8 +8,9 @@
  * take more than 5 minutes, the default ephemeral TTL.
  *
  * All four flows (Image Analysis, Metadata Generation, CSV Translation,
- * Optimize) are hardcoded to claude-opus-4-7. The OpenAI text and vision
- * paths were removed once the user-facing model selector was dropped.
+ * Optimize) are hardcoded to claude-opus-4-8 with adaptive thinking at
+ * medium effort. The OpenAI text and vision paths were removed once the
+ * user-facing model selector was dropped.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -21,7 +22,7 @@ import type { VisionApiResponse, ImageFile, CachedPromptInput } from '../types';
  * METADATA_GENERATION_MODEL) — single source of truth even though callers
  * always pass an explicit model.
  */
-const DEFAULT_CLAUDE_MODEL = 'claude-opus-4-7';
+const DEFAULT_CLAUDE_MODEL = 'claude-opus-4-8';
 
 /**
  * Type guard — narrows the union returned by prompt builders. Old builders
@@ -37,7 +38,9 @@ function isCachedPrompt(value: unknown): value is CachedPromptInput {
 }
 
 /**
- * Call Claude with vision (images + text prompt).
+ * Call Claude with vision (images + text prompt). The instruction text is
+ * sent as a cached prefix (cache_control) so repeated analyses with the same
+ * settings re-read it at ~10% of the input price; the images vary and follow.
  */
 export async function analyzeWithClaude(
   prompt: string,
@@ -59,19 +62,24 @@ export async function analyzeWithClaude(
     },
   }));
 
+  // Adaptive thinking + medium effort per the Opus 4.8 migration guide.
+  // Cast to any: the installed @anthropic-ai/sdk (0.50.4) predates the
+  // adaptive-thinking / output_config types, but the API honours the fields.
   const response = await client.messages.create({
     model,
-    max_tokens: 4096,
+    max_tokens: 8192,
+    thinking: { type: 'adaptive' },
+    output_config: { effort: 'medium' },
     messages: [
       {
         role: 'user',
         content: [
-          { type: 'text', text: prompt },
+          { type: 'text', text: prompt, cache_control: { type: 'ephemeral' } },
           ...imageContent,
         ],
       },
     ],
-  });
+  } as any);
 
   const textBlock = response.content.find(
     (block): block is Anthropic.TextBlock => block.type === 'text',
@@ -119,10 +127,14 @@ export async function translateWithClaude(
     dangerouslyAllowBrowser: true,
   });
 
-  const params: Anthropic.MessageCreateParams = isCachedPrompt(prompt)
+  // Adaptive thinking + medium effort per the Opus 4.8 migration guide.
+  // `as any`: SDK 0.50.4 predates these types; the API still honours them.
+  const params: any = isCachedPrompt(prompt)
     ? {
         model,
-        max_tokens: 4096,
+        max_tokens: 16000,
+        thinking: { type: 'adaptive' },
+        output_config: { effort: 'medium' },
         system: [
           {
             type: 'text',
@@ -134,12 +146,14 @@ export async function translateWithClaude(
       }
     : {
         model,
-        max_tokens: 4096,
+        max_tokens: 16000,
+        thinking: { type: 'adaptive' },
+        output_config: { effort: 'medium' },
         messages: [{ role: 'user', content: prompt }],
       };
 
   const response = await client.messages.create(
-    params,
+    params as any,
     signal ? { signal } : undefined,
   );
 

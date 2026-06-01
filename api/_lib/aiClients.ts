@@ -1,8 +1,10 @@
 /**
- * Server-side AI client wrappers for OpenAI and Anthropic.
+ * Server-side Anthropic Claude client wrapper.
  * No browser dependencies (no CORS proxy, no toast, no dangerouslyAllowBrowser).
+ *
+ * The app is Anthropic-only. Adaptive thinking at medium effort per the
+ * Opus 4.8 migration guide.
  */
-import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 
 export interface AiResponse {
@@ -10,54 +12,6 @@ export interface AiResponse {
   tokens: {
     inputTokens: number;
     outputTokens: number;
-  };
-}
-
-/**
- * Call OpenAI chat completions API (server-side).
- */
-export async function callOpenAI(
-  apiKey: string,
-  modelId: string,
-  systemPrompt: string,
-  userPrompt: string
-): Promise<AiResponse> {
-  const client = new OpenAI({ apiKey });
-
-  const isNewModel = modelId.includes('o3') || modelId.includes('o4') || modelId.includes('gpt-5') || modelId.startsWith('o-');
-  const defaultMaxTokens = modelId.includes('gpt-5') ? 8000 : 4000;
-
-  const params: Record<string, unknown> = {
-    model: modelId,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-  };
-
-  if (isNewModel) {
-    params.max_completion_tokens = defaultMaxTokens;
-    if (modelId.includes('gpt-5')) {
-      params.reasoning_effort = 'low';
-      params.verbosity = 'low';
-    }
-  } else {
-    params.temperature = 0.7;
-    params.max_tokens = 4000;
-  }
-
-  const response = await client.chat.completions.create(params as any);
-  const content = response.choices?.[0]?.message?.content;
-  if (!content || content.trim() === '') {
-    throw new Error(`Empty response from OpenAI model ${modelId}`);
-  }
-
-  return {
-    content,
-    tokens: {
-      inputTokens: response.usage?.prompt_tokens || 0,
-      outputTokens: response.usage?.completion_tokens || 0,
-    },
   };
 }
 
@@ -72,10 +26,13 @@ export async function callAnthropic(
 ): Promise<AiResponse> {
   const client = new Anthropic({ apiKey });
 
-  const isSonnet45Plus = modelId.includes('sonnet-4-5') || modelId.includes('sonnet-4-6');
-
+  // `thinking`/`output_config` are honoured by the API; cast at call time
+  // because the installed SDK (0.50.4) predates the adaptive-thinking types.
   const requestParams: Record<string, unknown> = {
     model: modelId,
+    max_tokens: 16000,
+    thinking: { type: 'adaptive' },
+    output_config: { effort: 'medium' },
     system: [
       {
         type: 'text',
@@ -84,12 +41,7 @@ export async function callAnthropic(
       },
     ],
     messages: [{ role: 'user', content: userPrompt }],
-    max_tokens: isSonnet45Plus ? 16000 : 2000,
   };
-
-  if (isSonnet45Plus) {
-    requestParams.thinking = { type: 'enabled', budget_tokens: 5000 };
-  }
 
   const response = await client.messages.create(requestParams as any);
 
@@ -110,17 +62,13 @@ export async function callAnthropic(
 }
 
 /**
- * Unified AI call dispatcher based on model provider.
+ * Unified AI call dispatcher. The app is Anthropic-only.
  */
 export async function callAI(
   apiKey: string,
   modelId: string,
-  provider: 'openai' | 'anthropic',
   systemPrompt: string,
   userPrompt: string
 ): Promise<AiResponse> {
-  if (provider === 'openai') {
-    return callOpenAI(apiKey, modelId, systemPrompt, userPrompt);
-  }
   return callAnthropic(apiKey, modelId, systemPrompt, userPrompt);
 }
