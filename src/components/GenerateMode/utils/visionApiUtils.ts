@@ -38,7 +38,9 @@ function isCachedPrompt(value: unknown): value is CachedPromptInput {
 }
 
 /**
- * Call Claude with vision (images + text prompt).
+ * Call Claude with vision (images + text prompt). The instruction text is
+ * sent as a cached prefix (cache_control) so repeated analyses with the same
+ * settings re-read it at ~10% of the input price; the images vary and follow.
  */
 export async function analyzeWithClaude(
   prompt: string,
@@ -72,7 +74,7 @@ export async function analyzeWithClaude(
       {
         role: 'user',
         content: [
-          { type: 'text', text: prompt },
+          { type: 'text', text: prompt, cache_control: { type: 'ephemeral' } },
           ...imageContent,
         ],
       },

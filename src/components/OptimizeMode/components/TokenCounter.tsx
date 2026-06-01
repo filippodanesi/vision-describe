@@ -71,7 +71,7 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
               .slice(-5)
               .reverse()
               .map((record, index) => {
-                const provider = record.model.startsWith('claude') ? 'anthropic' : 'openai';
+                const provider = 'anthropic';
                 const cost =
                   record.actualCost !== undefined ? record.actualCost : record.estimatedCost;
                 const inputTokens = record.actualInputTokens || record.estimatedInputTokens;

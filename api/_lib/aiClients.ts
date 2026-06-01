@@ -62,13 +62,11 @@ export async function callAnthropic(
 }
 
 /**
- * Unified AI call dispatcher. The app is Anthropic-only; the `provider`
- * argument is retained for call-site compatibility but always routes to Claude.
+ * Unified AI call dispatcher. The app is Anthropic-only.
  */
 export async function callAI(
   apiKey: string,
   modelId: string,
-  _provider: 'openai' | 'anthropic',
   systemPrompt: string,
   userPrompt: string
 ): Promise<AiResponse> {
