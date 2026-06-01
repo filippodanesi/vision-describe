@@ -1,11 +1,10 @@
 /**
  * Utility functions for Claude API integration using the official Anthropic SDK
  * 
- * Claude Sonnet 4.5 Configuration:
- * - Extended thinking ENABLED for maximum performance on complex tasks
- * - Significantly better coding capabilities and reasoning
- * - Longer response times (60-120s) but highest quality output
- * - Budget: 10,000 thinking tokens per request
+ * Claude Opus 4.8 configuration:
+ * - Adaptive thinking at medium effort (per the Opus 4.8 migration guide)
+ * - Prompt caching on the system block (ephemeral cache_control)
+ * - Response times can reach ~120s on complex rows
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { claudeSystemPrompt } from './prompts/systemPrompt';
@@ -35,7 +34,7 @@ export interface ClaudeRequestOptions {
 export const optimizeWithClaude = async (
   prompt: string, 
   apiKey: string,
-  model: string = "claude-sonnet-4-20250514",
+  model: string = "claude-opus-4-8",
   systemPrompt?: string,
   options: ClaudeRequestOptions = {}
 ): Promise<ClaudeResponse> => {
@@ -112,8 +111,7 @@ Due to API connection issues, I couldn't display the AI-optimized result directl
 
 Options to resolve this:
 1. Check that your Claude API key is valid
-2. Use OpenAI instead (GPT-4o) which may have fewer connection restrictions
-3. Try again in a few moments
+2. Try again in a few moments
 
 The original text is preserved.`;
   } catch (fallbackError) {
@@ -179,7 +177,7 @@ const makeClaudeApiCallWithProxy = async (
 export const optimizeWithClaude = async (
   prompt: string, 
   apiKey: string,
-  model: string = "claude-sonnet-4-20250514",
+  model: string = "claude-opus-4-8",
   systemPrompt?: string,
   options: ClaudeRequestOptions = {}
 ): Promise<ClaudeResponse> => {
@@ -205,7 +203,7 @@ export const optimizeWithClaude = async (
     }
     
     // Use the specified Claude model or default to Claude 4 Sonnet
-    const claudeModel = model || "claude-sonnet-4-20250514";
+    const claudeModel = model || "claude-opus-4-8";
     console.log(`Using Claude model: ${claudeModel}`);
     
     // Get model name for display in toast
@@ -229,16 +227,11 @@ export const optimizeWithClaude = async (
     // Retry/backoff helpers
     const retryAttempts = Math.max(0, options.retryAttempts ?? 2);
     const baseDelay = Math.max(100, options.retryBaseDelayMs ?? 300);
-    // Claude Sonnet 4.5 with extended thinking can take up to 120s
-    const isSonnet45 = claudeModel.includes('sonnet-4-5');
-    const isOpus = claudeModel.includes('opus');
-    const defaultTimeout = (isSonnet45 || isOpus) ? 120000 : 30000; // 120s for Sonnet 4.5, 30s for others
-    const timeoutMs = Math.max(0, options.timeoutMs ?? defaultTimeout);
+    // Adaptive thinking can take up to ~120s on complex rows.
+    const timeoutMs = Math.max(0, options.timeoutMs ?? 120000);
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     
-    if (isSonnet45) {
-      console.log('⏳ Claude Sonnet 4.5 with extended thinking may take up to 120s. Please wait...');
-    }
+    // Adaptive thinking decides reasoning depth automatically.
 
     const performOnce = async (): Promise<any> => {
       // Try the official SDK with browser support
@@ -250,8 +243,7 @@ export const optimizeWithClaude = async (
       });
 
       try {
-        // Enable extended thinking for Sonnet 4.5 for maximum performance
-        const isSonnet45 = claudeModel.includes('sonnet-4-5');
+        // Adaptive thinking at medium effort per the Opus 4.8 migration guide.
         const requestParams: any = {
           model: claudeModel,
           // Prompt caching: send system as content blocks with cache_control
@@ -265,17 +257,10 @@ export const optimizeWithClaude = async (
           messages: [
             { role: 'user', content: prompt }
           ],
-          max_tokens: options.maxTokens ?? (isSonnet45 ? 16000 : 2000)
+          max_tokens: options.maxTokens ?? 16000,
+          thinking: { type: "adaptive" },
+          output_config: { effort: "medium" }
         };
-
-        // Add extended thinking for Sonnet 4.5
-        if (isSonnet45) {
-          requestParams.thinking = {
-            type: "enabled",
-            budget_tokens: 5000
-          };
-          console.log('🧠 Extended thinking enabled for Claude Sonnet 4.5 (budget: 5k tokens, max: 16k total)');
-        }
 
         const sdkResponse = await client.messages.create(requestParams);
         console.log('✅ Claude SDK call successful - no CORS proxy needed!');
@@ -462,7 +447,7 @@ export const processBatchClaudeRequests = async (
               
               const proxyResult = await makeClaudeApiCallWithProxy(
                 request.apiKey,
-                request.model || "claude-sonnet-4-20250514",
+                request.model || "claude-opus-4-8",
                 request.systemPrompt || "You are a helpful assistant.",
                 request.prompt
               );

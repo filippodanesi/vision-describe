@@ -1,6 +1,6 @@
 # VisionDescribe
 
-AI-powered content generation for e-commerce and marketplace platforms. Uses GPT-5.2, Claude Opus 4.6, and Claude Sonnet 4.5 to generate brand-compliant product descriptions, bullet points, and optimized copy — with real-time cost tracking and multi-language support.
+AI-powered content generation for e-commerce and marketplace platforms. Uses Claude Opus 4.8 (with adaptive thinking) to generate brand-compliant product descriptions, bullet points, and optimized copy, with real-time cost tracking and multi-language support.
 
 Built with React, TypeScript, and Vercel Edge Functions.
 
@@ -17,13 +17,13 @@ Built with React, TypeScript, and Vercel Edge Functions.
 - **Multi-format support** — Excel (.xlsx, .xlsm), CSV, and JSON file processing
 - **Dark/Light mode** — professional theming with user preference support
 
-## AI Models
+## AI Model
+
+All flows run on a single model, Claude Opus 4.8, with adaptive thinking at medium effort.
 
 | Model | Provider | Context | Notes |
 |-------|----------|---------|-------|
-| GPT-5.2 | OpenAI | 400K | Flagship model, best value |
-| Claude Opus 4.6 | Anthropic | 200K | Highest intelligence and reasoning |
-| Claude Sonnet 4.5 | Anthropic | 200K | Fast, great balance of quality and speed |
+| Claude Opus 4.8 | Anthropic | 1M | Most capable Anthropic model; adaptive thinking, native vision |
 
 ## Supported Platforms
 
@@ -40,14 +40,14 @@ Built with React, TypeScript, and Vercel Edge Functions.
 ### Prerequisites
 
 - Node.js 18+
-- OpenAI API key and/or Anthropic API key
+- Anthropic API key
 - Supabase project (for auth and data persistence)
 
 ### Installation
 
 ```bash
-git clone https://github.com/filippodanesi/ai-copy-assistant.git
-cd ai-copy-assistant
+git clone https://github.com/filippodanesi/vision-describe.git
+cd vision-describe
 npm install
 npm run dev
 ```
@@ -62,10 +62,9 @@ cp .env.example .env.local
 |----------|----------|-------------|
 | `VITE_SUPABASE_URL` | Yes | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anonymous key |
-| `VITE_OPENAI_API_KEY` | No | OpenAI API key (can also be set in-app) |
 | `VITE_ANTHROPIC_API_KEY` | No | Anthropic API key (can also be set in-app) |
 
-Server-side (Vercel) also requires `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`.
+Server-side (Vercel) also requires `ANTHROPIC_API_KEY`.
 
 ## Architecture
 
@@ -96,7 +95,7 @@ src/
 │   ├── AuthContext.tsx            # Supabase auth state
 │   └── ApiKeysContext.tsx         # User API keys storage
 ├── lib/
-│   ├── api/                      # API clients (OpenAI, Anthropic, server)
+│   ├── api/                      # API clients (Anthropic, server)
 │   ├── models.ts                 # AI model definitions and pricing
 │   ├── supabase.ts               # Supabase client
 │   └── prompts/                  # Shared prompt templates
@@ -129,7 +128,7 @@ supabase/migrations/              # Database schema
 | State | TanStack React Query | Server state management |
 | Routing | React Router DOM | Client-side routing |
 | File Processing | ExcelJS + Papa Parse | Excel and CSV handling |
-| AI Integration | OpenAI SDK + Anthropic SDK | Language model integration |
+| AI Integration | Anthropic SDK | Language model integration |
 | Auth & Database | Supabase (PostgreSQL) | Authentication and data persistence |
 | Deployment | Vercel | Edge Functions + static hosting |
 

@@ -3,24 +3,21 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
 
 interface ApiKeysContextType {
-  openaiKey: string;
   anthropicKey: string;
   hasKeys: boolean;
   loading: boolean;
-  saveKeys: (openaiKey: string, anthropicKey: string) => Promise<void>;
+  saveKeys: (anthropicKey: string) => Promise<void>;
 }
 
 const ApiKeysContext = createContext<ApiKeysContextType | undefined>(undefined);
 
 export const ApiKeysProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [openaiKey, setOpenaiKey] = useState('');
   const [anthropicKey, setAnthropicKey] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
-      setOpenaiKey('');
       setAnthropicKey('');
       setLoading(false);
       return;
@@ -29,27 +26,27 @@ export const ApiKeysProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setLoading(true);
     supabase
       .from('user_settings')
-      .select('openai_key, anthropic_key')
+      .select('anthropic_key')
       .eq('user_id', user.id)
       .single()
       .then(({ data }) => {
         if (data) {
-          setOpenaiKey(data.openai_key || '');
           setAnthropicKey(data.anthropic_key || '');
         }
       })
       .finally(() => setLoading(false));
   }, [user]);
 
-  const saveKeys = useCallback(async (newOpenaiKey: string, newAnthropicKey: string) => {
+  const saveKeys = useCallback(async (newAnthropicKey: string) => {
     if (!user) return;
 
+    // Only the anthropic_key column is written; the legacy openai_key column
+    // is left untouched (the app is Anthropic-only).
     const { error } = await supabase
       .from('user_settings')
       .upsert(
         {
           user_id: user.id,
-          openai_key: newOpenaiKey || null,
           anthropic_key: newAnthropicKey || null,
         },
         { onConflict: 'user_id' }
@@ -57,14 +54,13 @@ export const ApiKeysProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     if (error) throw error;
 
-    setOpenaiKey(newOpenaiKey);
     setAnthropicKey(newAnthropicKey);
   }, [user]);
 
-  const hasKeys = Boolean(openaiKey || anthropicKey);
+  const hasKeys = Boolean(anthropicKey);
 
   return (
-    <ApiKeysContext.Provider value={{ openaiKey, anthropicKey, hasKeys, loading, saveKeys }}>
+    <ApiKeysContext.Provider value={{ anthropicKey, hasKeys, loading, saveKeys }}>
       {children}
     </ApiKeysContext.Provider>
   );

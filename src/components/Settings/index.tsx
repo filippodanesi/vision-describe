@@ -9,23 +9,20 @@ import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/ui/page-header';
 
 export const Settings: React.FC = () => {
-  const { openaiKey, anthropicKey, loading, saveKeys } = useApiKeys();
+  const { anthropicKey, loading, saveKeys } = useApiKeys();
 
-  const [openai, setOpenai] = useState('');
   const [anthropic, setAnthropic] = useState('');
-  const [showOpenai, setShowOpenai] = useState(false);
   const [showAnthropic, setShowAnthropic] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setOpenai(openaiKey);
     setAnthropic(anthropicKey);
-  }, [openaiKey, anthropicKey]);
+  }, [anthropicKey]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveKeys(openai.trim(), anthropic.trim());
+      await saveKeys(anthropic.trim());
       toast('Settings saved', { description: 'Your API keys have been updated.' });
     } catch (err) {
       toast.error('Error saving settings', {
@@ -44,7 +41,7 @@ export const Settings: React.FC = () => {
     );
   }
 
-  const hasChanges = openai.trim() !== openaiKey || anthropic.trim() !== anthropicKey;
+  const hasChanges = anthropic.trim() !== anthropicKey;
 
   return (
     <div className="max-w-xl mx-auto animate-in fade-in-0 duration-300">
@@ -58,33 +55,10 @@ export const Settings: React.FC = () => {
         <CardHeader>
           <CardTitle className="text-base">API Keys</CardTitle>
           <CardDescription>
-            Enter your API keys to use AI models. At least one key is required.
+            Enter your Anthropic API key to use AI models.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="openai-key">OpenAI API Key</Label>
-            <div className="relative">
-              <Input
-                id="openai-key"
-                type={showOpenai ? 'text' : 'password'}
-                value={openai}
-                onChange={(e) => setOpenai(e.target.value)}
-                placeholder="sk-..."
-                className="pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowOpenai(!showOpenai)}
-                aria-label={showOpenai ? 'Hide OpenAI API key' : 'Show OpenAI API key'}
-                title={showOpenai ? 'Hide key' : 'Show key'}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-              >
-                {showOpenai ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="anthropic-key">Anthropic API Key</Label>
             <div className="relative">

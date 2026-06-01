@@ -5,8 +5,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useOptimizationConfig } from './hooks/optimization/useOptimizationConfig';
-import { optimizeTextWithAI } from './utils/optimizationUtils';
 import { toast } from 'sonner';
 import { useHybridProcessing } from './hooks/useHybridProcessing';
 import { useCostTracker } from './hooks/useCostTracker';
@@ -51,8 +49,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 // ─── Step Definitions ─────────────────────────────────────────────────────────
 
 // Hardcoded model for the Optimize flow.
-// Claude Opus 4.7 — most capable Anthropic model. No user selector exposed.
-const OPTIMIZE_MODEL = 'claude-opus-4-7';
+// Claude Opus 4.8 — most capable Anthropic model. No user selector exposed.
+const OPTIMIZE_MODEL = 'claude-opus-4-8';
 
 const getStepsForUseCase = (useCase: UseCase | ''): StepDef<ProcessingStep>[] => {
   switch (useCase) {
@@ -85,7 +83,7 @@ const getStepsForUseCase = (useCase: UseCase | ''): StepDef<ProcessingStep>[] =>
 
 export const OptimizeMode: React.FC = () => {
   // API keys from user settings
-  const { openaiKey, anthropicKey, hasKeys } = useApiKeys();
+  const { anthropicKey, hasKeys } = useApiKeys();
 
   // Project selection
   const [projects, setProjectsList] = useState<ProjectWithStats[]>([]);
@@ -240,8 +238,7 @@ export const OptimizeMode: React.FC = () => {
           setResumingRun(null);
           return;
         }
-        const isAnthropic = resumingRun.model_id.startsWith('claude');
-        const apiKey = isAnthropic ? anthropicKey : openaiKey;
+        const apiKey = anthropicKey;
         if (!apiKey) {
           toast.error('API Key Missing', {
             description: 'Configure your API keys in Settings before processing.'

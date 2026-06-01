@@ -2,8 +2,8 @@
  * Token Counter Component
  *
  * Real-time token usage and cost tracking. Renders session statistics,
- * per-provider cost breakdown, recent operations and a 100-product
- * projection as a single industrial-spec block — no rainbow palette.
+ * cost breakdown, recent operations and a 100-product projection as a
+ * single industrial-spec block.
  */
 
 import React from 'react';
@@ -49,11 +49,6 @@ export const TokenCounter: React.FC<TokenCounterProps> = ({ className }) => {
       <section>
         <SectionHeader index={2} title="Cost breakdown" />
         <div className="border border-border bg-card divide-y divide-border">
-          <ProviderRow
-            label="OpenAI"
-            spent={formatCurrency(totalCost.openai)}
-            remaining={formatCurrency(remainingBudget.openai)}
-          />
           <ProviderRow
             label="Anthropic"
             spent={formatCurrency(totalCost.anthropic)}
