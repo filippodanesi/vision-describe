@@ -164,7 +164,7 @@ ${truthfulnessRules()}
 
 3. Vary the brand metaphors. "Second skin", "next to skin", "morning to night", "every day / everyday", "comfort that moves with you" and similar are all brand-true, but become hollow when repeated. Use each of these metaphors at most once per description.
 
-4. Use simple, clear, direct language. Avoid: delve, leverage, landscape, testament, showcase, robust, comprehensive, seamless (as an adjective for non-construction concepts), harness, foster, elevate, navigate, crucial, paramount, intricate, tapestry, realm, embark, unleash, streamline, empower, unlock, vibrant, nestled, journey (as metaphor).
+4. Use simple, clear, direct language. Avoid: delve, leverage, landscape, testament, showcase, robust, comprehensive, seamless (as an adjective for non-construction concepts), harness, foster, elevate (including elevated and elevating), navigate, crucial, paramount, intricate, tapestry, realm, embark, unleash, streamline, empower, unlock, vibrant, nestled, journey (as metaphor).
 
 5. No humour, puns, jokes or culture-specific idioms. The text ships globally; assume the reader is reading in their second language.
 
@@ -288,7 +288,7 @@ A cross-sell line pointing to a matching ${brandLabel} series (e.g. "matching br
 
 3. Vary the brand metaphors. "Second skin", "next to skin", "morning to night", "every day / everyday", "comfort that moves with you" and similar are brand-true but become hollow when repeated. Use each at most once per description.
 
-4. Use simple, clear, direct language. Avoid: delve, leverage, landscape, testament, showcase, robust, comprehensive, seamless (as an adjective for non-construction concepts), harness, foster, elevate, navigate, crucial, paramount, intricate, tapestry, realm, embark, unleash, streamline, empower, unlock, vibrant, nestled, journey (as metaphor), thoughtful construction, prioritizes, ensures utmost.
+4. Use simple, clear, direct language. Avoid: delve, leverage, landscape, testament, showcase, robust, comprehensive, seamless (as an adjective for non-construction concepts), harness, foster, elevate (including elevated and elevating), navigate, crucial, paramount, intricate, tapestry, realm, embark, unleash, streamline, empower, unlock, vibrant, nestled, journey (as metaphor), thoughtful construction, prioritizes, ensures utmost.
 
 5. No humour, puns, jokes or culture-specific idioms. The text ships globally; assume the reader is reading in their second language.
 
