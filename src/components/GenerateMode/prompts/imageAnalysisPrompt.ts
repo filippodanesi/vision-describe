@@ -4,7 +4,7 @@
 //
 // Tuned for parity with the Metadata Generation prompt (commit 8b85664d):
 // XML structure, the shared aiBannedPhrases() / truthfulnessRules() /
-// wiringAndPaddingRules() rule blocks, 200-300 word target, no
+// wiringAndPaddingRules() rule blocks, 150-300 word target, no
 // rule-of-three / promotional-AI vocabulary in the instruction text itself.
 //
 // SINGLE_IMAGE and MULTIPLE_IMAGES were near-duplicates of each other (only
@@ -92,7 +92,7 @@ Output Inriver-compatible HTML in this exact shape:
 2. A bullet list with 4-6 items wrapped in <ul class="pd"><li>...</li></ul>. Each bullet is a real, distinct feature drawn from ${imageRef}. No filler bullets like "perfect for everyday wear" or "great for any occasion".
 3. A closing <p> of 1-2 sentences. No CTA, no "shop now".
 
-Target length: 200-300 words total. If ${imageRef} ${imageCount > 1 ? 'show' : 'shows'} limited detail, write tighter rather than padding with generic claims.
+Target length: 150 to 300 words total, aiming for around 220. If ${imageRef} ${imageCount > 1 ? 'show' : 'shows'} limited detail, land near the lower end rather than padding with generic claims.
 
 Match the grammatical number of the category exactly: if "${category}" is singular, use singular articles; if plural, use plural articles. Do not switch based on what is depicted.
 </structure>
@@ -122,7 +122,7 @@ Before returning, silently verify:
 - No banned style words (see <style_rules>).
 - No mention of colour, size or variant.
 - Every technical claim is supported by something visible in ${imageRef}.
-- Total length is between 200 and 300 words.
+- Total length is between 150 and 300 words.
 - HTML structure is exactly: <p>intro</p><ul class="pd"><li>...</li></ul><p>closing</p> (plus the certification line if applicable).
 
 Write the description now.

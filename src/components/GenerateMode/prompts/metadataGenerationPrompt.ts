@@ -68,7 +68,7 @@ const SLOGGI_FEWSHOTS = `
 - Style USP: Soft seamless microfibre, delicate lace inserts dot-bonded to the body, free-cut edges, 360-degree stretch, no visible lines under tight clothing.
 - Style Description: Brazilian cut with mid back coverage and a soft narrow waistband, brushed for a softer hand feel against the skin.
 </input_materials>
-<output><p>A brazilian brief that disappears under clothes without disappearing on personality. Soft microfibre, lace inserts where they count, and the seam-free comfort the ZERO Feel series is built around. Quiet style, loud confidence.</p><ul class="pd"><li>Brazilian cut with mid coverage at the back and a soft narrow waistband</li><li>GRS-certified recycled polyamide microfibre, brushed for a softer hand feel</li><li>Lace inserts dot-bonded to the body, so no seams and no scratch under tight clothing</li><li>360-degree stretch fabric that snaps back into shape without curling at the edges</li><li>Free-cut leg openings deliver a flat finish next to the skin</li></ul><p>That's the ZERO Feel promise: absolute invisibility, zero restriction, ultimate comfort, in a shape that still makes us feel like us.</p><p>Sustainability certificate GRS</p></output>
+<output><p>If you want underwear that stays invisible under fitted clothes, this brazilian brief is built for exactly that. It uses soft recycled microfibre with delicate lace inserts bonded flat to the body, so there are no seams to print through leggings or a close-cut dress. It belongs to the ZERO Feel series, made for all-day comfort you stop noticing.</p><ul class="pd"><li>Brazilian cut with mid coverage at the back and a soft, narrow waistband that sits flat</li><li>GRS-certified recycled polyamide microfibre, brushed for a softer hand feel against the skin</li><li>Lace inserts dot-bonded directly to the fabric, so they add detail without seams or scratch</li><li>360-degree stretch that moves with the body and snaps back into shape without curling at the edges</li><li>Free-cut leg openings leave a clean, flat finish next to the skin</li><li>Stays invisible under leggings, fitted trousers and close-cut dresses</li></ul><p>That is what ZERO Feel is built around: absolute invisibility, zero restriction and ultimate comfort, in a brief you can wear from morning to night.</p><p>Sustainability certificate GRS</p></output>
 </example>
 
 <example>
@@ -79,7 +79,7 @@ const SLOGGI_FEWSHOTS = `
 - Style USP: Soft elastic waistband, breathable recycled cotton blend, flat seams, mid-rise.
 - Style Description: Easy hipster brief in a 3-pack, cut for movement, layered under anything.
 </input_materials>
-<output><p>Underwear that gets out of the way. The GO Allround Hipster is the brief we keep coming back to: soft, breathable, cut for movement, and packed in threes so the laundry pile never wins.</p><ul class="pd"><li>3-pack of hipster briefs in a soft, breathable recycled cotton blend</li><li>Mid-rise soft elastic waistband that sits flat and stays in place</li><li>Stretch construction that moves with the body through any range of motion</li><li>Flat seams along the leg openings, so nothing digs in</li><li>Clean, sport-leaning lines that layer under anything</li></ul><p>That's what sloggi GO is for: all-round comfort, in a modern essential style, no fuss.</p></output>
+<output><p>When you want a reliable everyday brief and plenty of them, the GO Allround Hipster comes in a pack of three in a breathable recycled cotton blend. It is cut for movement and sits flat under anything, which is why it tends to become the pair you reach for first. The GO series is sloggi's modern essential: comfortable, unfussy, made for every day.</p><ul class="pd"><li>Pack of three hipster briefs in a soft, breathable recycled cotton blend</li><li>Mid-rise elastic waistband that sits flat and stays in place through the day</li><li>Stretch construction that moves with the body across any range of motion</li><li>Flat seams along the leg openings so nothing digs in or marks the skin</li><li>Easy-care fabric that holds its shape and colour wash after wash</li><li>Clean, sport-leaning lines that layer invisibly under jeans, trousers or activewear</li></ul><p>That is what sloggi GO is for: all-round comfort in a modern essential style, ready for whatever the day asks.</p></output>
 </example>
 
 <example>
@@ -90,7 +90,7 @@ const SLOGGI_FEWSHOTS = `
 - Style USP: Smart-cooling cotton tech that wicks heat away from the skin, narrow side seams, light back coverage.
 - Style Description: Tanga brief with a soft waistband for invisibility under fitted clothing.
 </input_materials>
-<output><p>Cooling underwear that earns its name. The EVER Cool Tanga uses a smart cotton technology that wicks heat away from the skin, so the body stays a degree closer to comfortable through the day. Sleek shape, low coverage, real engineering.</p><ul class="pd"><li>Tanga brief with narrow side seams and light back coverage</li><li>Smart-cooling cotton fabric that pulls heat and moisture away from the skin</li><li>Soft waistband that sits flat under fitted clothing</li><li>Lightweight construction with a soft drape against the body</li><li>Clean cut at the leg openings to stay invisible under leggings or jeans</li></ul><p>This is the EVER series doing what it does best: comfort from within, augmented by smart tech features.</p></output>
+<output><p>Warm days call for underwear that keeps up. The EVER Cool Tanga uses a smart cotton technology that wicks heat and moisture away from the skin, in a low-coverage shape with a soft waistband that disappears under fitted clothing. It is part of the EVER series, where sloggi adds real tech to everyday comfort.</p><ul class="pd"><li>Tanga brief with narrow side seams and light coverage at the back</li><li>Smart-cooling cotton fabric that pulls heat and moisture away from the skin</li><li>Soft, flat waistband that stays invisible under leggings and fitted trousers</li><li>Lightweight construction with a soft drape that sits close without pressure</li><li>Clean-cut leg openings for a smooth line under close-fitting clothes</li><li>Breathable, skin-friendly fabric suited to warm days and active routines</li></ul><p>This is the EVER series doing what it does best: comfort from within, with smart tech features that earn their place.</p></output>
 </example>
 `;
 
@@ -103,7 +103,7 @@ const TRIUMPH_FEWSHOTS = `
 - Style USP: Half-cup padded bra with delicate floral lace at the top of the cup, underwired for support, smooth back.
 - Style Description: Elegant padded bra that lifts and shapes, designed for everyday confidence.
 </input_materials>
-<output><p>A padded half-cup bra that pairs lift with softness. The Amourette Charm Spotlight delivers everyday support without giving up on detail, with delicate floral lace lining the top of the cup and a smooth back that sits clean under fitted tops.</p><ul class="pd"><li>Underwired half-cup design that lifts and shapes the bust naturally</li><li>Soft padding for a smooth, defined silhouette under clothing</li><li>Delicate floral lace at the upper cup as a signature romantic touch</li><li>Smooth back finish that stays invisible under fitted clothing</li><li>Adjustable straps and hook-and-eye closure for a precise fit</li></ul><p>Part of the Amourette series: feminine elegance with floral embroidery, designed to feel as considered as it looks.</p></output>
+<output><p>For everyday lift with a touch of romance, the Amourette Charm Spotlight is a padded half-cup bra that shapes and supports without losing the detail. Delicate floral lace lines the top of the cup, while a smooth back keeps it discreet under fitted tops and knitwear. It belongs to Amourette, Triumph's signature romantic series.</p><ul class="pd"><li>Underwired half-cup design that lifts and shapes the bust naturally</li><li>Soft padding for a smooth, defined silhouette under clothing</li><li>Delicate floral lace along the upper cup as the series' signature detail</li><li>Smooth back panel that stays invisible under fitted tops and fine knits</li><li>Adjustable straps and a hook-and-eye closure for a precise, personalised fit</li><li>An everyday bra that carries from work days through to evenings out</li></ul><p>Part of the Amourette series: feminine elegance with floral embroidery, made to feel as considered as it looks.</p></output>
 </example>
 
 <example>
@@ -114,7 +114,7 @@ const TRIUMPH_FEWSHOTS = `
 - Style USP: Padded T-shirt bra in microfibre, ultra-light spacer foam cups, mesh wings, underwired.
 - Style Description: Invisible bra under any outfit, with soft spacer cups for a sculpted but breathable hold.
 </input_materials>
-<output><p>An invisible T-shirt bra that does the smoothing without making itself known. Body Make-up Soft Touch combines an underwired structure with featherlight spacer cups, so the silhouette stays sculpted and the body stays cool.</p><ul class="pd"><li>Padded T-shirt bra with lightweight spacer foam for a smooth, defined shape</li><li>Underwired construction for steady, all-day hold</li><li>Breathable mesh wings to keep the bra light against the skin</li><li>Microfibre fabrication for a soft, invisible finish under fitted clothing</li><li>Adjustable straps and back closure for a personalised fit</li></ul><p>Part of the Body Make-up series: invisible second-skin comfort, with a smoothing effect that lasts the whole day.</p></output>
+<output><p>Under a fitted top, the last thing you want is a bra that shows. Body Make-up Soft Touch smooths and supports while staying invisible, pairing an underwired structure with featherlight spacer cups so the shape stays defined and the fabric stays cool against the skin. It is part of the Body Make-up series, designed for second-skin comfort.</p><ul class="pd"><li>Padded T-shirt bra with lightweight spacer foam for a smooth, even shape</li><li>Underwired construction for steady support that holds all day</li><li>Breathable mesh wings that keep the bra light and cool against the skin</li><li>Microfibre fabric for a soft, invisible finish under close-fitting clothes</li><li>Adjustable straps and back closure for a secure, personalised fit</li><li>Sits cleanly under t-shirts, fine knits and tailored tops where seams would show</li></ul><p>Part of the Body Make-up series: invisible comfort with a smoothing effect that holds through the day.</p></output>
 </example>
 `;
 
@@ -158,7 +158,7 @@ ${truthfulnessRules()}
 </truthfulness>
 
 <style_rules>
-1. Open with an actual sentence, not a template. Do not start with "Meet the [product]", "Introducing…", "Welcome to…", "Discover…", "Say hello to…" or any greeting-style opener. Vary your openings across descriptions: lead with a benefit, name a moment, lead with the fabric, name the cut, address a real need. The opener is the brand's first impression; write it.
+1. The first sentence must tell the customer exactly why they need this product: the concrete benefit, problem it solves, or use-case it is made for. Do not open with a template or greeting ("Meet the [product]", "Introducing…", "Welcome to…", "Discover…", "Say hello to…"). Vary the construction across descriptions (lead with the need, name the moment, lead with the fabric, name the cut), but make the reason to buy clear in that first sentence.
 
 2. Em dashes (—) are restricted. Use a maximum of 1 em dash in the entire description. Prefer commas, periods, parentheses or a clean rephrasing.
 
@@ -186,11 +186,11 @@ End with a closing line that ties the SKU back to its ${brandLabel} series. The 
 <structure>
 Output Inriver-compatible HTML in this exact shape:
 
-1. An opening <p> of 2-3 sentences stating what the product is and the comfort/benefit promise.
-2. A bullet list with 4-6 items wrapped in <ul class="pd"><li>…</li></ul>. Each bullet is a real, distinct feature or benefit drawn from <input_materials>. No filler bullets like "perfect for everyday wear" or "great for any occasion".
+1. An opening <p> of 2-3 sentences. The first sentence states why the customer needs the product (benefit or use-case); the rest grounds it in what the product is and the material or construction behind the promise.
+2. A bullet list with 5-6 items wrapped in <ul class="pd"><li>…</li></ul>. Lead with concrete specifics: materials and fabric composition, construction, fit and coverage, care, certifications, and the situations the product is made for. Prefer a verifiable specification or use-case over a vague benefit. No filler bullets like "perfect for everyday wear" or "great for any occasion".
 3. A closing <p> of 1-2 sentences anchoring back to the series promise (see <series_anchors>). No CTA, no "shop now".
 
-Target length: 200-300 words total. Stay inside this range. If the inputs are sparse, write tighter rather than padding.
+Target length: 150 to 300 words total, aiming for around 220. Use the bullets to carry concrete detail rather than padding the paragraphs. If the inputs are genuinely sparse, land near the lower end rather than inventing claims.
 </structure>
 
 <additional_rules>
@@ -212,12 +212,12 @@ Return only the HTML. Start directly with <p>. No preamble, no markdown code blo
 Use <p> and <ul class="pd"><li>…</li></ul> exclusively. Do not use <strong>, <b>, <em>, <i>, headings or any other tag.
 
 Before returning, silently verify:
-- The opening sentence does NOT start with "Meet the…", "Introducing…", "Welcome to…", "Discover…", "Say hello to…" or any greeting opener.
+- The opening sentence states why the customer needs the product and does NOT start with "Meet the…", "Introducing…", "Welcome to…", "Discover…", "Say hello to…" or any greeting opener.
 - Em dash count is 0 or 1.
 - No banned style words.
 - No mention of colour, size or variant.
 - All technical claims trace back to <input_materials>.
-- Total length is between 200 and 300 words.
+- Total length is between 150 and 300 words.
 - HTML structure is exactly: <p>intro</p><ul class="pd"><li>…</li></ul><p>closing</p> (plus the sustainability line if applicable).
 - If <input_materials> Style USP or Style Description contains a cup classification line ("Integrated fixed cups", "Removable cups", "Padded with removable cups", "Non-padded" / "non padded"), it appears verbatim (or with minimal rewording) as the FIRST bullet of the <li> list. It is not paraphrased into a generic "padded" / "non-padded" line and it is not dropped.
 </output_format>`;
@@ -282,7 +282,7 @@ A cross-sell line pointing to a matching ${brandLabel} series (e.g. "matching br
 </remove>
 
 <style_rules>
-1. Open with an actual sentence, not a template. Do not start with "Meet the [product]", "Introducing…", "Welcome to…", "Discover…", "Say hello to…" or any greeting-style opener. Vary the opener: lead with a benefit, name a moment, lead with the fabric, name the cut, address a real need.
+1. The first sentence must tell the customer exactly why they need this product: the concrete benefit, problem it solves, or use-case it is made for. Do not open with a template or greeting ("Meet the [product]", "Introducing…", "Welcome to…", "Discover…", "Say hello to…"). Vary the construction (lead with the need, name the moment, lead with the fabric, name the cut), but make the reason to buy clear in that first sentence.
 
 2. Em dashes (—) are restricted. Use a maximum of 1 em dash in the entire description.
 
@@ -302,11 +302,11 @@ A cross-sell line pointing to a matching ${brandLabel} series (e.g. "matching br
 <structure>
 Output Inriver-compatible HTML in this exact shape:
 
-1. An opening <p> of 2-3 sentences stating what the product is and the comfort/benefit promise.
-2. A bullet list with 4-6 items wrapped in <ul class="pd"><li>…</li></ul>. Each bullet is a real, distinct feature drawn from <existing_description>. No filler bullets like "perfect for everyday wear".
+1. An opening <p> of 2-3 sentences. The first sentence states why the customer needs the product (benefit or use-case); the rest grounds it in what the product is and the material or construction behind it.
+2. A bullet list with 5-6 items wrapped in <ul class="pd"><li>…</li></ul>. Lead with concrete specifics drawn from <existing_description>: materials, construction, fit and coverage, care, certifications, and the situations the product is made for. Prefer a verifiable specification or use-case over a vague benefit. No filler bullets like "perfect for everyday wear".
 3. A closing <p> of 1-2 sentences. No CTA, no "shop now".
 
-Target length: 200-300 words total. If the source is sparse, write tighter rather than padding.
+Target length: 150 to 300 words total, aiming for around 220. Carry concrete detail in the bullets rather than padding the paragraphs. If the source is genuinely thin, land near the lower end rather than inventing claims.
 </structure>
 
 <additional_rules>
@@ -323,13 +323,13 @@ Return only the HTML. Start directly with <p>. No preamble, no markdown code blo
 Use <p> and <ul class="pd"><li>…</li></ul> exclusively. No <strong>, <b>, <em>, <i>, headings or other tags.
 
 Before returning, silently verify:
-- The opening sentence does NOT start with a greeting opener.
+- The opening sentence states why the customer needs the product and does NOT start with a greeting opener.
 - Em dash count is 0 or 1.
 - No banned style words, no AI filler.
 - No mention of colour, size or variant; no model-wears-size or retouching line.
 - Every technical claim traces back to <existing_description>.
 - Output is entirely in English.
-- Total length is between 200 and 300 words.
+- Total length is between 150 and 300 words.
 - HTML structure is exactly: <p>intro</p><ul class="pd"><li>…</li></ul><p>closing</p>.
 </output_format>`;
 
