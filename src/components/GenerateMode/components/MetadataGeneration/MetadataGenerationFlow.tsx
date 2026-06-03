@@ -318,6 +318,15 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
             </div>
           )}
 
+          {format.type === 'longdesc-rework' && (
+            <div className="mt-4 border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+              Rework mode: each SKU's existing long description is rewritten to
+              brand standard in English, then localised into the locale columns
+              already present in the file. Existing columns are overwritten in
+              place. Rows with no existing copy fall back to the product name.
+            </div>
+          )}
+
           {error && (
             <div className="mt-4 flex items-center gap-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />

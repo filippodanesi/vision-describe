@@ -140,7 +140,12 @@ export enum MetadataGenerationStep {
 // default in this flow, no temperature/top_p/top_k allowed.
 export const METADATA_GENERATION_MODEL = 'claude-opus-4-8';
 
-export type MetadataFormatType = 'aw26-compact' | 'sloggi-b2c' | 'triumph-b2c' | 'unknown';
+export type MetadataFormatType =
+  | 'aw26-compact'
+  | 'sloggi-b2c'
+  | 'triumph-b2c'
+  | 'longdesc-rework'
+  | 'unknown';
 
 export interface MetadataFormat {
   type: MetadataFormatType;
@@ -159,6 +164,13 @@ export interface MetadataProduct {
   seriesUsp?: string;
   styleUsp?: string;
   styleDescription?: string;
+  /**
+   * For the 'longdesc-rework' format only: the existing long description used
+   * as the rewrite source. Usually the existing EN copy; falls back to the
+   * first populated locale when EN is empty (existingSourceLang records which).
+   */
+  existingDescription?: string;
+  existingSourceLang?: string;
   rawRow: Record<string, any>;
 }
 

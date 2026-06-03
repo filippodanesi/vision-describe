@@ -7,15 +7,26 @@ import type {
   GeneratedProduct,
   GenerationProgress,
 } from '../types';
-import { MetadataGenerationStep, INRIVER_LANGUAGES, METADATA_GENERATION_MODEL } from '../types';
+import {
+  MetadataGenerationStep,
+  INRIVER_LANGUAGES,
+  LANGUAGE_MAPPING,
+  METADATA_GENERATION_MODEL,
+} from '../types';
 import {
   buildEnMasterGenerationPrompt,
   buildLocalisationPrompt,
+  buildRewritePrompt,
 } from '../prompts/metadataGenerationPrompt';
 import { translateWithClaude } from '../utils/visionApiUtils';
 import { processTextWithTerminology } from '../utils/terminology';
 
 const BATCH_SIZE = 3;
+
+// Minimum character length for a MaterialLongDescriptionEcom_<lang> cell to
+// count as a rewrite source in the 'longdesc-rework' flow. Below this a cell is
+// an admin note or a certification fragment, not a description.
+const REWORK_MIN_SOURCE_LEN = 120;
 
 function cleanMarkdownFormatting(text: string): string {
   return text.replace(/^```[a-z]*\n?/gm, '').replace(/\n?```$/gm, '').trim();
@@ -63,7 +74,27 @@ function detectFormat(headers: string[]): MetadataFormatType {
   ];
   if (triumphB2cRequired.every((h) => set.has(h))) return 'triumph-b2c';
 
+  // Long-description rework: a material number, an EN product name and at
+  // least one existing MaterialLongDescriptionEcom_<lang> column, but none of
+  // the structured B2C source fields (those would have matched above). This is
+  // the "current assortment" export — rewrite the existing copy in place.
+  const hasMatNo = set.has('materialsapmaterialno') || set.has('material number');
+  const hasEnName =
+    set.has('materialmaterialdescription_en') || set.has('materialmaterialdescription');
+  const hasLongDescCol = headers.some((h) =>
+    /^materiallongdescriptionecom_/i.test(h.trim())
+  );
+  if (hasMatNo && hasEnName && hasLongDescCol) return 'longdesc-rework';
+
   return 'unknown';
+}
+
+/** Inriver locale codes present as MaterialLongDescriptionEcom_<code> columns. */
+function longDescLangsFromHeaders(headers: string[]): string[] {
+  return headers
+    .map((h) => h.trim())
+    .filter((h) => /^MaterialLongDescriptionEcom_/i.test(h))
+    .map((h) => h.replace(/^MaterialLongDescriptionEcom_/i, ''));
 }
 
 interface ParsedSheet {
@@ -134,6 +165,45 @@ function extractProducts(
             : undefined,
           rawRow: row,
         };
+      } else if (format === 'longdesc-rework') {
+        const matNo = row['MaterialSAPMaterialNo'] || row['Material Number'] || '';
+        if (!matNo) return;
+        const name = String(
+          row['MaterialMaterialDescription_en'] ||
+            row['MaterialMaterialDescription'] ||
+            ''
+        );
+        // Brand isn't a column in this export; infer it from the product name.
+        const brand = /sloggi/i.test(name) ? 'sloggi' : 'Triumph';
+        // Pick the rewrite source: existing EN copy, else the first populated
+        // locale (so the 25 EN-empty rows still have a source to rewrite from).
+        const langCols = longDescLangsFromHeaders(sheet.headers);
+        const sourcePref = [
+          'en', 'de', 'fr', 'it', 'es', 'nl', 'pl', 'cs', 'hu', 'da', 'sv', 'pt',
+        ].filter((l) => langCols.includes(l));
+        let existingDescription: string | undefined;
+        let existingSourceLang: string | undefined;
+        for (const lc of sourcePref) {
+          const val = row[`MaterialLongDescriptionEcom_${lc}`];
+          // Real copy (prose or HTML) runs 400+ chars. The 120-char floor skips
+          // admin notes ("Long descriptions is online, however not in Inriver")
+          // and standalone certification fragments that share these columns.
+          if (val && String(val).trim().length >= REWORK_MIN_SOURCE_LEN) {
+            existingDescription = String(val).trim();
+            existingSourceLang = lc;
+            break;
+          }
+        }
+        p = {
+          sheetName: sheet.name,
+          rowIndex: index,
+          materialNumber: String(matNo),
+          productName: name,
+          brand,
+          existingDescription,
+          existingSourceLang,
+          rawRow: row,
+        };
       } else if (format === 'sloggi-b2c' || format === 'triumph-b2c') {
         const matNo = row['MaterialSAPMaterialNo'] || '';
         if (!matNo) return;
@@ -166,7 +236,14 @@ function extractProducts(
         };
       }
 
-      if (p && hasUsableMetadata(p)) products.push(p);
+      // Rework rows are always usable: they have a product name and either an
+      // existing description to rewrite or (for the few fully-empty rows) the
+      // name as a best-effort source. USP-based formats keep the stricter gate.
+      const usable =
+        format === 'longdesc-rework'
+          ? Boolean(p && p.productName.trim())
+          : Boolean(p && hasUsableMetadata(p));
+      if (p && usable) products.push(p);
     });
   }
 
@@ -265,6 +342,20 @@ export function useMetadataGeneration() {
           new Set(prods.map((p) => (p.brand || 'unknown').trim()))
         );
         setSelectedBrands(brands);
+
+        // For the rework format, regenerate exactly the locale columns already
+        // present in the file (e.g. the current assortment ships 'pt', not
+        // 'pt-PT'), so the output overwrites them in place rather than adding
+        // parallel columns.
+        if (detected === 'longdesc-rework') {
+          const fileLangs = longDescLangsFromHeaders(allHeaders);
+          if (fileLangs.length > 0) setSelectedLanguages(fileLangs);
+          const withSource = prods.filter((p) => p.existingDescription).length;
+          addLog(
+            `Rework mode: ${prods.length} SKU(s), ${withSource} with an existing description to rewrite, ${prods.length - withSource} from product name only. Languages preset from file: ${fileLangs.join(', ')}.`
+          );
+        }
+
         addLog(
           `Parsed ${prods.length} product(s) across ${parsed.length} sheet(s); format: ${detected}`
         );
@@ -328,18 +419,31 @@ export function useMetadataGeneration() {
           } as GeneratedProduct;
         }
 
-        // Step 1 — generate EN master
+        // Step 1 — produce the EN master.
+        // Rework format with an existing description → rewrite it. Otherwise
+        // (USP-based formats, or rework rows with no source copy) → generate
+        // from the structured inputs / product name.
         try {
-          const enPrompt = buildEnMasterGenerationPrompt({
-            materialNumber: product.materialNumber,
-            productName: product.productName,
-            brand: product.brand,
-            productLine: product.productLine,
-            shortDescription: product.shortDescription,
-            seriesUsp: product.seriesUsp,
-            styleUsp: product.styleUsp,
-            styleDescription: product.styleDescription,
-          });
+          const isRework = format?.type === 'longdesc-rework';
+          const enPrompt =
+            isRework && product.existingDescription
+              ? buildRewritePrompt({
+                  materialNumber: product.materialNumber,
+                  productName: product.productName,
+                  brand: product.brand,
+                  existingDescription: product.existingDescription,
+                  existingSourceLang: product.existingSourceLang,
+                })
+              : buildEnMasterGenerationPrompt({
+                  materialNumber: product.materialNumber,
+                  productName: product.productName,
+                  brand: product.brand,
+                  productLine: product.productLine,
+                  shortDescription: product.shortDescription,
+                  seriesUsp: product.seriesUsp,
+                  styleUsp: product.styleUsp,
+                  styleDescription: product.styleDescription,
+                });
           const enResponse = await translateWithClaude(enPrompt, apiKey, modelId, signal);
           enMaster = cleanMarkdownFormatting(enResponse.content);
           enMaster = processTextWithTerminology(enMaster, 'en');
@@ -367,7 +471,7 @@ export function useMetadataGeneration() {
           for (const langCode of nonEnLangs) {
             if (signal.aborted) break;
             const langDef = INRIVER_LANGUAGES.find((l) => l.code === langCode);
-            const langName = langDef?.name || langCode;
+            const langName = langDef?.name || LANGUAGE_MAPPING[langCode] || langCode;
 
             try {
               const locPrompt = buildLocalisationPrompt(
@@ -472,7 +576,7 @@ export function useMetadataGeneration() {
         setStep(MetadataGenerationStep.RESULT);
       }
     },
-    [products, selectedBrands, selectedLanguages, addLog]
+    [products, selectedBrands, selectedLanguages, format, addLog]
   );
 
   const cancelGeneration = useCallback(() => {
