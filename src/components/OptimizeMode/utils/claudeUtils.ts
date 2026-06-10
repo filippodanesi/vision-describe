@@ -10,6 +10,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { claudeSystemPrompt } from './prompts/systemPrompt';
 import { toast } from "@/hooks/use-toast";
 import { fetchWithCorsProxy } from './corsProxyUtils';
+import { isQuotaError, emitQuotaExhausted } from '@/lib/api/anthropicErrors';
 
 export interface ClaudeResponse {
   content: string;
@@ -373,6 +374,7 @@ export const optimizeWithClaude = async (
     }
   } catch (error) {
     console.error("Claude API error:", error);
+    if (isQuotaError(error)) emitQuotaExhausted();
     throw error;
   }
 };

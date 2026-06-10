@@ -15,6 +15,22 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import type { VisionApiResponse, ImageFile, CachedPromptInput } from '../types';
+import { isQuotaError, emitQuotaExhausted } from '@/lib/api/anthropicErrors';
+
+/**
+ * Wrap a Claude SDK promise so a "tokens finished" failure (credit balance too
+ * low, or a rate limit) raises the app-wide quota signal that opens the
+ * reload-and-resume dialog. The error is still rethrown so callers keep their
+ * existing handling.
+ */
+// Loosely typed (Promise<any>) to match the existing `as any` call sites so the
+// inferred `response` type is unchanged.
+function withQuotaDetection(p: Promise<any>): Promise<any> {
+  return p.catch((err) => {
+    if (isQuotaError(err)) emitQuotaExhausted();
+    throw err;
+  });
+}
 
 /**
  * Default model for the Claude path. Aligned with the hardcoded constants
@@ -65,7 +81,7 @@ export async function analyzeWithClaude(
   // Adaptive thinking + medium effort per the Opus 4.8 migration guide.
   // Cast to any: the installed @anthropic-ai/sdk (0.50.4) predates the
   // adaptive-thinking / output_config types, but the API honours the fields.
-  const response = await client.messages.create({
+  const response = await withQuotaDetection(client.messages.create({
     model,
     max_tokens: 8192,
     thinking: { type: 'adaptive' },
@@ -79,7 +95,7 @@ export async function analyzeWithClaude(
         ],
       },
     ],
-  } as any);
+  } as any));
 
   const textBlock = response.content.find(
     (block): block is Anthropic.TextBlock => block.type === 'text',
@@ -152,10 +168,10 @@ export async function translateWithClaude(
         messages: [{ role: 'user', content: prompt }],
       };
 
-  const response = await client.messages.create(
+  const response = await withQuotaDetection(client.messages.create(
     params as any,
     signal ? { signal } : undefined,
-  );
+  ));
 
   const textBlock = response.content.find(
     (block): block is Anthropic.TextBlock => block.type === 'text',
