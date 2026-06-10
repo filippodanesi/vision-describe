@@ -33,8 +33,8 @@ export const ApiKeysProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (data) {
           setAnthropicKey(data.anthropic_key || '');
         }
-      })
-      .finally(() => setLoading(false));
+        setLoading(false);
+      });
   }, [user]);
 
   const saveKeys = useCallback(async (newAnthropicKey: string) => {

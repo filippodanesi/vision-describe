@@ -29,6 +29,7 @@ export function sanitizeLongDescription(text: string): string {
 export interface AboutYouValidation {
   styleName: { length: number; hasForbiddenWords: boolean; forbiddenWords: string[] };
   longDescription: { length: number; hasForbiddenWords: boolean; forbiddenWords: string[] };
+  copyDesignFeatures?: { length: number; hasForbiddenWords: boolean; forbiddenWords: string[] };
 }
 
 export function validateAboutYouOutput(

@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { ApiKeySection } from './components/config/ApiKeySection';
 import { AnalysisFeaturesSection } from './components/config/AnalysisFeaturesSection';
 import { LanguageSection } from './components/config/LanguageSection';
-import { LimitsSection } from './components/config/LimitsSection';
+import LimitsSection from './components/config/LimitsSection';
 import { QuickCredentialsInput } from './components/config/QuickCredentialsInput';
 import { SessionStorageControls } from './components/config/SessionStorageControls';
 
@@ -127,10 +127,7 @@ const ApiConfigPanel: React.FC<ApiConfigPanelProps> = ({
 
         <Separator />
 
-        <LimitsSection 
-          limits={limits}
-          handleLimitChange={handleLimitChange}
-        />
+        <LimitsSection />
       </CardContent>
     </Card>
   );

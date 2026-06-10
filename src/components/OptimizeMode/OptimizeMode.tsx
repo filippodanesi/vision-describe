@@ -103,7 +103,7 @@ export const OptimizeMode: React.FC = () => {
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
 
   // Column mappings (for confirmation step)
-  const [columnMappings, setColumnMappings] = useState<any[]>([]);
+  const [columnMappings, setColumnMappings] = useState<any>([]);
 
   // Selected model
   const [selectedModel, setSelectedModel] = useState<string>('');
@@ -641,7 +641,7 @@ export const OptimizeMode: React.FC = () => {
             </div>
 
             <ColumnSelector
-              useCase={useCase}
+              useCase={useCase || 'ecommerce'}
               columns={(() => {
                 const cols = fileData?.columns || [];
                 if (useCase === 'amazon' || useCase === 'partoo') return cols;
@@ -679,7 +679,7 @@ export const OptimizeMode: React.FC = () => {
           <ColumnConfirmation
             fileData={fileData!}
             selectedColumns={selectedColumns}
-            useCase={useCase}
+            useCase={useCase || 'ecommerce'}
             onConfirm={handleColumnConfirmation}
             onBack={handleBackToColumnSelection}
           />

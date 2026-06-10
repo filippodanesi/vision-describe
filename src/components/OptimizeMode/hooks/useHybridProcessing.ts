@@ -36,7 +36,7 @@ export interface HybridProcessingHook {
     model: Model,
     apiKey: string,
     context?: {
-      useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
+      useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next' | 'zalando';
       mappings?: any;
       lang?: string;
       langs?: string[];
@@ -201,10 +201,10 @@ export const useHybridProcessing = (): HybridProcessingHook => {
       langs: context?.langs,
       dryRun: context?.dryRun,
       businessIdsFilter: context?.businessIdsFilter
-        ? Array.from(context.businessIdsFilter)
+        ? (Array.from(context.businessIdsFilter) as string[])
         : undefined,
       storeTypeFilter: context?.storeTypeFilter
-        ? Array.from(context.storeTypeFilter)
+        ? (Array.from(context.storeTypeFilter) as string[])
         : undefined,
       colorMappings: context?.colorMappings,
       sizeMappings: context?.sizeMappings,
@@ -393,7 +393,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     model: Model,
     apiKey: string,
     context?: {
-      useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
+      useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next' | 'zalando';
       mappings?: any;
       lang?: string;
       langs?: string[];
@@ -662,7 +662,7 @@ export const useHybridProcessing = (): HybridProcessingHook => {
     model: Model,
     apiKey: string,
     context?: {
-      useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next';
+      useCase?: 'ecommerce' | 'sloggi-ecommerce' | 'amazon' | 'partoo' | 'aboutyou' | 'next' | 'zalando';
       mappings?: any;
       lang?: string;
       langs?: string[];

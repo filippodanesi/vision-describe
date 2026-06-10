@@ -21,7 +21,7 @@ const PURIFY_CONFIG = {
   ALLOWED_ATTR: [] as string[],
   FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'a', 'img'],
   KEEP_CONTENT: true,
-} as const;
+};
 
 /**
  * Convert \n to <br> in plain-text portions while preserving HTML block
