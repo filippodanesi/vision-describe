@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
@@ -84,10 +84,16 @@ const Login: React.FC = () => {
               />
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-col gap-3">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
+            <p className="text-sm text-muted-foreground text-center">
+              No account yet?{' '}
+              <Link to="/signup" className="text-foreground underline underline-offset-4">
+                Sign up
+              </Link>
+            </p>
           </CardFooter>
         </form>
       </Card>

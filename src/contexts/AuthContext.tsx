@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null; needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
 }
 
@@ -39,6 +40,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: error as Error | null };
   };
 
+  const signUp = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    // With email confirmation enabled, signUp succeeds but returns no session:
+    // the user must click the confirmation link before they can sign in.
+    const needsConfirmation = !error && !data.session;
+    return { error: error as Error | null, needsConfirmation };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -49,6 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user: session?.user ?? null,
       loading,
       signIn,
+      signUp,
       signOut,
     }}>
       {children}
