@@ -32,7 +32,7 @@ import {
   pimLocalesFromHeaders,
   pimLongDescColumn,
   type LocaleMismatch,
-} from '../utils/pimLocales';
+} from '@/lib/pimLocales';
 
 const BATCH_SIZE = 3;
 
@@ -160,6 +160,17 @@ async function parseExcelAllSheets(file: File): Promise<ParsedSheet[]> {
   return sheets;
 }
 
+/**
+ * Brand for exports that carry no brand column, inferred from the product name.
+ *
+ * "SLG" is the sloggi prefix for men's and basics lines (SLG Briefs, SLG Base
+ * Trunk, SLG T-shirt). Matching on the full word alone sent those 22 SKUs down
+ * the Triumph path, so they were written in the wrong brand voice.
+ */
+function inferBrandFromName(name: string): string {
+  return /\bsloggi\b|^\s*SLG\b/i.test(name) ? 'sloggi' : 'Triumph';
+}
+
 function extractProducts(
   format: MetadataFormatType,
   sheets: ParsedSheet[]
@@ -199,7 +210,7 @@ function extractProducts(
             ''
         );
         // Brand isn't a column in this export; infer it from the product name.
-        const brand = /sloggi/i.test(name) ? 'sloggi' : 'Triumph';
+        const brand = inferBrandFromName(name);
         // Pick the rewrite source: existing EN copy, else the first populated
         // locale (so the 25 EN-empty rows still have a source to rewrite from).
         const langCols = longDescLangsFromHeaders(sheet.headers);
@@ -235,7 +246,7 @@ function extractProducts(
         const name = String(row['Material Description'] || '');
         // No brand column in this export; infer it from the product name the
         // same way the rework flow does.
-        const brand = /sloggi/i.test(name) ? 'sloggi' : 'Triumph';
+        const brand = inferBrandFromName(name);
 
         // Pick the rewrite source: existing EN copy, else the first populated
         // locale, so rows with an empty EN column still have something to work
