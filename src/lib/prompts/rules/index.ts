@@ -1,5 +1,6 @@
 export { truthfulnessRules, preFlight } from './truthfulness';
 export { wiringAndPaddingRules, wiringAndPaddingCompact } from './wiringAndPadding';
+export { productTerminologyRules, productTerminologyCompact } from './productTerminology';
 export { seriesNameRules } from './seriesNameFormatting';
 export { aiBannedPhrases, aiBannedPhrasesCompact } from './aiStyleGuard';
 export { triumphBrandExpressions } from './brandExpressions';

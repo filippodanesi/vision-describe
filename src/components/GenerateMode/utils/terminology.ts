@@ -7,7 +7,7 @@ export const terminologyMap: Record<string, Record<string, string>> = {
     'cueca': 'cuecas',
     'calcinha': 'cuecas',
     'calcinhas': 'cuecas',
-    'abordagem fresca': 'abordagem nova',
+    'abordagem fresca': 'abordagem contemporânea',
     'abordagem nova': 'abordagem contemporânea',
     // Sleepwear & Lingerie specific terms (Carolina's corrections)
     'Roupa de dormir': 'roupa de dormir',
@@ -52,7 +52,7 @@ export const terminologyMap: Record<string, Record<string, string>> = {
     'highleg bikini bottoms': 'Bikini Slip mit hohem Beinausschnitt',
     'highleg knickers': 'Slip mit hohem Beinausschnitt',
     'highwaist bikini bottoms': 'Bikini Highwaist',
-    'highwaist knickers': 'Hochgeschnittener Miederslip',
+    'highwaist knickers': 'High Waist Slip',
     'highwaist shaping knickers': 'Shapewear Taillenslip',
     'hipster bikini bottoms': 'Bikini Hipster',
     'hipster knickers': 'Hipster',
@@ -120,11 +120,11 @@ export const terminologyMap: Record<string, Record<string, string>> = {
     'tanga': 'Tanga',
     'push-up bikini top': 'Push-up Bikini Top',
     'tai knickers': 'Tai',
-    'tank top': 'Unterhemd',
+    'tank top': 'Tanktop',
     'tankini': 'Tankini',
     'top with spaghetti straps': 'Unterhemd mit Spaghettiträgern',
     'trousers': 'Hose',
-    't-shirt bra': 'T-Shirt BH',
+    't-shirt bra': 'T-Shirt-BH',
     'tunic': 'Tunika',
     'unisex leggings': 'Unisex Leggings',
     'unisex long-sleeve top': 'Unisex Langarm-Top',
@@ -447,7 +447,7 @@ export const terminologyMap: Record<string, Record<string, string>> = {
     'sweater': 'Maglione',
     'cyclist shorts': 'Ciclisti',
     'racer top': 'Top Racer',
-    't-shirt': 'Maglietta',
+    't-shirt': 'T-shirt',
     'bodies': 'Bodies',
     'top': 'Top',
     'soft bra': 'Soft bra',
@@ -658,23 +658,154 @@ export function removeProductCodes(text: string): string {
   return cleanedText;
 }
 
+const escapeForRegex = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+interface LanguageMatchers {
+  /** Matches every source term in the map, longest first. */
+  keys: RegExp;
+  /** Matches every already-localised term in the map, longest first. */
+  values: RegExp;
+  /** Lowercased source term → replacement. */
+  lookup: Map<string, string>;
+}
+
+// Cache the matchers per language: building them means sorting and escaping
+// ~180 entries, and every generated description runs through here.
+const matcherCache = new Map<string, LanguageMatchers>();
+
+function buildAlternation(terms: string[]): RegExp {
+  // Longest first so 't-shirt bra' is tried before 't-shirt', and 't-shirt'
+  // before 'shirt'.
+  const alternation = [...new Set(terms)]
+    .sort((a, b) => b.length - a.length)
+    .map(escapeForRegex)
+    .join('|');
+
+  return new RegExp(`\\b(?:${alternation})\\b`, 'gi');
+}
+
+function getMatchers(language: string, languageMap: Record<string, string>): LanguageMatchers {
+  const cached = matcherCache.get(language);
+  if (cached) return cached;
+
+  const lookup = new Map<string, string>();
+  for (const [key, value] of Object.entries(languageMap)) {
+    const lowerKey = key.toLowerCase();
+    // The PT map deliberately holds both 'Forro suave …' and 'forro suave …'
+    // so the replacement can keep the source capitalisation; first one wins.
+    if (!lookup.has(lowerKey)) lookup.set(lowerKey, value);
+  }
+
+  const matchers: LanguageMatchers = {
+    keys: buildAlternation(Object.keys(languageMap)),
+    values: buildAlternation(Object.values(languageMap)),
+    lookup,
+  };
+
+  matcherCache.set(language, matchers);
+  return matchers;
+}
+
+/** Character ranges already holding a correctly localised term. */
+function findLocalisedRanges(text: string, values: RegExp): Array<[number, number]> {
+  const ranges: Array<[number, number]> = [];
+  values.lastIndex = 0;
+
+  let match: RegExpExecArray | null;
+  while ((match = values.exec(text)) !== null) {
+    ranges.push([match.index, match.index + match[0].length]);
+    if (match[0].length === 0) values.lastIndex++;
+  }
+
+  return ranges;
+}
+
 // Function to apply terminology corrections
 export function applyTerminologyCorrections(text: string, language: string): string {
   const languageMap = terminologyMap[language];
   if (!languageMap) return text;
-  
-  let correctedText = text;
-  
-  // Apply corrections in order of specificity (longer phrases first)
-  const sortedCorrections = Object.entries(languageMap)
-    .sort(([a], [b]) => b.length - a.length);
-  
-  for (const [incorrect, correct] of sortedCorrections) {
-    const regex = new RegExp(`\\b${incorrect.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-    correctedText = correctedText.replace(regex, correct);
+
+  const { keys, values, lookup } = getMatchers(language, languageMap);
+
+  // Two guards, both learned from the DE product pages:
+  //
+  // 1. One pass over the text, never re-reading what a replacement just wrote.
+  //    Replacing entry by entry let a later key match inside an earlier key's
+  //    output — 't-shirt bra' produced "T-Shirt-BH", then 'shirt' → 'Hemd'
+  //    turned that into "T-Hemd-BH".
+  // 2. Skip anything sitting inside an already-localised term, so a source key
+  //    that is a substring of some target term leaves it alone: "Bolero-Shirt"
+  //    must not become "Bolero-Hemd", "Dirndl-BH" must not gain a second "-BH".
+  const localised = findLocalisedRanges(text, values);
+  const insideLocalised = (start: number, end: number): boolean =>
+    localised.some(([from, to]) => start >= from && end <= to);
+
+  keys.lastIndex = 0;
+
+  return text.replace(keys, (match, offset: number) => {
+    if (insideLocalised(offset, offset + match.length)) return match;
+
+    // Exact hit first so an entry's own capitalisation is preserved.
+    if (match in languageMap) return languageMap[match];
+
+    return lookup.get(match.toLowerCase()) ?? match;
+  });
+}
+
+/**
+ * Known mistranslations to repair in already-localised copy.
+ *
+ * Two jobs: undo the damage the sequential-replace bug left in descriptions
+ * that are re-imported for rework, and put back the English technical terms
+ * sloggi ships unchanged on every market (reported from the DE site as
+ * "punktverschweißte Kanten" and "Innovative Punktverschweiß-Technologie").
+ */
+const mistranslationFixes: Record<string, Array<[RegExp, string]>> = {
+  de: [
+    // Dot-Bonding stays English. Adjective forms collapse into a compound so
+    // "punktverschweißten Kanten" reads "Dot-Bonding-Kanten", not "Dot-Bonding Kanten".
+    [/\bpunktverschwei(?:ß|ss)te[nmrs]?\s+/gi, 'Dot-Bonding-'],
+    [/\bpunktverschwei(?:ß|ss)(?:ung|en|t)?(?=-)/gi, 'Dot-Bonding'],
+    [/\bpunktverschwei(?:ß|ss)(?:technik|technologie)\b/gi, 'Dot-Bonding-Technologie'],
+    [/\bpunktverschwei(?:ß|ss)(?:ung|en|t)?\b/gi, 'Dot-Bonding'],
+
+    // Leftovers from the sequential-replace bug. Order matters: repair the
+    // intact "T-Hemd" first, so the compound rules below only see the cases
+    // where the series pattern had already eaten the "T" ("ADAPT-Hemd BH").
+    [/\bT-Hemd\b/gi, 'T-Shirt'],
+    [/([A-Za-zÀ-ÿ])-Hemd([-\s])(BH|Bra)\b/gi, '$1 T-Shirt-$3'],
+    [/\bHemd[-\s](BH|Bra)\b/gi, 'T-Shirt-$1'],
+
+    // Declined forms too: the live pages carry both "Hochgeschnittener
+    // Miederslip" and "Dieser hochgeschnittene Miederslip".
+    [/\bhochgeschnittene[nmrs]?\s+Miederslip\b/gi, 'High Waist Slip'],
+    [/\bMiederslip\b/g, 'High Waist Slip'],
+  ],
+  it: [
+    // 'shirt' -> 'Camicia' hit inside compounds, so repair the whole compound.
+    [/\b([A-Za-zÀ-ÿ]+)-Camicia\b/g, '$1-shirt'],
+  ],
+  fr: [
+    // Same for 'shirt' -> 'Haut'. Case-sensitive on purpose: a capitalised
+    // "Haut" mid-sentence after a hyphen is the bug, whereas French prose
+    // legitimately uses lowercase "haut".
+    [/\b([A-Za-zÀ-ÿ]+)-Haut\b/g, '$1-shirt'],
+  ],
+  es: [
+    [/\bT-Camiseta\b/gi, 'Camiseta'],
+  ],
+};
+
+export function applyMistranslationFixes(text: string, language: string): string {
+  const fixes = mistranslationFixes[language];
+  if (!fixes) return text;
+
+  let corrected = text;
+  for (const [pattern, replacement] of fixes) {
+    corrected = corrected.replace(pattern, replacement);
   }
-  
-  return correctedText;
+  return corrected;
 }
 
 // Function to get correct terminology for a product type
@@ -740,22 +871,27 @@ export function formatSeriesReference(seriesName: string, language: string): str
 export function processTextWithTerminology(text: string, language: string): string {
   // Remove product codes first
   let processedText = removeProductCodes(text);
-  
+
   // Apply terminology corrections
   processedText = applyTerminologyCorrections(processedText, language);
-  
+
+  // Repair known mistranslations and restore do-not-translate technical terms
+  processedText = applyMistranslationFixes(processedText, language);
+
   // Normalize any series names in the text
-  // Match common series name patterns
+  // Match common series name patterns. The trailing-T patterns must not fire on
+  // a hyphenated word: "THE UP T-Shirt Bra" is a product name, and stripping its
+  // "T" is how the DE page ended up reading "THE UP-Hemd Bra".
   const seriesPatterns = [
-    /\bO\s*-\s*([A-Z][a-zA-Z\s]+?)(?:\s+T)?\b/g,
-    /\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)\s+T\b/g,
+    /\bO\s*-\s*([A-Z][a-zA-Z\s]+?)(?:\s+T(?![-\w]))?\b/g,
+    /\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)\s+T(?![-\w])/g,
   ];
-  
+
   for (const pattern of seriesPatterns) {
-    processedText = processedText.replace(pattern, (match, name) => {
+    processedText = processedText.replace(pattern, (match) => {
       return normalizeSeriesName(match);
     });
   }
-  
+
   return processedText;
 }

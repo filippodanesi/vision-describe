@@ -17,6 +17,7 @@ import {
   aiBannedPhrases,
   truthfulnessRules,
   wiringAndPaddingRules,
+  productTerminologyRules,
 } from '@/lib/prompts/rules';
 
 interface ImageAnalysisPromptInput {
@@ -107,6 +108,8 @@ Write idiomatically in the target language from the start. Do not translate word
 
 <additional_rules>
 ${wiringAndPaddingRules()}
+
+${productTerminologyRules()}
 </additional_rules>
 
 <output_format>
@@ -122,6 +125,7 @@ Before returning, silently verify:
 - No banned style words (see <style_rules>).
 - No mention of colour, size or variant.
 - Every technical claim is supported by something visible in ${imageRef}.
+- No component is called adjustable, removable or detachable unless ${imageRef} shows it, and the garment type matches what is shown (sleeves mean T-Shirt, not Tanktop).
 - Total length is between 150 and 300 words.
 - HTML structure is exactly: <p>intro</p><ul class="pd"><li>...</li></ul><p>closing</p> (plus the certification line if applicable).
 

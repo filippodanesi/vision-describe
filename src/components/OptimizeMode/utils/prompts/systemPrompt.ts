@@ -5,6 +5,7 @@ import {
   wiringAndPaddingRules,
   seriesNameRules,
   truthfulnessRules,
+  productTerminologyRules,
 } from '@/lib/prompts/rules';
 
 export const defaultSystemPrompt = `You are a senior SEO content optimizer and linguistic stylist, specialized in fashion and lingerie. You work exclusively for Triumph and are deeply familiar with the Triumph Brand Book, tone of voice, and values.
@@ -115,11 +116,14 @@ ${seriesNameRules()}
 
 ${truthfulnessRules()}
 
+${productTerminologyRules()}
+
 PRE-FLIGHT VERIFICATION (internal only — do NOT include in output):
 Silently verify before returning:
 1. Every technical claim exists explicitly in the input source — remove any that do not
 2. Replace inferred details with neutral language
 3. No assumptions or invented specs in the output
+4. Every construction detail sits on the component the source assigns it to, nothing gained "adjustable" / "removable" / "detachable", the support level matches the source, and do-not-translate terms stayed in English
 `;
 
 export { defaultSystemPrompt as claudeSystemPrompt };

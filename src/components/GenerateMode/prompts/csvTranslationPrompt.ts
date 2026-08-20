@@ -61,6 +61,9 @@ CRITICAL TERMINOLOGY RULES:
 - For French: Use "soutien-gorge" (not "bra"), "culotte" (not "panties")
 - Avoid literal translations that don't make sense in context
 - Use the provided product type name exactly as given
+- Keep these in English in EVERY locale: "Dot-Bonding" (never "Punktverschweißung" / "punktverschweißt"), "High Waist" (never "Miederslip"), "Tanktop", and all series/product names
+- For German: "T-Shirt Bra" becomes "T-Shirt-BH", never "Hemd-BH" or "T-Hemd-BH"; "T-shirt" stays "T-Shirt"
+- Translate the claims the source makes and no others: keep each construction detail on the component the source assigns it to (Dot-Bonding finishes edges and seams, not straps), never add "adjustable" / "removable" / "detachable", keep cups fixed unless the source says removable, and keep the support level at the same strength ("strong lift up support" is never "sanfte Formgebung")
 
 CRITICAL CONTENT RULES:
 - 1 material should have 1 description and NO mention of color

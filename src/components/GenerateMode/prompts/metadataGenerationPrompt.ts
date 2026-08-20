@@ -17,6 +17,7 @@ import {
   sustainabilityHandling,
   seriesNameRules,
   wiringAndPaddingRules,
+  productTerminologyRules,
 } from '@/lib/prompts/rules';
 import { getCompleteLocalizationContext } from './languageInstructions';
 import type { CachedPromptInput } from '../types';
@@ -198,6 +199,8 @@ ${sustainabilityHandling()}
 
 ${wiringAndPaddingRules()}
 
+${productTerminologyRules()}
+
 ${seriesNameRules()}
 </additional_rules>
 
@@ -220,6 +223,7 @@ Before returning, silently verify:
 - Total length is between 150 and 300 words.
 - HTML structure is exactly: <p>intro</p><ul class="pd"><li>…</li></ul><p>closing</p> (plus the sustainability line if applicable).
 - If <input_materials> Style USP or Style Description contains a cup classification line ("Integrated fixed cups", "Removable cups", "Padded with removable cups", "Non-padded" / "non padded"), it appears verbatim (or with minimal rewording) as the FIRST bullet of the <li> list. It is not paraphrased into a generic "padded" / "non-padded" line and it is not dropped.
+- Every construction detail sits on the component <input_materials> assigns it to, no feature is described as adjustable, removable or detachable unless the input says so, and the support level matches the input rather than being softened or intensified.
 </output_format>`;
 
   const user = `<input_materials>
@@ -314,6 +318,8 @@ ${sustainabilityHandling()}
 
 ${wiringAndPaddingRules()}
 
+${productTerminologyRules()}
+
 ${seriesNameRules()}
 </additional_rules>
 
@@ -331,6 +337,7 @@ Before returning, silently verify:
 - Output is entirely in English.
 - Total length is between 150 and 300 words.
 - HTML structure is exactly: <p>intro</p><ul class="pd"><li>…</li></ul><p>closing</p>.
+- Every construction detail sits on the component <existing_description> assigns it to, nothing is described as adjustable, removable or detachable unless the source says so, and the support level matches the source rather than being softened or intensified.
 </output_format>`;
 
   const user = `<product_context>
@@ -393,6 +400,7 @@ ${brandRulesBlock(input.brand)}
 8. Use idiomatic, fluent language for the target locale. The reader should not feel they are reading a translation.
 9. Avoid AI-style words in their target-language equivalents: no "delve / approfondire eccessivamente / sumergirse" filler, no "showcase / mettere in mostra" filler, no "realm / regno" metaphor.
 10. Preserve cup classification. If <source> contains a bullet about cup state ("integrated fixed cups", "removable cups", "padded with removable cups", "non-padded"), localise it with the locale-correct underwear industry term and KEEP it as a dedicated bullet in the same position. Do not merge it into another bullet, do not drop it, do not paraphrase it into a generic "padded" / "non-padded".
+11. Localise the claims <source> makes, no others. Keep every construction detail on the component <source> assigns it to, keep the support level at the same strength, and never add "adjustable", "removable" or "detachable" where <source> does not. Localisation is where invented features slip in, because the target-language phrasing sounds natural.
 </rules>
 
 <terminology>
@@ -423,12 +431,18 @@ Cup classification. Locale-correct equivalents to use when <source> mentions cup
 - Swedish: "fast integrerade kupor" / "uttagbara inlägg" / "opolstrad"
 
 Do not include product codes (WHP, W01, NDK, etc.) inside body copy. Use the product type name.
+
+${productTerminologyRules()}
 </terminology>
 
 <output_format>
 Return only the localised HTML. Start directly with <p>. No markdown code blocks, no commentary.
 
 Use the same tags as <source>: <p> and <ul class="pd"><li>…</li></ul>. No <strong>, <b>, <em>, <i> or any other formatting.
+
+Before returning, silently verify:
+- Every claim in the output appears in <source>: same components, same support level, nothing gained "adjustable", "removable" or "detachable" along the way.
+- Technical terms that stay in English stayed in English, and no garment type changed.
 </output_format>`;
 
   const user = `<product_context>
