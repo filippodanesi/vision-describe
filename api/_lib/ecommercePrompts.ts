@@ -22,9 +22,10 @@ CUP CLASSIFICATION (BRAS, BRA-SHIRTS, TOPS WITH INTEGRATED BRA, BODIES):
 
 export function productTerminologyCompact(): string {
   return `PRODUCT TERMINOLOGY:
-- Keep in English in EVERY locale: "Dot-Bonding" (never "Punktverschweißung"/"punktverschweißt"), "High Waist" (never "Miederslip"), "Tanktop", and all series/product names
-- German: "T-Shirt Bra" → "T-Shirt-BH", never "Hemd-BH" / "T-Hemd-BH"; "T-shirt" → "T-Shirt"
+- Keep in English in EVERY locale: cut names ("T-Shirt", "Push-up", "Bralette", "Maxi", "Midi", "Mini", "Hipster", "Tai", "String"), technologies ("Dot-Bonding" — never "Punktverschweißung"/"punktverschweißt", "LYCRA® FREEF!T® X-MOVE", "TENCEL™", "Supima"), certifications ("GRS", "OEKO-TEX"), and all series/product names
+- German: "T-Shirt Bra" → "T-Shirt-BH", never "Hemd-BH" / "T-Hemd-BH"; "T-shirt" → "T-Shirt"; "High Waist" stays "High Waist", never "Miederslip"
 - Sleeved garment = T-Shirt, sleeveless = Tanktop. Never swap the garment type given in the input
+- Unsure of a technical term? Leave it in English rather than coining one. An untranslated term can be reviewed; an invented one ships as fact
 
 FEATURE ATTRIBUTION:
 - Keep every construction detail on the component the input assigns it to — Dot-Bonding finishes edges and seams, not straps

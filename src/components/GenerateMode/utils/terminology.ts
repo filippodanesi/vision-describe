@@ -30,7 +30,13 @@ export const terminologyMap: Record<string, Record<string, string>> = {
   'de': {
     'shaping shorts': 'Figurformende Shorts',
     'pyjama top': 'Pyjama-Oberteil',
-    'shirt': 'Hemd',
+    // "Shirt" stays as-is. Every garment in this assortment that carries the
+    // word is a jersey top — T-Shirt, Bra Shirt, Spaghetti Shirt, V Neck
+    // Shirt — and there is no buttoned shirt in the catalogue at all. Mapping
+    // it to "Hemd" (a buttoned shirt) is what put "T-Hemd-BH" on the live DE
+    // pages, and it stayed wrong even after the replace order was fixed.
+    // Matches the existing 'bolero' → 'Bolero-Shirt' entry below.
+    'shirt': 'Shirt',
     'dirndl': 'Dirndl-BH',
     'non-wired padded bra': 'Bügelloser, gepolsterter BH',
     'robe top': 'Morgenmantel-Oberteil',
@@ -181,7 +187,8 @@ export const terminologyMap: Record<string, Record<string, string>> = {
   'es': {
     'shaping shorts': 'Shorts moldeadores',
     'pyjama top': 'Camiseta de pijama',
-    'shirt': 'Camiseta',
+    // Same reasoning as the German entry: no buttoned shirt in this catalogue.
+    'shirt': 'Shirt',
     'dirndl': 'Sujetador dirndl',
     'non-wired padded bra': 'Sujetador sin aros, acolchado',
     'robe top': 'Camiseta de bata',
@@ -332,7 +339,8 @@ export const terminologyMap: Record<string, Record<string, string>> = {
   'it': {
     'shaping shorts': 'Short aderenti',
     'pyjama top': 'Giacca del pigiama',
-    'shirt': 'Camicia',
+    // Same reasoning as the German entry: no buttoned shirt in this catalogue.
+    'shirt': 'Shirt',
     'dirndl': 'Reggiseno dirndl',
     'non-wired padded bra': 'Reggiseno imbottito senza ferretto',
     'robe top': 'Canotta',
@@ -483,7 +491,8 @@ export const terminologyMap: Record<string, Record<string, string>> = {
   'fr': {
     'shaping shorts': 'Short modelant',
     'pyjama top': 'Haut de pyjama',
-    'shirt': 'Haut',
+    // Same reasoning as the German entry: no buttoned shirt in this catalogue.
+    'shirt': 'Shirt',
     'dirndl': 'Soutien-gorge dirndl',
     'non-wired padded bra': 'Soutien-gorge ampliforme sans armatures',
     'robe top': 'Haut de robe de chambre',
@@ -761,7 +770,23 @@ export function applyTerminologyCorrections(text: string, language: string): str
  * sloggi ships unchanged on every market (reported from the DE site as
  * "punktverschweißte Kanten" and "Innovative Punktverschweiß-Technologie").
  */
-const mistranslationFixes: Record<string, Array<[RegExp, string]>> = {
+type Fix = [RegExp, string];
+
+/**
+ * The series-name pattern used to strip a trailing " T" from any capitalised
+ * word sequence, so "THE UP T-Shirt" lost its "T" and closed up to
+ * "UP-Shirt". That ran on the EN master before localisation, so the damage
+ * reached every locale: the AW26 export carries UP-Shirt, ADAPT-Shirt,
+ * Ribbed-Shirt, Neck-Shirt and even "Dieses-Hemd" (from "Dieses T-Shirt").
+ *
+ * "Bolero-Shirt" is excluded because it is a legitimate map value, not damage.
+ */
+const eatenT = (shirtWord: string, replacement: string): Fix => [
+  new RegExp(`\\b(?!Bolero\\b)([A-Z][A-Za-zÀ-ÿ]+)-${shirtWord}\\b`, 'g'),
+  `$1 ${replacement}`,
+];
+
+const mistranslationFixes: Record<string, Fix[]> = {
   de: [
     // Dot-Bonding stays English. Adjective forms collapse into a compound so
     // "punktverschweißten Kanten" reads "Dot-Bonding-Kanten", not "Dot-Bonding Kanten".
@@ -770,12 +795,14 @@ const mistranslationFixes: Record<string, Array<[RegExp, string]>> = {
     [/\bpunktverschwei(?:ß|ss)(?:technik|technologie)\b/gi, 'Dot-Bonding-Technologie'],
     [/\bpunktverschwei(?:ß|ss)(?:ung|en|t)?\b/gi, 'Dot-Bonding'],
 
-    // Leftovers from the sequential-replace bug. Order matters: repair the
-    // intact "T-Hemd" first, so the compound rules below only see the cases
-    // where the series pattern had already eaten the "T" ("ADAPT-Hemd BH").
+    // Order matters throughout: repair the intact "T-Hemd" first, so the
+    // compound rules below only see cases where the "T" was already eaten.
     [/\bT-Hemd\b/gi, 'T-Shirt'],
+    [/\bBolero-Hemd\b/gi, 'Bolero-Shirt'],
     [/([A-Za-zÀ-ÿ])-Hemd([-\s])(BH|Bra)\b/gi, '$1 T-Shirt-$3'],
     [/\bHemd[-\s](BH|Bra)\b/gi, 'T-Shirt-$1'],
+    eatenT('Hemd', 'T-Shirt'),
+    eatenT('Shirt', 'T-Shirt'),
 
     // Declined forms too: the live pages carry both "Hochgeschnittener
     // Miederslip" and "Dieser hochgeschnittene Miederslip".
@@ -784,21 +811,41 @@ const mistranslationFixes: Record<string, Array<[RegExp, string]>> = {
   ],
   it: [
     // 'shirt' -> 'Camicia' hit inside compounds, so repair the whole compound.
-    [/\b([A-Za-zÀ-ÿ]+)-Camicia\b/g, '$1-shirt'],
+    [/\bT-Camicia\b/gi, 'T-shirt'],
+    [/\b([a-zà-ÿ]+)-Camicia\b/g, '$1-shirt'],
+    eatenT('Camicia', 'T-shirt'),
+    eatenT('Shirt', 'T-shirt'),
   ],
   fr: [
     // Same for 'shirt' -> 'Haut'. Case-sensitive on purpose: a capitalised
     // "Haut" mid-sentence after a hyphen is the bug, whereas French prose
     // legitimately uses lowercase "haut".
-    [/\b([A-Za-zÀ-ÿ]+)-Haut\b/g, '$1-shirt'],
+    [/\bT-Haut\b/gi, 'T-shirt'],
+    [/\b([a-zà-ÿ]+)-Haut\b/g, '$1-shirt'],
+    eatenT('Haut', 'T-shirt'),
+    eatenT('Shirt', 'T-shirt'),
   ],
   es: [
     [/\bT-Camiseta\b/gi, 'Camiseta'],
+    eatenT('Shirt', 'T-shirt'),
   ],
+  // The remaining locales kept the English "Shirt", so the eaten "T" is the
+  // only damage they carry — including the EN master every localisation
+  // starts from.
+  en: [eatenT('Shirt', 'T-Shirt')],
+  cs: [eatenT('Shirt', 'T-Shirt')],
+  da: [eatenT('Shirt', 'T-Shirt')],
+  hu: [eatenT('Shirt', 'T-Shirt')],
+  nl: [eatenT('Hemd', 'T-Shirt'), eatenT('Shirt', 'T-Shirt')],
+  pl: [eatenT('Shirt', 'T-Shirt')],
+  'pt-PT': [eatenT('Shirt', 'T-Shirt')],
+  pt: [eatenT('Shirt', 'T-Shirt')],
+  sv: [eatenT('Shirt', 'T-Shirt')],
 };
 
 export function applyMistranslationFixes(text: string, language: string): string {
-  const fixes = mistranslationFixes[language];
+  const fixes =
+    mistranslationFixes[language] ?? mistranslationFixes[language.split('-')[0]];
   if (!fixes) return text;
 
   let corrected = text;
@@ -806,6 +853,55 @@ export function applyMistranslationFixes(text: string, language: string): string
     corrected = corrected.replace(pattern, replacement);
   }
   return corrected;
+}
+
+/**
+ * Glossary entries relevant to one piece of source copy, as prompt lines.
+ *
+ * The map has ~180 entries per language. Sending all of them would bury the
+ * handful that matter for a given SKU and would cost more than the copy
+ * itself, so only the terms the source text actually uses are passed through.
+ * This is the half that was missing: the map only ever ran as a find-and-replace
+ * after the model had already answered, so the model never knew the approved
+ * wording and had to guess.
+ */
+export function buildGlossaryForSource(sourceText: string, language: string): string {
+  const mapKey = terminologyMap[language] ? language : language.split('-')[0];
+  const languageMap = terminologyMap[mapKey];
+  if (!languageMap) return '';
+
+  const plain = sourceText.replace(/<[^>]+>/g, ' ');
+  const { keys, lookup } = getMatchers(mapKey, languageMap);
+  keys.lastIndex = 0;
+
+  const seen = new Set<string>();
+  const lines: string[] = [];
+
+  // Walk the text with the combined longest-first matcher rather than testing
+  // each entry on its own. "T-Shirt Bra" is then consumed whole, so the vaguer
+  // 'shirt' → 'Hemd' entry never surfaces — handing the model that line would
+  // be instructing it to make the exact mistake this file exists to prevent.
+  let match: RegExpExecArray | null;
+  while ((match = keys.exec(plain)) !== null) {
+    const term = match[0];
+    if (term.length === 0) {
+      keys.lastIndex++;
+      continue;
+    }
+
+    const lower = term.toLowerCase();
+    if (seen.has(lower)) continue;
+    seen.add(lower);
+
+    const value = languageMap[term] ?? lookup.get(lower);
+    // Skip entries that leave the term unchanged: the do-not-translate rule in
+    // the system prompt already covers those, and a "X → X" line is noise.
+    if (!value || value.toLowerCase() === lower) continue;
+
+    lines.push(`- "${term}" → "${value}"`);
+  }
+
+  return lines.join('\n');
 }
 
 // Function to get correct terminology for a product type

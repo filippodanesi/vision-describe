@@ -20,6 +20,7 @@ import {
   productTerminologyRules,
 } from '@/lib/prompts/rules';
 import { getCompleteLocalizationContext } from './languageInstructions';
+import { buildGlossaryForSource } from '../utils/terminology';
 import type { CachedPromptInput } from '../types';
 
 export interface MetadataInput {
@@ -445,6 +446,11 @@ Before returning, silently verify:
 - Technical terms that stay in English stayed in English, and no garment type changed.
 </output_format>`;
 
+  // Only the glossary entries this SKU's copy actually uses. The full map is
+  // ~180 entries per language; sending all of them would bury the few that
+  // matter and cost more than the description itself.
+  const glossary = buildGlossaryForSource(enMaster, langCode);
+
   const user = `<product_context>
 - Material Number: ${input.materialNumber}
 - Product Name: ${input.productName}
@@ -460,7 +466,17 @@ Target language: ${langName} (code: ${langCode})
 
 ${getCompleteLocalizationContext(langCode, input.brand)}
 </localisation_context>
+${
+  glossary
+    ? `
+<approved_glossary>
+These are the approved ${langName} renderings for terms in <source>. Use them exactly. They are the wording the brand team signed off; a fluent synonym is still wrong here.
 
+${glossary}
+</approved_glossary>
+`
+    : ''
+}
 Write the localised description in ${langName} now.`;
 
   return { system, user };

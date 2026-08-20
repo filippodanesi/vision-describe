@@ -10,15 +10,23 @@
 /** Full version — used by the default system prompt, image analysis, metadata generation. */
 export function productTerminologyRules(): string {
   return `PRODUCT TERMINOLOGY (CRITICAL):
-Some terms are part of the product, not words to translate. Keep them in English in EVERY locale, including German:
-- "Dot-Bonding" — never "Punktverschweißung", "punktverschweißt", "Punktverschweiß-Technologie" or any welding wording. Welding language describes metal, not underwear.
-- "High Waist" — never "Hochgeschnittener Miederslip", "Miederslip" or other girdle wording, which reads dated
-- "Tanktop" — the German term for a sleeveless top
-- Series and product names: "sloggi ZERO Feel", "S by sloggi", "THE UP", "Triumph Amourette"
+Some terms are part of the product, not words to translate. These appear in their English form in the approved copy for every market, so keep them unchanged in EVERY locale:
+- Cut and shape names: "T-Shirt", "Push-up", "Bralette", "Maxi", "Midi", "Mini", "Hipster", "Tai", "String"
+- Materials and technologies: "Dot-Bonding", "LYCRA® FREEF!T® X-MOVE", "TENCEL™", "Supima"
+- Certifications: "GRS", "OEKO-TEX"
+- Series and product names: "sloggi ZERO Feel", "GO Daily", "EVER", "ADAPT", "THE UP", "S by sloggi", "Triumph Amourette"
 
-German garment names that DO get translated, with the only accepted forms:
+"Dot-Bonding" in particular is never "Punktverschweißung", "punktverschweißt", "Punktverschweiß-Technologie" or any other welding wording — welding language describes metal, not underwear.
+
+German garment names, with the only accepted forms:
 - "T-Shirt Bra" → "T-Shirt-BH". Never "Hemd-BH" or "T-Hemd-BH": a "Hemd" is a buttoned shirt and the wording is wrong
 - "Tank top" → "Tanktop"; "T-shirt" → "T-Shirt"
+- "High Waist" stays "High Waist" — never "Hochgeschnittener Miederslip", "Miederslip" or other girdle wording, which reads dated. (In French, Italian, Spanish, Portuguese and Polish the approved copy describes the high-rise fit in natural prose instead, which is correct there.)
+
+WHEN A TERM IS NOT IN THE GLOSSARY:
+- Do not coin a translation for a technical or material term you are unsure of. Leave it in English instead — an untranslated term is a wording choice someone can review, an invented one reads as fact and ships
+- This is exactly how "Dot-Bonding" reached the German site as "Punktverschweiß-Technologie": a plausible-sounding coinage that no one had approved
+- The same applies to a term whose target-language form you are only inferring from its shape. Fluency is not evidence of correctness
 
 GARMENT TYPE MUST MATCH THE GARMENT:
 - A garment with sleeves is a T-Shirt, never a Tanktop; a sleeveless one is a Tanktop, never a T-Shirt
@@ -49,9 +57,10 @@ CORRECT:
 /** Compact version — used by amazon, ecommerce, csv translation. */
 export function productTerminologyCompact(): string {
   return `PRODUCT TERMINOLOGY:
-- Keep in English in EVERY locale: "Dot-Bonding" (never "Punktverschweißung"/"punktverschweißt"), "High Waist" (never "Miederslip"), "Tanktop", and all series/product names
-- German: "T-Shirt Bra" → "T-Shirt-BH", never "Hemd-BH" / "T-Hemd-BH"; "T-shirt" → "T-Shirt"
+- Keep in English in EVERY locale: cut names ("T-Shirt", "Push-up", "Bralette", "Maxi", "Midi", "Mini", "Hipster", "Tai", "String"), technologies ("Dot-Bonding" — never "Punktverschweißung"/"punktverschweißt", "LYCRA® FREEF!T® X-MOVE", "TENCEL™", "Supima"), certifications ("GRS", "OEKO-TEX"), and all series/product names
+- German: "T-Shirt Bra" → "T-Shirt-BH", never "Hemd-BH" / "T-Hemd-BH"; "T-shirt" → "T-Shirt"; "High Waist" stays "High Waist", never "Miederslip"
 - Sleeved garment = T-Shirt, sleeveless = Tanktop. Never swap the garment type given in the input
+- Unsure of a technical term? Leave it in English rather than coining one. An untranslated term can be reviewed; an invented one ships as fact
 
 FEATURE ATTRIBUTION:
 - Keep every construction detail on the component the input assigns it to — Dot-Bonding finishes edges and seams, not straps
