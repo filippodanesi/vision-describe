@@ -78,10 +78,12 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
     logs,
     results,
     error,
+    localeMismatches,
     parseFile,
     startGeneration,
     cancelGeneration,
     exportResults,
+    exportSfccImport,
     reset,
   } = useMetadataGeneration();
 
@@ -109,6 +111,23 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
     }
     startGeneration(anthropicKey);
   };
+
+  /** One line per affected SKU: 'de_DE holds fr_FR, nl_NL holds de_DE'. */
+  const mismatchSkus = useMemo(() => {
+    const bySku = new Map<string, string[]>();
+    for (const m of localeMismatches) {
+      const detail = m.detectedLocale
+        ? `${m.declaredLocale} holds ${m.detectedLocale}`
+        : `${m.declaredLocale} is not ${m.declaredLocale}`;
+      const list = bySku.get(m.materialNumber);
+      if (list) list.push(detail);
+      else bySku.set(m.materialNumber, [detail]);
+    }
+    return Array.from(bySku.entries()).map(([materialNumber, details]) => ({
+      materialNumber,
+      columns: details.join(', '),
+    }));
+  }, [localeMismatches]);
 
   const brandBreakdown = useMemo(() => {
     const counts = new Map<string, number>();
@@ -327,6 +346,45 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
             </div>
           )}
 
+          {format.type === 'pim-longdesc' && (
+            <div className="mt-4 border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+              PIM export detected. Each SKU's existing long description is
+              rewritten to brand standard in English, then localised into the
+              locales the file carries. At the end you get the SFCC upload
+              template, ready to load back into the PIM.
+            </div>
+          )}
+
+          {localeMismatches.length > 0 && (
+            <div className="mt-4 border border-destructive/40 bg-destructive/5 p-3 text-sm">
+              <div className="flex items-center gap-2 text-destructive">
+                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="font-medium">
+                  {mismatchSkus.length} product
+                  {mismatchSkus.length === 1 ? '' : 's'} with a locale column in
+                  the wrong language
+                </span>
+              </div>
+              <p className="mt-2 text-muted-foreground">
+                These columns hold text in a language other than the one the
+                header names, so a rewrite would start from the wrong source.
+                Check them in the PIM, or exclude the SKUs above.
+              </p>
+              <ul className="mt-2 space-y-0.5 font-mono text-xs text-muted-foreground">
+                {mismatchSkus.slice(0, 8).map((m) => (
+                  <li key={m.materialNumber}>
+                    {m.materialNumber} — {m.columns}
+                  </li>
+                ))}
+              </ul>
+              {mismatchSkus.length > 8 && (
+                <p className="mt-1 font-mono text-xs text-muted-foreground">
+                  … {mismatchSkus.length - 8} more
+                </p>
+              )}
+            </div>
+          )}
+
           {error && (
             <div className="mt-4 flex items-center gap-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -438,6 +496,9 @@ export const MetadataGenerationFlow: React.FC<MetadataGenerationFlowProps> = ({
           results={results}
           selectedLanguages={selectedLanguages}
           onExport={exportResults}
+          onExportSfccImport={
+            format?.type === 'pim-longdesc' ? exportSfccImport : undefined
+          }
           onReset={reset}
         />
       )}

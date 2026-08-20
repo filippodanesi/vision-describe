@@ -145,6 +145,7 @@ export type MetadataFormatType =
   | 'sloggi-b2c'
   | 'triumph-b2c'
   | 'longdesc-rework'
+  | 'pim-longdesc'
   | 'unknown';
 
 export interface MetadataFormat {

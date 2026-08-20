@@ -20,6 +20,19 @@ import {
 } from '../prompts/metadataGenerationPrompt';
 import { translateWithClaude } from '../utils/visionApiUtils';
 import { processTextWithTerminology } from '../utils/terminology';
+import {
+  PIM_LOCALES,
+  PIM_LONG_DESC_PREFIX,
+  SFCC_IMPORT_HEADERS,
+  SFCC_IMPORT_SHEET_NAME,
+  findLocaleMismatches,
+  pimLanguageCodesFromHeaders,
+  pimLocaleByCode,
+  pimLocaleByLocale,
+  pimLocalesFromHeaders,
+  pimLongDescColumn,
+  type LocaleMismatch,
+} from '../utils/pimLocales';
 
 const BATCH_SIZE = 3;
 
@@ -73,6 +86,18 @@ function detectFormat(headers: string[]): MetadataFormatType {
     'materialb2cusps_en',
   ];
   if (triumphB2cRequired.every((h) => set.has(h))) return 'triumph-b2c';
+
+  // PIM long-description export: 'Material Number' + 'Material Description'
+  // plus one 'Ecom Long Desc_<locale>' column per locale. This is the export
+  // Masterdata pulls out of the PIM for a rewrite round-trip; the matching
+  // upload goes back as the SFCC import template.
+  if (
+    set.has('material number') &&
+    set.has('material description') &&
+    pimLocalesFromHeaders(headers).length > 0
+  ) {
+    return 'pim-longdesc';
+  }
 
   // Long-description rework: a material number, an EN product name and at
   // least one existing MaterialLongDescriptionEcom_<lang> column, but none of
@@ -204,6 +229,40 @@ function extractProducts(
           existingSourceLang,
           rawRow: row,
         };
+      } else if (format === 'pim-longdesc') {
+        const matNo = row['Material Number'] || '';
+        if (!matNo) return;
+        const name = String(row['Material Description'] || '');
+        // No brand column in this export; infer it from the product name the
+        // same way the rework flow does.
+        const brand = /sloggi/i.test(name) ? 'sloggi' : 'Triumph';
+
+        // Pick the rewrite source: existing EN copy, else the first populated
+        // locale, so rows with an empty EN column still have something to work
+        // from. Same 120-char floor as the rework flow.
+        const locales = pimLocalesFromHeaders(sheet.headers);
+        const preferred = ['en_GB', ...locales.filter((l) => l !== 'en_GB')];
+        let existingDescription: string | undefined;
+        let existingSourceLang: string | undefined;
+        for (const locale of preferred) {
+          if (!locales.includes(locale)) continue;
+          const val = row[pimLongDescColumn(locale)];
+          if (val && String(val).trim().length >= REWORK_MIN_SOURCE_LEN) {
+            existingDescription = String(val).trim();
+            existingSourceLang = pimLocaleByLocale(locale)?.code ?? locale;
+            break;
+          }
+        }
+        p = {
+          sheetName: sheet.name,
+          rowIndex: index,
+          materialNumber: String(matNo),
+          productName: name,
+          brand,
+          existingDescription,
+          existingSourceLang,
+          rawRow: row,
+        };
       } else if (format === 'sloggi-b2c' || format === 'triumph-b2c') {
         const matNo = row['MaterialSAPMaterialNo'] || '';
         if (!matNo) return;
@@ -240,7 +299,7 @@ function extractProducts(
       // existing description to rewrite or (for the few fully-empty rows) the
       // name as a best-effort source. USP-based formats keep the stricter gate.
       const usable =
-        format === 'longdesc-rework'
+        format === 'longdesc-rework' || format === 'pim-longdesc'
           ? Boolean(p && p.productName.trim())
           : Boolean(p && hasUsableMetadata(p));
       if (p && usable) products.push(p);
@@ -261,6 +320,26 @@ function hasUsableMetadata(p: MetadataProduct): boolean {
 
 function targetColumnFor(langCode: string): string {
   return `MaterialLongDescriptionEcom_${langCode}`;
+}
+
+/**
+ * Language code a long-description column targets, for either naming
+ * convention: 'MaterialLongDescriptionEcom_de' and 'Ecom Long Desc_de_DE' both
+ * resolve to 'de'. Returns undefined for any other column.
+ */
+function languageCodeForColumn(header: string): string | undefined {
+  const h = header.trim();
+
+  if (/^MaterialLongDescriptionEcom_/i.test(h)) {
+    return h.replace(/^MaterialLongDescriptionEcom_/i, '');
+  }
+
+  if (h.toLowerCase().startsWith(PIM_LONG_DESC_PREFIX.toLowerCase())) {
+    const locale = h.slice(PIM_LONG_DESC_PREFIX.length);
+    return pimLocaleByLocale(locale)?.code;
+  }
+
+  return undefined;
 }
 
 function isAbortError(err: unknown): boolean {
@@ -295,6 +374,7 @@ export function useMetadataGeneration() {
   const [logs, setLogs] = useState<string[]>([]);
   const [results, setResults] = useState<GeneratedProduct[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [localeMismatches, setLocaleMismatches] = useState<LocaleMismatch[]>([]);
   const abortRef = useRef<AbortController | null>(null);
 
   const addLog = useCallback((msg: string) => {
@@ -329,7 +409,7 @@ export function useMetadataGeneration() {
 
         if (detected === 'unknown') {
           setError(
-            'File format not recognised. Expected AW26-compact, sloggi-B2C or Triumph-B2C headers.'
+            'File format not recognised. Expected AW26-compact, sloggi-B2C, Triumph-B2C, or a PIM long-description export (Material Number + Ecom Long Desc_<locale> columns).'
           );
           setProducts([]);
           setStep(MetadataGenerationStep.FORMAT_DETECT);
@@ -354,6 +434,29 @@ export function useMetadataGeneration() {
           addLog(
             `Rework mode: ${prods.length} SKU(s), ${withSource} with an existing description to rewrite, ${prods.length - withSource} from product name only. Languages preset from file: ${fileLangs.join(', ')}.`
           );
+        }
+
+        if (detected === 'pim-longdesc') {
+          const fileLangs = pimLanguageCodesFromHeaders(allHeaders);
+          if (fileLangs.length > 0) setSelectedLanguages(fileLangs);
+          const withSource = prods.filter((p) => p.existingDescription).length;
+          addLog(
+            `PIM rework mode: ${prods.length} SKU(s), ${withSource} with an existing description to rewrite, ${prods.length - withSource} from product name only. Locales preset from file: ${pimLocalesFromHeaders(allHeaders).join(', ')}.`
+          );
+
+          // A PIM export can ship a locale column holding another locale's text.
+          // Rewriting from the wrong source language would be invisible in the
+          // output, so surface it here instead.
+          const mismatches = parsed.flatMap((s) =>
+            findLocaleMismatches(s.data, s.headers, 'Material Number', 'Material Description')
+          );
+          setLocaleMismatches(mismatches);
+          if (mismatches.length > 0) {
+            const skus = new Set(mismatches.map((m) => m.materialNumber));
+            addLog(
+              `Warning: ${mismatches.length} cell(s) across ${skus.size} SKU(s) hold text in a different language than their column claims. Check these before generating.`
+            );
+          }
         }
 
         addLog(
@@ -424,7 +527,8 @@ export function useMetadataGeneration() {
         // (USP-based formats, or rework rows with no source copy) → generate
         // from the structured inputs / product name.
         try {
-          const isRework = format?.type === 'longdesc-rework';
+          const isRework =
+            format?.type === 'longdesc-rework' || format?.type === 'pim-longdesc';
           const enPrompt =
             isRework && product.existingDescription
               ? buildRewritePrompt({
@@ -589,11 +693,16 @@ export function useMetadataGeneration() {
 
   /**
    * Export: rebuilds the original workbook (preserving sheets and all original
-   * columns) and fills the MaterialLongDescriptionEcom_<lang> column for every
-   * selected language with the generated/localised content.
+   * columns) and fills the long-description column for every selected language
+   * with the generated/localised content.
+   *
+   * Two column conventions are in play — the Inriver 'MaterialLongDescriptionEcom_<lang>'
+   * one and the PIM export's 'Ecom Long Desc_<locale>' one — so the target
+   * column follows whichever the source file uses.
    */
   const exportResults = useCallback(async (): Promise<Blob> => {
     const workbook = new Workbook();
+    const isPim = format?.type === 'pim-longdesc';
     const resultByMatNo = new Map<string, GeneratedProduct>();
     for (const r of results) {
       resultByMatNo.set(String(r.product.materialNumber), r);
@@ -605,7 +714,8 @@ export function useMetadataGeneration() {
       // Ensure every selected language has a target column in the output
       const headers = [...sheet.headers];
       for (const lang of selectedLanguages) {
-        const col = targetColumnFor(lang);
+        const locale = pimLocaleByCode(lang)?.locale;
+        const col = isPim && locale ? pimLongDescColumn(locale) : targetColumnFor(lang);
         if (!headers.includes(col)) headers.push(col);
       }
       ws.addRow(headers);
@@ -623,13 +733,9 @@ export function useMetadataGeneration() {
         const generated = matNo ? resultByMatNo.get(matNo) : undefined;
 
         for (const h of headers) {
-          if (h.startsWith('MaterialLongDescriptionEcom_')) {
-            const lang = h.replace('MaterialLongDescriptionEcom_', '');
-            if (generated && generated.translations[lang]) {
-              rowOut.push(generated.translations[lang]);
-            } else {
-              rowOut.push(row[h] ?? '');
-            }
+          const lang = languageCodeForColumn(h);
+          if (lang && generated && generated.translations[lang]) {
+            rowOut.push(generated.translations[lang]);
           } else {
             rowOut.push(row[h] ?? '');
           }
@@ -642,7 +748,40 @@ export function useMetadataGeneration() {
     return new Blob([buffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
-  }, [results, sheets, selectedLanguages]);
+  }, [results, sheets, selectedLanguages, format]);
+
+  /**
+   * Export: the SFCC upload template Masterdata feeds back into the PIM — one
+   * row per product and locale, keyed by numeric LanguageID.
+   *
+   * Only generated content is written. A locale that produced nothing for a SKU
+   * is left out rather than uploaded empty, which would blank the live copy.
+   */
+  const exportSfccImport = useCallback(async (): Promise<Blob> => {
+    const workbook = new Workbook();
+    const ws = workbook.addWorksheet(SFCC_IMPORT_SHEET_NAME);
+    ws.addRow([...SFCC_IMPORT_HEADERS]);
+
+    // Grouped by locale, then by product, matching the files Masterdata sends.
+    for (const locale of PIM_LOCALES) {
+      if (!selectedLanguages.includes(locale.code)) continue;
+      for (const r of results) {
+        const description = r.translations[locale.code];
+        if (!description || !description.trim()) continue;
+        ws.addRow([
+          locale.languageId,
+          String(r.product.materialNumber),
+          description,
+          '',
+        ]);
+      }
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+  }, [results, selectedLanguages]);
 
   const reset = useCallback(() => {
     if (abortRef.current && !abortRef.current.signal.aborted) {
@@ -662,6 +801,7 @@ export function useMetadataGeneration() {
     setLogs([]);
     setResults([]);
     setError(null);
+    setLocaleMismatches([]);
   }, []);
 
   const excludedSkus = useMemo(
@@ -701,10 +841,12 @@ export function useMetadataGeneration() {
     logs,
     results,
     error,
+    localeMismatches,
     parseFile,
     startGeneration,
     cancelGeneration,
     exportResults,
+    exportSfccImport,
     reset,
   };
 }

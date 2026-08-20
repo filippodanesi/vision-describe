@@ -17,6 +17,8 @@ interface GenerationResultProps {
   results: GeneratedProduct[];
   selectedLanguages: string[];
   onExport: () => Promise<Blob>;
+  /** PIM round-trip only: builds the SFCC upload template. */
+  onExportSfccImport?: () => Promise<Blob>;
   onReset: () => void;
 }
 
@@ -24,6 +26,7 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
   results,
   selectedLanguages,
   onExport,
+  onExportSfccImport,
   onReset,
 }) => {
   const totalDescriptions = results.reduce(
@@ -35,20 +38,27 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
     0
   );
 
-  const handleExport = async () => {
+  const download = async (build: () => Promise<Blob>, prefix: string) => {
     try {
-      const blob = await onExport();
+      const blob = await build();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      link.download = `metadata-generated_${timestamp}.xlsx`;
+      link.download = `${prefix}_${timestamp}.xlsx`;
       link.click();
       window.URL.revokeObjectURL(url);
       toast('File exported successfully');
     } catch {
       toast.error('Export failed');
     }
+  };
+
+  const handleExport = () => download(onExport, 'metadata-generated');
+
+  const handleExportSfccImport = () => {
+    if (!onExportSfccImport) return;
+    return download(onExportSfccImport, 'SFCC_Product_info_template_upload');
   };
 
   return (
@@ -77,8 +87,17 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
               tone={totalErrors > 0 ? 'destructive' : 'foreground'}
             />
           </div>
-          <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-border">
-            <Button onClick={handleExport}>
+          <div className="flex flex-wrap items-center justify-end gap-3 px-5 py-4 border-t border-border">
+            {onExportSfccImport && (
+              <Button onClick={handleExportSfccImport}>
+                <Download className="h-4 w-4 mr-2" />
+                Export PIM upload
+              </Button>
+            )}
+            <Button
+              onClick={handleExport}
+              variant={onExportSfccImport ? 'outline' : 'default'}
+            >
               <Download className="h-4 w-4 mr-2" />
               Export Excel
             </Button>
@@ -87,6 +106,13 @@ export const GenerationResult: React.FC<GenerationResultProps> = ({
               Process another file
             </Button>
           </div>
+          {onExportSfccImport && (
+            <p className="px-5 pb-4 -mt-1 text-xs text-muted-foreground">
+              "Export PIM upload" is the SFCC template, ready to load: one row
+              per product and locale, keyed by LanguageID. "Export Excel" keeps
+              the layout of the file you uploaded.
+            </p>
+          )}
         </div>
       </section>
 
