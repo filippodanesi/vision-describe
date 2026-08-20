@@ -8,8 +8,8 @@
  * take more than 5 minutes, the default ephemeral TTL.
  *
  * All four flows (Image Analysis, Metadata Generation, CSV Translation,
- * Optimize) are hardcoded to claude-opus-4-8 with adaptive thinking at
- * medium effort. The OpenAI text and vision paths were removed once the
+ * Optimize) are hardcoded to claude-opus-5 with adaptive thinking at high
+ * effort. The OpenAI text and vision paths were removed once the
  * user-facing model selector was dropped.
  */
 
@@ -38,7 +38,37 @@ function withQuotaDetection(p: Promise<any>): Promise<any> {
  * METADATA_GENERATION_MODEL) — single source of truth even though callers
  * always pass an explicit model.
  */
-const DEFAULT_CLAUDE_MODEL = 'claude-opus-4-8';
+const DEFAULT_CLAUDE_MODEL = 'claude-opus-5';
+
+/** Stop fields the installed SDK (0.50.4) does not type yet. */
+interface StopSignals {
+  stop_reason?: string | null;
+  stop_details?: { category?: string | null } | null;
+}
+
+/**
+ * Turn a response with no usable text into an error that says why.
+ *
+ * Opus 5 can end a turn with stop_reason 'refusal' (HTTP 200, a stop_details
+ * category, and no text block). Without this, a declined SKU surfaced as the
+ * generic "No valid text content" and looked like a parsing bug — easy to miss
+ * in a batch of several hundred calls. 'max_tokens' gets the same treatment,
+ * since a truncated description is also worth naming.
+ */
+function describeEmptyResponse(response: StopSignals): string {
+  const stopReason = response?.stop_reason;
+
+  if (stopReason === 'refusal') {
+    const category = response?.stop_details?.category;
+    return `Claude declined this request${category ? ` (${category})` : ''}. The source copy or product data likely tripped a safety classifier — check the input for this SKU.`;
+  }
+
+  if (stopReason === 'max_tokens') {
+    return 'Response hit the max_tokens ceiling before producing any text. Raise max_tokens or shorten the input.';
+  }
+
+  return `No valid text content in Claude response${stopReason ? ` (stop_reason: ${stopReason})` : ''}`;
+}
 
 /**
  * Type guard — narrows the union returned by prompt builders. Old builders
@@ -78,14 +108,15 @@ export async function analyzeWithClaude(
     },
   }));
 
-  // Adaptive thinking + medium effort per the Opus 4.8 migration guide.
+  // Adaptive thinking at high effort: this copy has to hold a terminology
+  // contract, and high is the Opus 5 default for quality-sensitive work.
   // Cast to any: the installed @anthropic-ai/sdk (0.50.4) predates the
   // adaptive-thinking / output_config types, but the API honours the fields.
   const response = await withQuotaDetection(client.messages.create({
     model,
     max_tokens: 8192,
     thinking: { type: 'adaptive' },
-    output_config: { effort: 'medium' },
+    output_config: { effort: 'high' },
     messages: [
       {
         role: 'user',
@@ -101,8 +132,8 @@ export async function analyzeWithClaude(
     (block): block is Anthropic.TextBlock => block.type === 'text',
   );
 
-  if (!textBlock) {
-    throw new Error('No valid text content in Claude response');
+  if (!textBlock || !textBlock.text.trim()) {
+    throw new Error(describeEmptyResponse(response));
   }
 
   return {
@@ -143,14 +174,15 @@ export async function translateWithClaude(
     dangerouslyAllowBrowser: true,
   });
 
-  // Adaptive thinking + medium effort per the Opus 4.8 migration guide.
+  // Adaptive thinking at high effort: this copy has to hold a terminology
+  // contract, and high is the Opus 5 default for quality-sensitive work.
   // `as any`: SDK 0.50.4 predates these types; the API still honours them.
   const params: any = isCachedPrompt(prompt)
     ? {
         model,
         max_tokens: 16000,
         thinking: { type: 'adaptive' },
-        output_config: { effort: 'medium' },
+        output_config: { effort: 'high' },
         system: [
           {
             type: 'text',
@@ -164,7 +196,7 @@ export async function translateWithClaude(
         model,
         max_tokens: 16000,
         thinking: { type: 'adaptive' },
-        output_config: { effort: 'medium' },
+        output_config: { effort: 'high' },
         messages: [{ role: 'user', content: prompt }],
       };
 
@@ -177,8 +209,8 @@ export async function translateWithClaude(
     (block): block is Anthropic.TextBlock => block.type === 'text',
   );
 
-  if (!textBlock) {
-    throw new Error('No valid text content in Claude response');
+  if (!textBlock || !textBlock.text.trim()) {
+    throw new Error(describeEmptyResponse(response));
   }
 
   return {

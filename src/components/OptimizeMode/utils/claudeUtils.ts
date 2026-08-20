@@ -1,8 +1,8 @@
 /**
  * Utility functions for Claude API integration using the official Anthropic SDK
  * 
- * Claude Opus 4.8 configuration:
- * - Adaptive thinking at medium effort (per the Opus 4.8 migration guide)
+ * Claude Opus 5 configuration:
+ * - Adaptive thinking at high effort (quality-sensitive copy)
  * - Prompt caching on the system block (ephemeral cache_control)
  * - Response times can reach ~120s on complex rows
  */
@@ -35,7 +35,7 @@ export interface ClaudeRequestOptions {
 export const optimizeWithClaude = async (
   prompt: string, 
   apiKey: string,
-  model: string = "claude-opus-4-8",
+  model: string = "claude-opus-5",
   systemPrompt?: string,
   options: ClaudeRequestOptions = {}
 ): Promise<ClaudeResponse> => {
@@ -178,7 +178,7 @@ const makeClaudeApiCallWithProxy = async (
 export const optimizeWithClaude = async (
   prompt: string, 
   apiKey: string,
-  model: string = "claude-opus-4-8",
+  model: string = "claude-opus-5",
   systemPrompt?: string,
   options: ClaudeRequestOptions = {}
 ): Promise<ClaudeResponse> => {
@@ -204,7 +204,7 @@ export const optimizeWithClaude = async (
     }
     
     // Use the specified Claude model or default to Claude 4 Sonnet
-    const claudeModel = model || "claude-opus-4-8";
+    const claudeModel = model || "claude-opus-5";
     console.log(`Using Claude model: ${claudeModel}`);
     
     // Get model name for display in toast
@@ -244,7 +244,7 @@ export const optimizeWithClaude = async (
       });
 
       try {
-        // Adaptive thinking at medium effort per the Opus 4.8 migration guide.
+        // Adaptive thinking at high effort: this copy has to hold a terminology contract.
         const requestParams: any = {
           model: claudeModel,
           // Prompt caching: send system as content blocks with cache_control
@@ -260,7 +260,7 @@ export const optimizeWithClaude = async (
           ],
           max_tokens: options.maxTokens ?? 16000,
           thinking: { type: "adaptive" },
-          output_config: { effort: "medium" }
+          output_config: { effort: "high" }
         };
 
         const sdkResponse = await client.messages.create(requestParams);
@@ -449,7 +449,7 @@ export const processBatchClaudeRequests = async (
               
               const proxyResult = await makeClaudeApiCallWithProxy(
                 request.apiKey,
-                request.model || "claude-opus-4-8",
+                request.model || "claude-opus-5",
                 request.systemPrompt || "You are a helpful assistant.",
                 request.prompt
               );

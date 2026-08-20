@@ -5,7 +5,7 @@
  * @description Cost tracking for AI operations: token usage, cost calculation,
  *              budget tracking, and session statistics.
  *
- * The app is Anthropic-only (Claude Opus 4.8).
+ * The app is Anthropic-only (Claude Opus 5).
  */
 
 import { useState, useEffect } from 'react';
@@ -31,10 +31,10 @@ export interface CostRecord {
   estimatedCost: number;
 }
 
-// Per-model pricing. Claude Opus 4.8: $5 / $25 per MTok.
+// Per-model pricing. Claude Opus 5: $5 / $25 per MTok.
 const MODEL_COSTS: Record<string, ModelCostData> = {
-  'claude-opus-4-8': {
-    name: 'Claude Opus 4.8',
+  'claude-opus-5': {
+    name: 'Claude Opus 5',
     inputCostPer1M: 5.00,
     outputCostPer1M: 25.00,
     tokensPerCharInput: 0.25,

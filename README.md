@@ -1,6 +1,6 @@
 # VisionDescribe
 
-AI-powered content generation for e-commerce and marketplace platforms. Uses Claude Opus 4.8 (with adaptive thinking) to generate brand-compliant product descriptions, bullet points, and optimized copy, with real-time cost tracking and multi-language support.
+AI-powered content generation for e-commerce and marketplace platforms. Uses Claude Opus 5 (with adaptive thinking) to generate brand-compliant product descriptions, bullet points, and optimized copy, with real-time cost tracking and multi-language support.
 
 Built with React, TypeScript, and Vercel Edge Functions.
 
@@ -19,11 +19,11 @@ Built with React, TypeScript, and Vercel Edge Functions.
 
 ## AI Model
 
-All flows run on a single model, Claude Opus 4.8, with adaptive thinking at medium effort.
+All flows run on a single model, Claude Opus 5, with adaptive thinking at medium effort.
 
 | Model | Provider | Context | Notes |
 |-------|----------|---------|-------|
-| Claude Opus 4.8 | Anthropic | 1M | Most capable Anthropic model; adaptive thinking, native vision |
+| Claude Opus 5 | Anthropic | 1M | Most capable Anthropic model; adaptive thinking, native vision |
 
 ## Supported Platforms
 

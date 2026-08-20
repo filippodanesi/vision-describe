@@ -2,8 +2,8 @@
  * Server-side Anthropic Claude client wrapper.
  * No browser dependencies (no CORS proxy, no toast, no dangerouslyAllowBrowser).
  *
- * The app is Anthropic-only. Adaptive thinking at medium effort per the
- * Opus 4.8 migration guide.
+ * The app is Anthropic-only. Adaptive thinking at high effort, matching the
+ * client-side calls in visionApiUtils.ts.
  */
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -32,7 +32,7 @@ export async function callAnthropic(
     model: modelId,
     max_tokens: 16000,
     thinking: { type: 'adaptive' },
-    output_config: { effort: 'medium' },
+    output_config: { effort: 'high' },
     system: [
       {
         type: 'text',
@@ -49,7 +49,20 @@ export async function callAnthropic(
     (block: any) => block.type === 'text' && 'text' in block
   );
   if (!textBlock || !('text' in textBlock)) {
-    throw new Error(`No text content in Anthropic response for model ${modelId}`);
+    // Opus 5 can end a turn with stop_reason 'refusal' (HTTP 200, no text
+    // block). Name it, so a declined row is not mistaken for a parsing bug.
+    // stop_details is not typed by the installed SDK (0.50.4).
+    const stopSignals = response as {
+      stop_reason?: string | null;
+      stop_details?: { category?: string | null } | null;
+    };
+    const stopReason = stopSignals.stop_reason;
+    const category = stopSignals.stop_details?.category;
+    const detail =
+      stopReason === 'refusal'
+        ? `Claude declined this request${category ? ` (${category})` : ''}`
+        : `No text content in Anthropic response${stopReason ? ` (stop_reason: ${stopReason})` : ''}`;
+    throw new Error(`${detail} for model ${modelId}`);
   }
 
   return {

@@ -49,8 +49,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 // ─── Step Definitions ─────────────────────────────────────────────────────────
 
 // Hardcoded model for the Optimize flow.
-// Claude Opus 4.8 — most capable Anthropic model. No user selector exposed.
-const OPTIMIZE_MODEL = 'claude-opus-4-8';
+// Claude Opus 5 — most capable Anthropic model. No user selector exposed.
+const OPTIMIZE_MODEL = 'claude-opus-5';
 
 const getStepsForUseCase = (useCase: UseCase | ''): StepDef<ProcessingStep>[] => {
   switch (useCase) {
