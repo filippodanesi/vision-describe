@@ -7,6 +7,7 @@
 // Vercel function and cannot resolve the `@/` alias.
 
 export function wiringAndPaddingCompact(): string {
+import { longDescColumnFor } from './longDescColumns';
   return `WIRING & PADDING (FOR BRA PRODUCTS):
 - When wiring/padding info is provided, include as FIRST bullet point
 - Format: "[Wiring], [padding] bra for [benefit]"
@@ -122,7 +123,7 @@ export function buildEcommerceUserPrompt(
   row: Record<string, unknown>,
   language: string
 ): string {
-  const descKey = `MaterialLongDescriptionEcom_${language}`;
+  const descKey = longDescColumnFor(row, language);
   const description = String(row[descKey] ?? '');
 
   // Optional short hint (dynamic column lookup)

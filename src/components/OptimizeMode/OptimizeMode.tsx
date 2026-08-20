@@ -45,6 +45,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { isLongDescriptionColumn } from '@/lib/longDescriptionColumns';
 
 // ─── Step Definitions ─────────────────────────────────────────────────────────
 
@@ -645,11 +646,7 @@ export const OptimizeMode: React.FC = () => {
               columns={(() => {
                 const cols = fileData?.columns || [];
                 if (useCase === 'amazon' || useCase === 'partoo') return cols;
-                return cols.filter((col) => {
-                  const colLower = col.toLowerCase();
-                  return colLower.startsWith('colormateriallongdescriptionecom') ||
-                         colLower.startsWith('materiallongdescriptionecom');
-                });
+                return cols.filter(isLongDescriptionColumn);
               })()}
               onColumnsSelected={handleColumnsSelected}
             />

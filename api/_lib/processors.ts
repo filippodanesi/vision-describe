@@ -7,6 +7,7 @@
 import { callAI, AiResponse } from './aiClients';
 import { RunConfig } from './types';
 import {
+import { longDescColumnFor } from './longDescColumns';
   wiringAndPaddingCompact,
   seriesNameRules,
   truthfulnessRules,
@@ -1275,7 +1276,7 @@ async function processEcommerceRow(
   let totalOut = 0;
   const language = config.lang || 'en';
 
-  const descKey = `MaterialLongDescriptionEcom_${language}`;
+  const descKey = longDescColumnFor(row, language);
   const description = String(row[descKey] ?? '');
 
   // Skip if no description to optimize

@@ -51,7 +51,7 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
     detectors: {
       productId: [rx('^MaterialSAPMaterialNo$')],
       title: [rx('^MaterialSeriesName$')],
-      descriptionIn: [rx('^MaterialLongDescriptionEcom_([a-z]{2})$')],
+      descriptionIn: [rx('^MaterialLongDescriptionEcom_([a-z-]{2,5})$'), rx('^Ecom Long Desc_([a-z]{2}_[A-Z]{2})$')],
       bulletIn1: [rx('^Short description .*')],
       bulletIn2: [rx('^Short description .*')],
       bulletIn3: [rx('^Short description .*')],
@@ -67,7 +67,7 @@ export const USECASE_PROFILES: Record<UseCase, UseCaseProfile> = {
     detectors: {
       productId: [rx('^MaterialSAPMaterialNo$')],
       title: [rx('^MaterialSeriesName$')],
-      descriptionIn: [rx('^MaterialLongDescriptionEcom_([a-z]{2})$')],
+      descriptionIn: [rx('^MaterialLongDescriptionEcom_([a-z-]{2,5})$'), rx('^Ecom Long Desc_([a-z]{2}_[A-Z]{2})$')],
       bulletIn1: [rx('^Short description .*')],
       bulletIn2: [rx('^Short description .*')],
       bulletIn3: [rx('^Short description .*')],

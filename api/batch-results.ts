@@ -9,6 +9,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Anthropic from '@anthropic-ai/sdk';
 import { supabaseAdmin, verifyUserJwt, getUserApiKeys } from './_lib/supabaseAdmin';
+import { longDescColumnFor } from './_lib/longDescColumns';
 
 export const config = { maxDuration: 300 };
 
@@ -111,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           // Fallback to original description or title if empty
           if (!gen) {
-            const descKey = `MaterialLongDescriptionEcom_${lang}`;
+            const descKey = longDescColumnFor(rows[rowIndex], lang);
             const altTitleKey = `MaterialAlternativeStyle_${lang}`;
             gen = String(
               rows[rowIndex][descKey] ??
@@ -121,7 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ).trim();
           }
 
-          mergedRows[rowIndex][`MaterialLongDescriptionEcom_${lang}`] = gen;
+          mergedRows[rowIndex][longDescColumnFor(rows[rowIndex], lang)] = gen;
         }
 
         succeededCount++;

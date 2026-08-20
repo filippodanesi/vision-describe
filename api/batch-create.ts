@@ -11,6 +11,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { supabaseAdmin, verifyUserJwt, getUserApiKeys } from './_lib/supabaseAdmin';
 import type { RunConfig } from './_lib/types';
 import {
+import { longDescColumnFor } from './_lib/longDescColumns';
   ECOMMERCE_SYSTEM_PROMPT,
   SLOGGI_ECOMMERCE_SYSTEM_PROMPT,
   buildEcommerceUserPrompt,
@@ -119,7 +120,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const lang of langs) {
       for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
         const row = rows[rowIndex];
-        const descKey = `MaterialLongDescriptionEcom_${lang}`;
+        const descKey = longDescColumnFor(row, lang);
         const description = String(row[descKey] ?? '').trim();
 
         // Skip rows with no description for this language

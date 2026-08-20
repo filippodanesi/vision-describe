@@ -6,6 +6,7 @@ import { CheckCircle, AlertTriangle, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { USECASE_PROFILES } from '../usecases';
 import { findMatchingShortDescriptionColumn } from '../utils/columnMatching';
+import { langCodeFromColumn } from '@/lib/longDescriptionColumns';
 
 interface ColumnMapping {
   longDescColumn: string;
@@ -62,18 +63,18 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
 
     const langs = Array.from(new Set(
       fileData.columns
-        .map(c => c.match(/MaterialLongDescriptionEcom_([a-z]{2})$/i)?.[1]?.toLowerCase())
+        .map(c => langCodeFromColumn(c))
         .filter(Boolean) as string[]
     ));
     setAvailableLangs(langs);
     setSelectedLangs(langs);
 
     const selectedForLangs = selectedColumns.filter(c =>
-      langs.some(l => new RegExp(`MaterialLongDescriptionEcom_${l}$`, 'i').test(c))
+      langs.some(l => langCodeFromColumn(c) === l)
     );
     const initialMappings: ColumnMapping[] = (selectedForLangs.length ? selectedForLangs : selectedColumns).map(column => {
-      const langMatch = column.match(/_([a-z]{2})$/i);
-      const language = langMatch ? langMatch[1].toUpperCase() : 'UNK';
+      const langCode = langCodeFromColumn(column);
+      const language = langCode ? langCode.toUpperCase() : 'UNK';
       const availableShortDescColumns = fileData.columns.filter(col => {
         const lower = col.toLowerCase();
         const isShortDesc = lower.includes('short description');
@@ -81,8 +82,8 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
         const isAltStyle = /^materialalternativestyle_/i.test(col);
         return isShortDesc || isSC || isAltStyle;
       });
-      const matchedShortDescColumn = langMatch
-        ? findMatchingShortDescriptionColumn(fileData.columns, langMatch[1])
+      const matchedShortDescColumn = langCode
+        ? findMatchingShortDescriptionColumn(fileData.columns, langCode)
         : '';
       return {
         longDescColumn: column,
@@ -99,11 +100,11 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
     if (useCase === 'amazon' || availableLangs.length === 0) return;
 
     const selectedForLangs = selectedColumns.filter(c =>
-      selectedLangs.some(l => new RegExp(`MaterialLongDescriptionEcom_${l}$`, 'i').test(c))
+      selectedLangs.some(l => langCodeFromColumn(c) === l)
     );
     const newMappings: ColumnMapping[] = (selectedForLangs.length ? selectedForLangs : []).map(column => {
-      const langMatch = column.match(/_([a-z]{2})$/i);
-      const language = langMatch ? langMatch[1].toUpperCase() : 'UNK';
+      const langCode = langCodeFromColumn(column);
+      const language = langCode ? langCode.toUpperCase() : 'UNK';
       const availableShortDescColumns = fileData.columns.filter(col => {
         const lower = col.toLowerCase();
         const isShortDesc = lower.includes('short description');
@@ -111,8 +112,8 @@ const ColumnConfirmation: React.FC<ColumnConfirmationProps> = ({
         const isAltStyle = /^materialalternativestyle_/i.test(col);
         return isShortDesc || isSC || isAltStyle;
       });
-      const matchedShortDescColumn = langMatch
-        ? findMatchingShortDescriptionColumn(fileData.columns, langMatch[1])
+      const matchedShortDescColumn = langCode
+        ? findMatchingShortDescriptionColumn(fileData.columns, langCode)
         : '';
       return {
         longDescColumn: column,
