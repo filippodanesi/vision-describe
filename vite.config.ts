@@ -53,21 +53,14 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-query': ['@tanstack/react-query'],
-            'vendor-radix': [
-              '@radix-ui/react-accordion',
-              '@radix-ui/react-alert-dialog',
-              '@radix-ui/react-dialog',
-              '@radix-ui/react-dropdown-menu',
-              '@radix-ui/react-popover',
-              '@radix-ui/react-select',
-              '@radix-ui/react-tabs',
-              '@radix-ui/react-tooltip',
-            ],
-            'vendor-sheets': ['xlsx', 'exceljs', 'papaparse'],
-            'vendor-ai': ['@anthropic-ai/sdk'],
+          // Vite 8 (rolldown) only accepts the function form of manualChunks
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return;
+            if (/node_modules\/(react|react-dom|react-router-dom)\//.test(id)) return 'vendor-react';
+            if (id.includes('node_modules/@tanstack/react-query')) return 'vendor-query';
+            if (id.includes('node_modules/@radix-ui/')) return 'vendor-radix';
+            if (/node_modules\/(xlsx|exceljs|papaparse)\//.test(id)) return 'vendor-sheets';
+            if (id.includes('node_modules/@anthropic-ai/sdk')) return 'vendor-ai';
           },
         },
       },
